@@ -1,0 +1,10 @@
+#ignore silly python files
+*.py[oc]
+
+#ignore anything in the env director
+env/
+
+#ignore editor files
+*~
+*.swp
+
