@@ -20,3 +20,8 @@ class User(Base,TableMixin):
     location   = Column(String)
     gender     = Column(String)
     bio        = Column(String)
+
+
+    def __init__(self, name):
+        self.name = name
+        self.entity_id = "http://localhost/%s" % name.lower().replace(' ','.')
