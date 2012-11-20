@@ -18,7 +18,7 @@ class TableMixin:
     '''
     @declared_attr
     def __tablename__(self):
-        return self.__name__.lower() 
+        return self.__name__.lower() + 's'
 
 #-----------------------------------------------------------------------------
 
