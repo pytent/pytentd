@@ -11,8 +11,11 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
 Base = declarative_base()
 
+#----------------------------------------------------------------------------
+
 class TableMixin:
-    
+    '''Mixin class used as a base by all tent data objects.
+    '''
     @declared_attr
     def __tablename__(self):
         return self.__name__.lower() 
@@ -30,7 +33,7 @@ class DBConfigurationException(Exception):
 
 #-----------------------------------------------------------------------------
 
-def init( config ):
+def connect( config ):
     
     '''This function is called to set up a database engine.
 
@@ -40,11 +43,17 @@ def init( config ):
     '''
     
     if(config['driver'] == "sqlite"):
-        connection_string = "sqlite:///%s" % config['path'],
+        connection_string = "sqlite:///%s" % config['path']
     else:
         raise DBConfigurationException("Invalid database configuration",
             config)
 
-    
     engine = create_engine(connection_string,echo=True)
     return engine
+
+#-------------------------------------------------------------------------------
+
+def install_tables( dbengine ):
+    ''' Run a set of create queries on the given dbengine object
+    '''
+    Base.metadata.create_all(dbengine)

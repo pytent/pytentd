@@ -11,8 +11,6 @@ class User(Base,TableMixin):
   User class contains all profile information about a tent user entity
   '''
 
-  __tablename__ = "users"
-
   entity_id  = Column(String, primary_key=True)
   licenses   = []
   servers    = []
