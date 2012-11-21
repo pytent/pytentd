@@ -3,11 +3,8 @@
 
 '''
 
-from sqlalchemy.orm import sessionmaker
-
 import unittest
-import tent.data.dbm
-
+from tent.data import dbm
 from tent.data.user import User
 
 class UserDataTest(unittest.TestCase):
@@ -19,11 +16,9 @@ class UserDataTest(unittest.TestCase):
         '''Configure test database, open connections
         ''' 
         config = { 'driver' : 'sqlite', 'path' : ':memory:'}
-        self.engine = tent.data.dbm.connect(config)
-        tent.data.dbm.install_tables(self.engine)
-        
-        Session =  sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.engine = dbm.connect(config)
+        dbm.install_tables(self.engine)
+        self.session = dbm.open_session(self.engine)
         
     @classmethod
     def tearDownClass(self):

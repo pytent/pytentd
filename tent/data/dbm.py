@@ -7,6 +7,7 @@ Main database module constructor/initial code
 '''
 
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 
 Base = declarative_base()
@@ -50,6 +51,14 @@ def connect( config ):
 
     engine = create_engine(connection_string,echo=True)
     return engine
+
+#-------------------------------------------------------------------------------
+
+def open_session( engine ):
+    '''Set up an ORM session based upon an existing database engine
+    '''
+    Session =  sessionmaker(bind=engine)
+    return Session() 
 
 #-------------------------------------------------------------------------------
 

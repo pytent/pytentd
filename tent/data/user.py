@@ -4,6 +4,7 @@ Data model and bindings for tent users
 '''
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship, backref
 from tent.data.dbm import Base, TableMixin
 
 class User(Base,TableMixin):
@@ -25,3 +26,13 @@ class User(Base,TableMixin):
     def __init__(self, name):
         self.name = name
         self.entity_id = "http://localhost/%s" % name.lower().replace(' ','.')
+
+
+class Friend(Base,TableMixin):
+    '''A friend is a user hosted on a remote server.
+    
+    Friends are users who have relationships with 
+    '''
+    follower_id = Column(String, primary_key=True)
+
+
