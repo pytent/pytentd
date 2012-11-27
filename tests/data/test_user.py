@@ -1,11 +1,11 @@
 '''
- Test cases for the user profile data
-
+Test cases for the user profile data
 '''
 
 import unittest
-from tent.data import dbm
-from tent.data.user import User
+
+from tentd.data import dbm
+from tentd.data.user import User
 
 class UserDataTest(unittest.TestCase):
     '''This test case verifies the functionality of the users data objects
@@ -15,7 +15,11 @@ class UserDataTest(unittest.TestCase):
     def setUpClass(self):
         '''Configure test database, open connections
         ''' 
-        config = { 'driver' : 'sqlite', 'path' : ':memory:'}
+        config = {
+			'driver': 'sqlite',
+			'path': ':memory:'
+		}
+        
         self.engine = dbm.connect(config)
         dbm.install_tables(self.engine)
         self.session = dbm.open_session(self.engine)
@@ -26,8 +30,7 @@ class UserDataTest(unittest.TestCase):
         '''
 
     @classmethod
-    def test_create_user(self):
-        
+    def test_create_user(self):        
         u = User("James Ravenscroft")
         self.session.add(u)
 
@@ -35,8 +38,5 @@ class UserDataTest(unittest.TestCase):
         
         return u is our_user
 
-
-
 if __name__ == "__main__":
     unittest.main()
-

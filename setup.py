@@ -12,7 +12,7 @@ setup(
     long_description = open('README.rst').read(),
     
     packages         = find_packages(),
-    install_requires = ['flask==0.9'],
+    install_requires = ['flask==0.9, sqlalchemy'],
     
     include_package_data = True,
     zip_safe         = False,
