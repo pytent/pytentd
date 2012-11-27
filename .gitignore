@@ -1,9 +1,8 @@
-#ignore anything in the env director
+# Virtualenv
 env/
 
+# Compiled python
 *.py[cod]
-
-# C extensions
 *.so
 
 # Packages
@@ -32,12 +31,6 @@ nosetests.xml
 # Translations
 *.mo
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-#ignore editor files
+# Editor files
 *~
 *.swp
-
