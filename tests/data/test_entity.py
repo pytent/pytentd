@@ -14,12 +14,13 @@ class DataTest (TestCase):
 		"""
 		db.create_all()
 		
-		cls.entity = Entity(name="James Ravenscroft")
+		cls.url = "http://example.com/profile/jamesravencroft"
+		cls.entity = Entity(url=cls.url)
 		
 	def test_create_entity (self):
 		db.session.add(self.entity)
 
-		queried_entity = Entity.query.filter_by(name="James Ravenscroft").first()
+		queried_entity = Entity.query.filter_by(url=self.url).first()
 
 		return self.entity is queried_entity
 

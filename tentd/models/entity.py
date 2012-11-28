@@ -29,7 +29,7 @@ class Entity (db.Model):
 	url = Column(String, primary_key=True, nullable=False)
 	
 	#: Posts made by the entity
-	# posts = db.relationship('Post', back_populates='creator')
+	posts = db.relationship('Post', back_populates='creator')
 	
 	def __init__(self, url):
 		self.url = url
