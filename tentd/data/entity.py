@@ -2,61 +2,70 @@
 Data model and bindings for tent users
 '''
 
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
+from flask import jsonify
 
 from tentd.data import db
 
 class Entity (db.Model):
-	""" A tent entity, better known as a user """
+	"""
+	An entity is a single user.
+	The base model provides the Core Profile info type.
+	
+	https://tent.io/docs/info-types#core
+	
+		Every Tent user needs a profile with the Core info type. This block
+		provides critical information that tells other servers and users how to
+		interact with it.
+	
+	TODO: Add licence and server relationships
+	"""
+	
+	#: The local identifier for the entity
+	id = Column(Integer, primary_key=True, nullable=False)
+	
+	#: The canonical entity url
+	url = Column(String, primary_key=True, nullable=False)
+	
+	#: Posts made by the entity
+	# posts = db.relationship('Post', back_populates='creator')
+	
+	def __init__(self, url):
+		self.url = url
 
-	id         = Column(String, primary_key=True)
+	def beep (self):
+		return jsonify({'https://tent.io/types/info/core/v0.1.0': {
+			'entity': self.url,
+			'licences': [],
+			'servers': [],
+		}})
+	
+class BasicProfile (db.Model):
+	"""
+	The Basic Profile info type.
+	
+	https://tent.io/docs/info-types#basic
+	
+		The Basic Profile helps humanize users. All fields are optional but help
+		provide a context in which to place a user's details.
+	"""
+	
+	id = db.Column(db.Integer, db.ForeignKey('entity.id'), primary_key=True)
+
 	avatar_url = Column(String)
 
 	name       = Column(String)
 	location   = Column(String)
 	gender     = Column(String)
 	
-	birthdate  = Column(DateTime)
+	birthdate  = Column(String)
 	bio        = Column(Text)
-
-	posts      = relationship('Post', back_populates='creator')
-
-	def __init__(self, name, id=None):
-		self.name = name
-		self.id = id or Entity._get_entity_url(self)
-
-	@staticmethod
-	def _get_entity_url (entity):
-		return "http://localhost/" + entity.name.lower().replace(' ','.')
-
-class CoreProfile (db.Model):
-	'''The most basic tent profile which every user must have.
 	
-	This provides critical information that tells other servers how to interact with it.'''
-
-	CORE_DESCRIPTOR = 'https://tent.io/types/info/core/v0.1.0'
-
-	#FIXME Find out the best way of putting these into a DB without messing up everything.
-
-	id = Column(String, primary_key=True)
-
-	#FIXME link these to License and Server models.
-	licenses = []
-	servers = []
-
-class BasicProfile (CoreProfile):
-	'''The Basic Profile helps humanize users. All fields are optional but help provide a 
-	context in which to place a user's details.'''
-
-	DESCRIPTOR = 'https://tent.io/types/info/basic/v0.1.0'
-
-	name = Column(String)
-	avatar_url = Column(String)
-	birthdate = Column(DateTime)
-	location = Column(String)
-	gender = Column(String)
-	bio = Column(Text)
+	def __json__ (self):
+		attrs = ['avatar_url', 'name', 'location', 'gender', 'birthdate', 'bio']
+		attrs = {attr: getattr(self, attr) for attr in attrs}
+		return jsonify({'https://tent.io/types/info/basic/v0.1.0': attrs})
 
 class Server (db.Model):
 	'''Tent servers are the protocol core. They represent the users and maintain their data and
@@ -85,7 +94,7 @@ class Post (db.Model):
 	`GET posts/<id>` returns a post with the defined id.'''
 
 	# The UUID of the post on this instance (i.e. the primary key on the DB).
-	id = Columm(String, primary_key=True)
+	id = Column(String, primary_key=True)
 
 	# The type this post is. Valid types are:
 	# - status: a short (<256 character) message.
