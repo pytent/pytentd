@@ -1,7 +1,0 @@
-{
-    "database" : {
-        "driver" : "sqlite",
-        "path"   : "/home/james/tentdata.db"
-    }
-
-}

@@ -1,11 +1,14 @@
-""" An implementation of the tent.io server protocol. """
+""" An implementation of the http://tent.io server protocol. """
 
 __version__ = "0.0.0"
 
+import argparse
 from flask import Flask
 
-app = Flask('tentd')
+from tentd.base import base
+from tentd.run import run_application
 
-@app.route('/')
-def doc ():
-	return __doc__
+app = Flask('tentd')
+app.register_blueprint(base)
+
+run = lambda run: run_application(app)
