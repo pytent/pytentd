@@ -1,21 +1,24 @@
 """ Test cases for the user profile data """
 
-import unittest
+from unittest import TestCase
 
+from tentd import app
 from tentd.data import db
 from tentd.data.entity import Entity
 
-class DataTest(unittest.TestCase):
+class DataTest (TestCase):
 	@classmethod
-	def setUpClass(self):
+	def setUpClass (cls):
+		"""
+		Place the app in testing mode (allowing exceptions to propagate,
+		and initialise the database
+		"""
+		app.testing = True
 		db.create_all()
+		cls.entity = Entity(name="James Ravenscroft")
 		
-		self.entity = Entity(name="James Ravenscroft")
-		
-	@classmethod
-	def test_create_entity(self):
+	def test_create_entity (self):
 		db.session.add(self.entity)
-		db.session.commit()
 
 		queried_entity = Entity.query.filter_by(name="James Ravenscroft").first()
 
