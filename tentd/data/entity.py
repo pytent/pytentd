@@ -30,7 +30,7 @@ class Entity (db.Model):
 	def _get_entity_url (entity):
 		return "http://localhost/" + entity.name.lower().replace(' ','.')
 
-class CoreProfile:
+class CoreProfile (db.Model):
 	'''The most basic tent profile which every user must have.
 	
 	This provides critical information that tells other servers how to interact with it.'''
@@ -38,7 +38,10 @@ class CoreProfile:
 	CORE_DESCRIPTOR = 'https://tent.io/types/info/core/v0.1.0'
 
 	#FIXME Find out the best way of putting these into a DB without messing up everything.
-	entity = 'String'
+
+	id = Column(String, primary_key=True)
+
+	#FIXME link these to License and Server models.
 	licenses = []
 	servers = []
 
@@ -48,13 +51,21 @@ class BasicProfile (CoreProfile):
 
 	DESCRIPTOR = 'https://tent.io/types/info/basic/v0.1.0'
 
-	#FIXME make these into columns.
-	name = 'String'
-	avatar_url = 'String'
-	birthdate = 'Strng'
-	location = 'String'
-	gender = 'String'
-	bio = 'String'
+	name = Column(String)
+	avatar_url = Column(String)
+	birthdate = Column(DateTime)
+	location = Column(String)
+	gender = Column(String)
+	bio = Column(Text)
+
+class Server (db.Model):
+	'''Tent servers are the protocol core. They represent the users and maintain their data and
+	relationships.'''
+	id = Column(String, primary_key=True)
+
+class License (db.Model):
+	'''Licenses content is released under.'''
+	id = Column(String, primary_key=True)
 
 class Follower (db.Model):
 	'''A follower is a user hosted on a remote server.'''
