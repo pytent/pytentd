@@ -1,0 +1,156 @@
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("follower")
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("license")
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("entity")
+2012-11-28 21:46:47,935 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("server")
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("post")
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("basic_profile")
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE follower (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,936 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE license (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE entity (
+	id INTEGER NOT NULL, 
+	url VARCHAR NOT NULL, 
+	PRIMARY KEY (id, url)
+)
+
+
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE server (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:47,937 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE post (
+	id VARCHAR NOT NULL, 
+	content_type VARCHAR, 
+	content VARCHAR, 
+	creator_id VARCHAR, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(creator_id) REFERENCES entity (id)
+)
+
+
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE basic_profile (
+	id INTEGER NOT NULL, 
+	avatar_url VARCHAR, 
+	name VARCHAR, 
+	location VARCHAR, 
+	gender VARCHAR, 
+	birthdate VARCHAR, 
+	bio TEXT, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(id) REFERENCES entity (id)
+)
+
+
+2012-11-28 21:46:47,938 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:47,939 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,111 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("follower")
+2012-11-28 21:46:48,111 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,111 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("entity")
+2012-11-28 21:46:48,111 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("license")
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("server")
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("basic_profile")
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("post")
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE follower (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:48,112 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE entity (
+	id INTEGER NOT NULL, 
+	url VARCHAR NOT NULL, 
+	PRIMARY KEY (id, url)
+)
+
+
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE license (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,113 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE server (
+	id VARCHAR NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE basic_profile (
+	id INTEGER NOT NULL, 
+	avatar_url VARCHAR, 
+	name VARCHAR, 
+	location VARCHAR, 
+	gender VARCHAR, 
+	birthdate VARCHAR, 
+	bio TEXT, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(id) REFERENCES entity (id)
+)
+
+
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine COMMIT
+2012-11-28 21:46:48,114 INFO sqlalchemy.engine.base.Engine 
+CREATE TABLE post (
+	id VARCHAR NOT NULL, 
+	content_type VARCHAR, 
+	content VARCHAR, 
+	creator_id VARCHAR, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(creator_id) REFERENCES entity (id)
+)
+
+
+2012-11-28 21:46:48,115 INFO sqlalchemy.engine.base.Engine ()
+2012-11-28 21:46:48,115 INFO sqlalchemy.engine.base.Engine COMMIT

@@ -6,11 +6,11 @@ from argparse import ArgumentParser
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 
-from tentd.blueprints.base import base
 
 app = Flask('tentd')
 db = SQLAlchemy(app)
 
+from tentd.blueprints.base import base
 app.register_blueprint(base)
 
 def run ():
@@ -28,6 +28,9 @@ def run ():
 	# Flask configuration
 	parser.add_argument("--DEBUG", action="store_true",
 		help="run flask in debug mode")
+
+	# DB Echo
+	parser.add_argument('--echodb', action='store_true', help='Echo Database actions.')
 	
 	args = parser.parse_args()
 	
@@ -39,6 +42,13 @@ def run ():
 	if args.show:
 		from pprint import pprint
 		pprint(dict(app.config))
-	
+
+	if args.echodb:
+		app.config['SQLALCHEMY_ECHO'] = True
+		
+
+	# Create the DB
+	db.create_all()
+
 	if not args.norun:
 		app.run()

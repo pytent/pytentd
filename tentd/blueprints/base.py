@@ -8,6 +8,7 @@ from flask import Flask
 
 from tentd import __doc__ as info, __version__
 
+from tentd.models.entity import Entity
 
 base = Blueprint('base', __name__)
 
@@ -17,6 +18,8 @@ def the_docstring ():
 
 @base.route('/<username>', methods=['HEAD'])
 def get_user (username):
+	user = Entity.query.filter_by(url=username).first()
+	print user.id
 	resp = make_response()
 	resp.headers['Link'] = url_for('.profile', username=username, _external=True)
 	return resp
