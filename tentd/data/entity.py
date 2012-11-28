@@ -27,9 +27,9 @@ class Entity (db.Model):
 	def _get_entity_url (entity):
 		return "http://localhost/" + entity.name.lower().replace(' ','.')
 
-class Friend (db.Model):
-	'''A friend is a user hosted on a remote server.
+class Follower (db.Model):
+	'''A follower is a user hosted on a remote server.
 
-	Friends are users who have relationships with 
+	Followers are users who have relationships with 
 	'''
 	follower_id = Column(String, primary_key=True)
