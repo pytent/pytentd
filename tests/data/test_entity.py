@@ -2,9 +2,8 @@
 
 from unittest import TestCase
 
-from tentd import app
-from tentd.data import db
-from tentd.data.entity import Entity
+from tentd import app, db
+from tentd.models.entity import Entity
 
 class DataTest (TestCase):
 	@classmethod
@@ -13,8 +12,8 @@ class DataTest (TestCase):
 		Place the app in testing mode (allowing exceptions to propagate,
 		and initialise the database
 		"""
-		app.testing = True
 		db.create_all()
+		
 		cls.entity = Entity(name="James Ravenscroft")
 		
 	def test_create_entity (self):

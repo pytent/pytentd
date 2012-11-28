@@ -4,7 +4,7 @@ Data model and bindings for tent users
 
 from sqlalchemy import Column, String, DateTime, Text
 
-from tentd.data import db
+from tentd import db
 
 class Entity (db.Model):
 	""" A tent entity, better known as a user """

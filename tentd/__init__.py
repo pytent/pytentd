@@ -2,12 +2,14 @@
 
 __version__ = "0.0.0"
 
-from flask import Flask
 from argparse import ArgumentParser
-
-app = Flask('tentd')
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
 
 from tentd.base import base
+
+app = Flask('tentd')
+db = SQLAlchemy(app)
 
 app.register_blueprint(base)
 
