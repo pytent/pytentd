@@ -1,6 +1,6 @@
 """ Test cases for the user profile data """
 
-from unittest import TestCase
+from unittest import TestCase, main
 
 from tentd import app, db
 from tentd.models.entity import Entity
@@ -25,4 +25,4 @@ class DataTest (TestCase):
 		return self.entity is queried_entity
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
