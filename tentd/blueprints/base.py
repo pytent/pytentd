@@ -8,6 +8,7 @@ from flask import Flask
 
 from tentd import __doc__ as info, __version__
 
+
 base = Blueprint('base', __name__)
 
 @base.route('/')
@@ -23,10 +24,3 @@ def get_user (username):
 @base.route('/<username>/profile', methods=['GET'])
 def profile (username):
 	return jsonify(owner=username)
-
-
-# Local testing so I can perform REST requests using CURL. Yes I am a terrible person. Deal with it.
-if __name__ == '__main__':
-	app = Flask(__name__)
-	app.register_blueprint(base)
-	app.run(debug=True)
