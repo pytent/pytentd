@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 
-from tentd.base import base
+from tentd.blueprints.base import base
 
 app = Flask('tentd')
 db = SQLAlchemy(app)
