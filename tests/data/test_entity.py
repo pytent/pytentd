@@ -1,22 +1,17 @@
 """ Test cases for the user profile data """
 
-from unittest import TestCase, main
+from tests import AppTestCase, main
 
-from tentd import app, db
+from tentd import db
 from tentd.models.entity import Entity
-
-class DataTest (TestCase):
+		
+class DataTest (AppTestCase):
 	@classmethod
 	def setUpClass (cls):
-		"""
-		Place the app in testing mode (allowing exceptions to propagate,
-		and initialise the database
-		"""
-		db.create_all()
-		
+		super(DataTest, cls).setUpClass()
 		cls.url = "http://example.com/profile/jamesravencroft"
 		cls.entity = Entity(url=cls.url)
-		
+	
 	def test_create_entity (self):
 		db.session.add(self.entity)
 

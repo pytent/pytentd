@@ -8,10 +8,16 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 from tentd.blueprints.base import base
 
-app = Flask('tentd')
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
-app.register_blueprint(base)
+def create_app ():
+	app = Flask('tentd')
+	app.config['DEBUG'] = True
+	app.config['TESTING'] = True
+	# app.config['SQLALCHEMY_ECHO'] = True
+	app.register_blueprint(base)
+	db.init_app(app)
+	return app
 
 def run ():
 	""" Parse the command line arguments and run the application """
@@ -30,6 +36,8 @@ def run ():
 		help="run flask in debug mode")
 	
 	args = parser.parse_args()
+	
+	app = create_app()
 	
 	if args.conf:
 		app.config.from_pyfile(args.conf)
