@@ -2,14 +2,16 @@
 
 __version__ = "0.0.0"
 
+from os import getcwd
 from argparse import ArgumentParser
-from flask import Flask
+from flask import Flask, Config
 
 from tentd.models import db
 from tentd.blueprints.base import base
 
-def create_app ():
+def create_app (config=dict()):
 	app = Flask('tentd')
+	app.config.update(config)
 	app.register_blueprint(base)
 	db.init_app(app)
 	return app
@@ -42,22 +44,18 @@ def run ():
 	# Load the arguments
 	args = parser.parse_args()
 	
-	# Create the application
-	app = create_app()
-	db.create_all(app=app)
-	
+	config = Config(getcwd())
+	config['DEBUG'] = args.debug or args.dev
+	config['TESTING'] = args.testing or args.dev
+	config['SQLALCHEMY_ECHO'] = args.echodb or args.dev
+
 	# Set the configuration options from the file given
-	# and the command line options
-	
 	if args.conf:
-		app.config.from_pyfile(args.conf)
+		config.from_pyfile(args.conf)
 	
-	app.config['DEBUG'] = args.debug
-	app.config['TESTING'] = args.testing
-	app.config['SQLALCHEMY_ECHO'] = args.echodb
-	
-	if args.dev:
-		args.debug = args.testing = args.echodb = True
+	# Create the application and create the database
+	app = create_app(config)
+	db.create_all(app=app)
 	
 	if args.show:
 		from pprint import pprint
