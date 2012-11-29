@@ -26,7 +26,7 @@ class Entity (db.Model):
 	id = Column(Integer, primary_key=True, nullable=False)
 	
 	#: The canonical entity url
-	url = Column(String, primary_key=True, nullable=False)
+	url = Column(String, nullable=False)
 	
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='creator')
