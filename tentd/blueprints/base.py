@@ -14,6 +14,7 @@ def the_docstring ():
 
 @base.route('/<username>', methods=['HEAD'])
 def get_user (username):
+        print username
 	user = Entity.query.filter_by(url=username).first()
 	resp = make_response()
 	resp.headers['Link'] = url_for('.profile', username=username, _external=True)
