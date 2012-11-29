@@ -1,14 +1,13 @@
 from setuptools import setup, find_packages
-from tentd import __version__, __doc__
 
 setup(
 	name             = 'tentd',
-	version          = __version__,
+	version          = "0.0.0",
 
 	author           = 'James Ravenscroft',
 	url              = 'https://github.com/ravenscroftj/pytentd',
 
-	description      = __doc__,
+	description      = 'An implementation of the http://tent.io server protocol',
 	long_description = open('README.rst').read(),
 
 	packages         = find_packages(),
