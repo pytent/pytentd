@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from flask import jsonify
 
-from tentd import db
+from tentd.models import db
 
 class Entity (db.Model):
 	"""
