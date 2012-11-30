@@ -22,17 +22,17 @@ class Entity (db.Model):
 	TODO: Add licence and server relationships
 	"""
 	
-	#: The local identifier for the entity
+	#: The local identifier and primary key
 	id = Column(Integer, primary_key=True, nullable=False)
 	
+	#: The url identifier
+	name = Column(String(20), unique=True)
+	
 	#: The canonical entity url
-	url = Column(String, nullable=False)
+	url = Column(String, unique=True)
 	
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='creator')
-	
-	def __init__(self, url):
-		self.url = url
 
 	def __json__ (self):
 		return {'https://tent.io/types/info/core/v0.1.0': {
@@ -51,7 +51,7 @@ class BasicProfile (db.Model):
 		provide a context in which to place a user's details.
 	"""
 	
-	id = db.Column(db.Integer, db.ForeignKey('entity.id'), primary_key=True)
+	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
 
 	avatar_url = Column(String)
 

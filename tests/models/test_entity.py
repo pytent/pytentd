@@ -5,17 +5,20 @@ from tests import AppTestCase, main
 from tentd import db
 from tentd.models.entity import Entity
 		
-class DataTest (AppTestCase):
+class EntityTest (AppTestCase):
 	@classmethod
 	def setUpClass (cls):
-		super(DataTest, cls).setUpClass()
-		cls.url = "http://example.com/profile/jamesravencroft"
-		cls.entity = Entity(url=cls.url)
+		super(EntityTest, cls).setUpClass()
+		
+		cls.entity = Entity(
+			name="jamesravencroft",
+			url="http://james.example.com/"
+		)
 	
 	def test_create_entity (self):
 		db.session.add(self.entity)
 
-		queried_entity = Entity.query.filter_by(url=self.url).first()
+		queried_entity = Entity.query.filter_by(name=self.entity.name).first()
 
 		return self.entity is queried_entity
 

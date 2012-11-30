@@ -12,15 +12,14 @@ base = Blueprint('base', __name__)
 def the_docstring ():
 	return jsonify(info=info, version=__version__)
 
-@base.route('/<username>', methods=['HEAD'])
-def get_user (username):
-        print username
-	user = Entity.query.filter_by(url=username).first_or_404()
+@base.route('/<name>', methods=['HEAD'])
+def get_user (name):
+	user = Entity.query.filter_by(name=name).first_or_404()
 	resp = make_response()
-	resp.headers['Link'] = url_for('.profile', username=username, _external=True)
+	resp.headers['Link'] = url_for('.profile', name=name, _external=True)
 	return resp
 
-@base.route('/<username>/profile', methods=['GET'])
-def profile (username):
-	user = Entity.query.filter_by(url=username).first_or_404()
+@base.route('/<name>/profile', methods=['GET'])
+def profile (name):
+	user = Entity.query.filter_by(name=name).first_or_404()
 	return jsonify(user.__json__())
