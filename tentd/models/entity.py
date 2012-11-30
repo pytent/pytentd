@@ -34,12 +34,12 @@ class Entity (db.Model):
 	def __init__(self, url):
 		self.url = url
 
-	def beep (self):
-		return jsonify({'https://tent.io/types/info/core/v0.1.0': {
+	def __json__ (self):
+		return {'https://tent.io/types/info/core/v0.1.0': {
 			'entity': self.url,
 			'licences': [],
 			'servers': [],
-		}})
+		}}
 	
 class BasicProfile (db.Model):
 	"""
@@ -63,9 +63,11 @@ class BasicProfile (db.Model):
 	bio        = Column(Text)
 	
 	def __json__ (self):
+		json = super(BasicProfile, self).__json__()
 		attrs = ['avatar_url', 'name', 'location', 'gender', 'birthdate', 'bio']
 		attrs = {attr: getattr(self, attr) for attr in attrs}
-		return jsonify({'https://tent.io/types/info/basic/v0.1.0': attrs})
+		json.update({'https://tent.io/types/info/basic/v0.1.0': attrs})
+		return json
 
 class Server (db.Model):
 	'''Tent servers are the protocol core. They represent the users and maintain their data and
