@@ -1,5 +1,7 @@
 """ Tests for pytentd """
 
+from os import close, remove
+from tempfile import mkstemp
 from unittest import TestCase, main
 
 from tentd import create_app, db
@@ -16,10 +18,19 @@ class AppTestCase (TestCase):
 		Place the app in testing mode (allowing exceptions to propagate,
 		and initialise the database
 		"""
+		cls.db_fd, cls.db_filename = mkstemp()
+		
+		config = {
+			'DEBUG': True,
+			'TESTING': True,
+			'SQLALCHEMY_DATABASE_URI': "sqlite:///" + cls.db_filename
+		}
+		
 		cls.app = create_app()
+		cls.test_client = cls.app.test_client()
 		
 	def setUp (self):
-		"""	Set up a request context and create the db """
+		"""	Create the database, and set up a request context """
 		self.ctx = self.app.test_request_context()
 		self.ctx.push()
 		
@@ -29,3 +40,9 @@ class AppTestCase (TestCase):
 		""" Clear the database, and the current request """
 		db.drop_all()
 		self.ctx.pop()
+
+	@classmethod
+	def tearDownClass (cls):
+		"""	Close the database file, and delete it """
+		close(cls.db_fd) 
+		remove(cls.db_filename)
