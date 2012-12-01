@@ -8,13 +8,16 @@ from flask import Flask, Config
 
 from tentd import defaults
 from tentd.models import db
+
 from tentd.blueprints.base import base
+from tentd.blueprints.entity import entity
 
 def create_app (config=dict()):
 	app = Flask('tentd')
 	app.config.from_object(defaults)
 	app.config.update(config)
 	app.register_blueprint(base)
+	app.register_blueprint(entity)
 	db.init_app(app)
 	return app
 
