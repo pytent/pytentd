@@ -33,6 +33,9 @@ class Entity (db.Model):
 	
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='creator')
+	
+	def __repr__ (self):
+		return "<Entity '{}' [{}]>".format(self.name, self.id)
 
 	def __json__ (self):
 		return {'https://tent.io/types/info/core/v0.1.0': {
