@@ -10,10 +10,7 @@ class EntityTest (AppTestCase):
 	def setUpClass (cls):
 		super(EntityTest, cls).setUpClass()
 		
-		cls.entity = Entity(
-			name="jamesravencroft",
-			url="http://james.example.com/"
-		)
+		cls.entity = Entity(name="testuser")
 	
 	def test_create_entity (self):
 		db.session.add(self.entity)

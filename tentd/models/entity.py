@@ -9,9 +9,35 @@ from flask import jsonify
 from tentd.models import db
 
 class Entity (db.Model):
+	#: The local identifier and primary key
+	id = Column(Integer, primary_key=True, nullable=False)
+	
+	#: The url identifier
+	name = Column(String(20), unique=True)
+	
+	#: Posts made by the entity
+	posts = db.relationship('Post', back_populates='creator')
+	
+	def __repr__ (self):
+		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
+
+class EntityID (Column):
 	"""
-	An entity is a single user.
-	The base model provides the Core Profile info type.
+	A shorthand reference to an entity
+	
+	Use in a declarative model::
+	
+		class ExampleProfile (db.Model):
+			id = EntityID()
+	"""
+	def __init__ (self, primary_key=True, **kwargs):
+		super(EntityID, self).__init__(
+			Integer, ForeignKey('entity.id'),
+			primary_key=primary_key, **kwargs)
+		
+class CoreProfile (db.Model):
+	"""
+	This model provides the Core Profile info type.
 	
 	https://tent.io/docs/info-types#core
 	
@@ -22,21 +48,11 @@ class Entity (db.Model):
 	TODO: Add licence and server relationships
 	"""
 	
-	#: The local identifier and primary key
-	id = Column(Integer, primary_key=True, nullable=False)
-	
-	#: The url identifier
-	name = Column(String(20), unique=True)
+	id = EntityID()
 	
 	#: The canonical entity url
 	url = Column(String, unique=True)
 	
-	#: Posts made by the entity
-	posts = db.relationship('Post', back_populates='creator')
-	
-	def __repr__ (self):
-		return "<Entity '{}' [{}]>".format(self.name, self.id)
-
 	def __json__ (self):
 		return {'https://tent.io/types/info/core/v0.1.0': {
 			'entity': self.url,
@@ -54,7 +70,7 @@ class BasicProfile (db.Model):
 		provide a context in which to place a user's details.
 	"""
 	
-	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
+	id = EntityID()
 
 	avatar_url = Column(String)
 
@@ -83,7 +99,6 @@ class License (db.Model):
 
 class Follower (db.Model):
 	'''A follower is a user hosted on a remote server.'''
-
 	id = Column(String, primary_key=True)
 
 class Post (db.Model):
