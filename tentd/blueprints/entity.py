@@ -11,27 +11,37 @@ class EntityBlueprint (Blueprint):
 	def __init__ (self, *args, **kwargs):
 		kwargs['url_prefix'] = kwargs.get('url_prefix', '') + '/<string:name>'
 		super(EntityBlueprint, self).__init__(*args, **kwargs)
-		
-	def route (self, *args, **kwargs):	
-		return super(EntityBlueprint, self).route(*args, **kwargs)
+	
+	def fetch_entity_decorator (self, f):
+		@wraps(f)
+		def decorator (name, **kwargs):
+			entity = Entity.query.filter_by(name=name).first_or_404()
+			return f(entity=entity, **kwargs)
+		return decorator
+	
+	def route(self, rule, **options):
+		"""
+		Like :meth:`Flask.route` but for a blueprint.
+		The endpoint for the :func:`url_for` function is prefixed with the name of the blueprint.
+		"""
+		def decorator(f):
+			if options.pop('fetch_entity', True):
+				f = self.fetch_entity_decorator(f)
+			endpoint = options.pop("endpoint", f.__name__)
+			self.add_url_rule(rule, endpoint, f, **options)
+			return f
+		return decorator
 
-def fetch_entity (func):
-	@wraps(func)
-	def decorator (name, **kwargs):
-		entity = Entity.query.filter_by(name=name).first_or_404()
-		return func(entity=entity, **kwargs)
-	return decorator
+print "Creating blueprint"
 
 entity = EntityBlueprint('entity', __name__)
 
 @entity.route('/', endpoint='link', methods=['HEAD'])
-@fetch_entity
 def get_user (entity):
 	resp = make_response()
 	resp.headers['Link'] = url_for('.profile', name=entity.name, _external=True)
 	return resp
 
 @entity.route('/profile', endpoint='profile')
-@fetch_entity
 def profile (entity):
 	return jsonify(entity.__json__())
