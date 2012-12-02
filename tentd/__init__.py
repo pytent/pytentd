@@ -7,15 +7,16 @@ from argparse import ArgumentParser
 from flask import Flask, Config
 
 from tentd import defaults
-from tentd.models import db
-
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
+from tentd.models import db
+from tentd.utils.converters import EntityCoverter
 
 def create_app (config=dict()):
 	app = Flask('tentd')
 	app.config.from_object(defaults)
 	app.config.update(config)
+	app.url_map.converters['entity'] = EntityCoverter.new(app)
 	app.register_blueprint(base)
 	app.register_blueprint(entity)
 	db.init_app(app)
