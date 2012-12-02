@@ -13,9 +13,13 @@ setup(
 	packages         = find_packages(),
 	install_requires = [
 		'flask==0.9',
-		'Flask-SQLAlchemy==0.16'
+		'Flask-SQLAlchemy==0.16',
 	],
 
+	entry_points = {
+		'console_scripts': ['tentd = tentd:run'],
+	},
+	
 	include_package_data = True,
 	zip_safe         = False,
 )
