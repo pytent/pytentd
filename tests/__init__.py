@@ -59,3 +59,9 @@ class AppTestCase (TestCase):
 		"""	Close the database file, and delete it """
 		close(cls.db_fd) 
 		remove(cls.db_filename)
+
+	def assertStatus (self, response, status):
+		try:
+			self.assertIn(response.status_code, status)
+		except TypeError:
+			self.assertEquals(response.status_code, status)
