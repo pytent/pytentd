@@ -4,7 +4,19 @@ from os import close, remove
 from tempfile import mkstemp
 from unittest import TestCase, main
 
+from flask import Response, json_available, json
+from werkzeug import cached_property
+
 from tentd import create_app, db
+
+class TestResponse (Response):
+	@cached_property
+	def json (self):
+		if not json_available:
+			raise NotImplementedError
+		elif not self.mimetype == 'application/json':
+			return None
+		return json.loads(self.data)
 
 class AppTestCase (TestCase):
 	"""
@@ -27,7 +39,8 @@ class AppTestCase (TestCase):
 		}
 		
 		cls.app = create_app(config)
-		cls.test_client = cls.app.test_client()
+		cls.app.response_class = TestResponse
+		cls.client = cls.app.test_client()
 		
 	def setUp (self):
 		"""	Create the database, and set up a request context """
