@@ -1,14 +1,15 @@
-'''
-Data model and bindings for tent users
-'''
+"""
+Data model for tent entities
+"""
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from flask import jsonify
 
 from tentd.models import db
 
 class Entity (db.Model):
+	"""	A tent entity """
+	
 	#: The local identifier and primary key
 	id = Column(Integer, primary_key=True, nullable=False)
 	
@@ -16,25 +17,11 @@ class Entity (db.Model):
 	name = Column(String(20), unique=True)
 	
 	#: Posts made by the entity
-	posts = db.relationship('Post', back_populates='creator')
+	posts = db.relationship('Post', back_populates='owner')
 	
 	def __repr__ (self):
 		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
 
-class EntityID (Column):
-	"""
-	A shorthand reference to an entity
-	
-	Use in a declarative model::
-	
-		class ExampleProfile (db.Model):
-			id = EntityID()
-	"""
-	def __init__ (self, primary_key=True, **kwargs):
-		super(EntityID, self).__init__(
-			Integer, ForeignKey('entity.id'),
-			primary_key=primary_key, **kwargs)
-		
 class CoreProfile (db.Model):
 	"""
 	This model provides the Core Profile info type.
@@ -48,7 +35,7 @@ class CoreProfile (db.Model):
 	TODO: Add licence and server relationships
 	"""
 	
-	id = EntityID()
+	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
 	
 	#: The canonical entity url
 	url = Column(String, unique=True)
@@ -70,7 +57,7 @@ class BasicProfile (db.Model):
 		provide a context in which to place a user's details.
 	"""
 	
-	id = EntityID()
+	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
 
 	avatar_url = Column(String)
 
@@ -90,46 +77,45 @@ class BasicProfile (db.Model):
 			'birthdate',
 			'bio'
 		]}
-
 class Server (db.Model):
-	'''Tent servers are the protocol core. They represent the users and maintain their data and
-	relationships.'''
+	""" A server """
 	id = Column(String, primary_key=True)
 
 class License (db.Model):
-	'''Licenses content is released under.'''
+	""" A license that content is released under """
 	id = Column(String, primary_key=True)
 
 class Follower (db.Model):
-	'''A follower is a user hosted on a remote server.'''
+	""" A follower is an entity subscribed to the posts of another entity """
 	id = Column(String, primary_key=True)
 
 class Post (db.Model):
-	'''Posts are at the core of Tent. Posts are sent to followers immediately after being 
-	created (from the tent protocol introduction).
+	"""
+	A post beloning to an entity.
+	
+	Posts are at the core of Tent. Posts are sent to followers immediately after
+	being created. The tent specifcation defines that there are two ways of
+	accessing posts:
 
-	The tent specifcation defines that there are two ways of accessing posts:
+	`GET posts/` returns all posts, the parameters of the request define any
+	filtering. There may need to be extra filtering for server-side performance.
 
-	`GET posts/` returns all posts, the parameters of the request define any filtering.
-	There may need to be extra filtering for server-side performance (i.e. only providing a set
-	number of posts to stop the server being overloaded).
+	`GET posts/<id>` returns a post with the defined id.
+	
+	Valid post content types include:
+	 - status: a short (<256 character) message.
+	 - essay: a longer message.
+	 - photo: an image.
+	 - album: a collection of photos.
+	"""
 
-	`GET posts/<id>` returns a post with the defined id.'''
+	id = Column(Integer, primary_key=True)	
+	
+	owner_id = Column(Integer, ForeignKey('entity.id'))
+	owner = relationship('Entity', back_populates='posts')
 
-	# The UUID of the post on this instance (i.e. the primary key on the DB).
-	id = Column(String, primary_key=True)
-
-	# The type this post is. Valid types are:
-	# - status: a short (<256 character) message.
-	# - essay: a longer message.
-	# - photo: an image.
-	# - album: a collection of photos.
-	content_type = Column(String)
+	content_type = Column(String(20))
 
 	# The content associated with this post
-	#FIXME This should be a foriegn key to the content type depicted by post_type.
-	content = Column(String)
-
-	# The creator of this post.
-	creator_id = Column(String, ForeignKey('entity.id'))
-	creator = relationship('Entity', back_populates='posts')
+	# FIXME: This should be a foriegn key to the content type
+	content = Column(Text)

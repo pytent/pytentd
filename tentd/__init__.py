@@ -10,15 +10,21 @@ from tentd import defaults
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
-from tentd.utils.converters import EntityCoverter
+from tentd.models.entity import Entity
+from tentd.utils.converters import ModelConverter
 
 def create_app (config=dict()):
+	""" Create an instance of the tentd flask application """
 	app = Flask('tentd')
+	# Load configuration
 	app.config.from_object(defaults)
 	app.config.update(config)
-	app.url_map.converters['entity'] = EntityCoverter.new(app)
+	# Register url converters, as they requrire the application
+	app.url_map.converters['entity'] = ModelConverter.new(app, Entity, 'name')
+	# Register the blueprints
 	app.register_blueprint(base)
 	app.register_blueprint(entity)
+	# Initialise the db for this app
 	db.init_app(app)
 	return app
 
@@ -51,7 +57,8 @@ def run ():
 	config = Config(getcwd())
 	
 	# Set the configuration options from the file given
-	if args.conf: config.from_pyfile(args.conf)
+	if args.conf:
+		config.from_pyfile(args.conf)
 	
 	# Load the rest of the arguments, overriding the conf file
 	config['DEBUG'] = args.debug or args.dev

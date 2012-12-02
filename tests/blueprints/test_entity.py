@@ -15,7 +15,7 @@ class EntityBlueprintTest (AppTestCase):
 
 	def test_entity_link (self):
 		r = self.client.head('/' + self.name)
-		self.assertIn('/' + self.name + 'profile', r.headers['Link'])
+		self.assertIn('/' + self.name + '/profile', r.headers['Link'])
 	
 	def test_entity_link_404 (self):
 		self.assertStatus(self.client.head('/non-existent-user'), 404)
