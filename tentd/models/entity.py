@@ -18,6 +18,9 @@ class Entity (db.Model):
 	
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='owner')
+
+        #link to core profile
+        core = db.relationship('CoreProfile',backref='entity',uselist=False)
 	
 	def __repr__ (self):
 		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
@@ -36,11 +39,11 @@ class CoreProfile (db.Model):
 	"""
 	
 	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
-	
+
 	#: The canonical entity url
 	url = Column(String, unique=True)
-	
-	def __json__ (self):
+
+	def __json__(self):
 		return {
 			'entity': self.url,
 			'licences': [],
@@ -67,7 +70,7 @@ class BasicProfile (db.Model):
 	
 	birthdate  = Column(String)
 	bio        = Column(Text)
-	
+
 	def __json__ (self):
 		return {name: getattr(self, name) for name in [
 			'avatar_url',
