@@ -15,12 +15,12 @@ def fetch_entity (endpoint, values):
 @entity.route('/profile', endpoint='profile')
 def profile (entity):
 	""" Return the info types belonging to the entity """
-	db.session.add(entity)
-
-        return jsonify({
-		'https://tent.io/types/info/core/v0.1.0': entity.core.__json__(),
-		'https://tent.io/types/info/basic/v0.1.0':{},
-	})
+	json = {}
+	if entity.core:
+		json['https://tent.io/types/info/core/v0.1.0'] = entity.core.__json__()
+	if entity.basic:
+		json['https://tent.io/types/info/basic/v0.1.0'] = entity.basic.__json__()
+	return jsonify(json)
 
 @entity.route('/followers', endpoint='followers')
 def profile(entity): 

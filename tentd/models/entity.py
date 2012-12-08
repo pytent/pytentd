@@ -2,6 +2,7 @@
 Data model for tent entities
 """
 
+from flask import url_for
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -19,8 +20,8 @@ class Entity (db.Model):
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='owner')
 
-        #link to core profile
-        core = db.relationship('CoreProfile',backref='entity',uselist=False)
+	core = db.relationship('CoreProfile', backref='entity', uselist=False)
+	basic = db.relationship('BasicProfile', backref='entity', uselist=False)
 	
 	def __repr__ (self):
 		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
@@ -49,7 +50,7 @@ class CoreProfile (db.Model):
 
 	def __json__(self):
 		return {
-			'entity': self.url,
+			'entity': self.url or url_for('entity.profile', entity=self.entity, _external=True),
 			'licences': [],
 			'servers': [],
 		}
