@@ -4,7 +4,6 @@ Data model for tent entities
 
 from flask import url_for
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
-from sqlalchemy.orm import relationship
 
 from tentd.models import db
 
@@ -20,8 +19,22 @@ class Entity (db.Model):
 	#: Posts made by the entity
 	posts = db.relationship('Post', back_populates='owner')
 
+	# The entity's info types
 	core = db.relationship('CoreProfile', backref='entity', uselist=False)
 	basic = db.relationship('BasicProfile', backref='entity', uselist=False)
+	
+	def __init__ (self, name, create_base_info_types=True, **kwargs):
+		"""
+		Create an Entity instance
+		
+		Unless `create_base_info_types==False`, Core and Basic profiles will be
+		created for the Entity. The keyword arguments `core` and `basic` can be
+		used to pass arguments to the respective constructors.
+		"""
+		self.name = name
+		if create_base_info_types:
+			self.core = CoreProfile(entity=self, **kwargs.get('core', {}))
+			self.basic = BasicProfile(entity=self, **kwargs.get('basic', {}))
 	
 	def __repr__ (self):
 		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
@@ -45,15 +58,34 @@ class CoreProfile (db.Model):
 	
 	id = Column(Integer, ForeignKey('entity.id'), primary_key=True)
 
-	#: The canonical entity url
-	url = Column(String, unique=True)
+	#: The canonical entity identifier (an url)
+	identifier = Column(String, unique=True)
+	
+	#: The entity's servers
+	servers = db.relationship('Server', backref='core')
 
 	def __json__(self):
+		# The entity's API root
+		link = url_for('base.link', entity=self.entity, _external=True)
+			
 		return {
-			'entity': self.url or url_for('entity.profile', entity=self.entity, _external=True),
+			'entity': self.identifier or link,
 			'licences': [],
-			'servers': [],
+			'servers': [link],
 		}
+
+class Server (db.Model):
+	""" An API root that a entities can be found at """
+	url = Column(String, primary_key=True)
+	
+	core_id = Column(Integer, ForeignKey('core_profile.id'))
+	
+	def __init__ (self, url, core):
+		self.url = url
+		self.core = core
+	
+	def __repr__ (self):
+		return "<Server '{}': '{}'>".format(self.core.entity.name, self.url)
 	
 class BasicProfile (db.Model):
 	"""
@@ -85,9 +117,6 @@ class BasicProfile (db.Model):
 			'birthdate',
 			'bio'
 		]}
-class Server (db.Model):
-	""" A server """
-	id = Column(String, primary_key=True)
 
 class License (db.Model):
 	""" A license that content is released under """
@@ -99,7 +128,7 @@ class Follower (db.Model):
 
 class Post (db.Model):
 	"""
-	A post beloning to an entity.
+	A post belonging to an entity.
 	
 	Posts are at the core of Tent. Posts are sent to followers immediately after
 	being created. The tent specifcation defines that there are two ways of
@@ -120,7 +149,7 @@ class Post (db.Model):
 	id = Column(Integer, primary_key=True)	
 	
 	owner_id = Column(Integer, ForeignKey('entity.id'))
-	owner = relationship('Entity', back_populates='posts')
+	owner = db.relationship('Entity', back_populates='posts')
 
 	content_type = Column(String(20))
 

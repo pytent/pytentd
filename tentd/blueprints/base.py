@@ -14,7 +14,11 @@ def info ():
 
 @base.route('/<string:entity>', endpoint='link', methods=['HEAD'])
 def link (entity):
-	"""	Returns a link to an entity's profile in the headers """
+	"""
+	The base API endpoint for an entity
+	
+	Returns a link to an entity's profile in the headers
+	"""
 	entity = Entity.query.filter_by(name=entity).first_or_404()
 	resp = make_response()
 	resp.headers['Link'] = url_for('entity.profile', entity=entity.name, _external=True)

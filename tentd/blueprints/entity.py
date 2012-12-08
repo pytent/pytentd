@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, json
 
 from tentd.models import db
-from tentd.models.entity import Entity, CoreProfile, BasicProfile
+from tentd.models.entity import Entity
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
