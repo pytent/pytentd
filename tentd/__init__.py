@@ -11,7 +11,6 @@ from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
 from tentd.models.entity import Entity
-from tentd.utils.converters import ModelConverter
 
 def create_app (config=dict()):
 	""" Create an instance of the tentd flask application """
@@ -19,8 +18,6 @@ def create_app (config=dict()):
 	# Load configuration
 	app.config.from_object(defaults)
 	app.config.update(config)
-	# Register url converters, as they requrire the application
-	app.url_map.converters['entity'] = ModelConverter.new(app, Entity, 'name')
 	# Register the blueprints
 	app.register_blueprint(base)
 	app.register_blueprint(entity)
