@@ -24,6 +24,10 @@ class Entity (db.Model):
 	
 	def __repr__ (self):
 		return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
+	
+	def __str__ (self):
+		"""	Used in urls, so don't change! """
+		return self.name
 
 class CoreProfile (db.Model):
 	"""
