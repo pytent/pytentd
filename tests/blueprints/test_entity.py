@@ -10,6 +10,7 @@ class EntityBlueprintTest (AppTestCase):
 		super(EntityBlueprintTest, self).setUp()
 		self.name = 'testuser'
 		self.expected_api_root = 'http://localhost/' + self.name
+		self.expected_link_header = '<{0}/profile>; rel="https://tent.io/rels/profile"'.format(self.expected_api_root)
 		
 		self.user = Entity(name=self.name)
 		db.session.add(self.user)
@@ -17,7 +18,7 @@ class EntityBlueprintTest (AppTestCase):
 
 	def test_entity_link (self):
 		r = self.client.head('/' + self.name)
-		self.assertEquals(r.headers['Link'], self.expected_api_root + '/profile')
+		self.assertEquals(r.headers['Link'], self.expected_link_header)
 	
 	def test_entity_link_404 (self):
 		self.assertStatus(self.client.head('/non-existent-user'), 404)
