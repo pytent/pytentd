@@ -2,7 +2,7 @@
 pytentd
 =======
 
-A Python implementation of the `tent.io <http://tent.io/>`_ server protocol.
+A Python implementation of the `tent.io <http://tent.io/>`_ server protocol and a client to go on top too.
 
 Running pytentd
 ---------------
