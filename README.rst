@@ -43,15 +43,15 @@ to flask. You may find that external URLs come through as http://localhost:5000,
 look at the proxy_pass flags: 
 http://flask.pocoo.org/mailinglist/archive/2011/3/14/problem-with-apache-proxy-and-canonical-urls/#f2a36991baa8f41c6671b91ce8269f2a
 
-Example nginx virtualhost:
+Example nginx virtualhost::
 
-``server {
-        listen 80;
-        server_name tentd.example.com;
-
-        location / {
-                proxy_pass http://localhost:5000/;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header Host $http_host;
-        }
-}``
+	server {
+	        listen 80;
+	        server_name tentd.example.com;
+	
+	        location / {
+	                proxy_pass http://localhost:5000/;
+	                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	                proxy_set_header Host $http_host;
+	        }
+	}
