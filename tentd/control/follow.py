@@ -13,7 +13,7 @@ def start_following(details):
 
 	canonical_entity_url = entity['https://tent.io/types/info/core/v0.1.0']['entity']
 
-	if canonical_entity_id != entity_url:
+	if canonical_entity_url != entity_url and canonical_entity_url != details['entity']:
 		entity = get_entity(canonical_entity_url)
 
 	servers = entity['https://tent.io/types/info/core/v0.1.0']['servers']
