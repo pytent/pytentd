@@ -2,6 +2,7 @@
 import requests, re, time
 from requests import ConnectionError
 
+from tentd.errors import TentError
 
 def start_following(details):
 	''' Start following a user. '''
@@ -30,9 +31,10 @@ def get_entity(entity_url):
 			print "GET {} HTTP/1.1".format(profile_url)
 			return requests.get(profile_url).json
 		else:
-			return dict(error="No link header found. Not a known tentd entity.")
+			raise TentError("No link header found. Not a known tentd entity.", 404)
 	except ConnectionError as e:
-		return dict(error=str(e))
+		# TODO improve this.
+		raise TentError(str(e), 404)
 
 def get_entity_url(link_header):
 	''' Helper method to get the url from the Link header. These headers are 
