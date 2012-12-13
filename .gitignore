@@ -37,3 +37,6 @@ nosetests.xml
 # Editor files
 *~
 *.swp
+
+# config files for tent
+*.cfg
