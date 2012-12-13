@@ -21,5 +21,5 @@ def link (entity):
 	"""
 	entity = Entity.query.filter_by(name=entity).first_or_404()
 	resp = make_response()
-	resp.headers['Link'] = '<{0}>; rel="{1}"'.format(url_for('entity.profile', entity=entity.name, _external=True), 'https://tent.io/rels/profile')
+	resp.headers['Link'] = '<{0}>; rel="{1}"'.format(external_url_for('entity.profile', entity=entity.name, _external=True), 'https://tent.io/rels/profile')
 	return resp
