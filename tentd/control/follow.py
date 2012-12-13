@@ -7,7 +7,16 @@ from tentd.errors import TentError
 def start_following(details):
 	''' Start following a user. '''
 	response = dict()
-	entity = get_entity(details["entity"])
+
+	entity_url = get_entity_url_from_link_header(details['entity'])
+	entity = get_entity(entity_url)
+
+	canonical_entity_url = entity['https://tent.io/types/info/core/v0.1.0']['entity']
+
+	if canonical_entity_id != entity_url:
+		entity = get_entity(canonical_entity_url)
+
+	servers = entity['https://tent.io/types/info/core/v0.1.0']['servers']
 
 	# TODO use entity in some way here.
 	
@@ -24,23 +33,25 @@ def start_following(details):
 def get_entity(entity_url):
 	''' Gets the actual entity details from an entity url. '''
 	try:
-		print 'HEAD {} HTTP/1.1'.format(entity_url)
-		entity_header = requests.head(entity_url).headers
-		if entity_header["Link"]:
-			(profile_url, profile_type) = get_entity_url(entity_header['Link'])
-			print "GET {} HTTP/1.1".format(profile_url)
-			return requests.get(profile_url).json
-		else:
-			raise TentError("No link header found. Not a known tentd entity.", 404)
+		entity = requests.get(entity_url).json
+		if 'https://tent.io/types/info/core/v0.1.0' not in entity:
+			raise TentError('Entity does not have core profile.', 404)
+		return entity		
 	except ConnectionError as e:
 		# TODO improve this.
 		raise TentError(str(e), 404)
 
-def get_entity_url(link_header):
-	''' Helper method to get the url from the Link header. These headers are 
-	typically in the form `<entity_url>; rel="type"`. '''
-	print link_header
-	return re.search('^<(.+)>; rel="(.+)"$', link_header).groups()
+def get_entity_url_from_link_header(entity_url):
+	''' Gets the URL of an entity from the Link header of a given URL. '''
+	try:
+		entity_header = requests.head(entity_url).headers
+		if entity_header['Link']:
+			(url, type) = re.search('^<(.+)>; rel="(.+)"$', entity_header['Link']).groups()
+			return url
+		else:
+			raise TentError('No link header found.', 404)
+	except ConnectionError as e:
+		raise TentError(str(e), 404)
 
 def stop_following(follower_id):
 	''' Stops following a user. '''
