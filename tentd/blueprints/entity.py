@@ -22,7 +22,3 @@ def profile (entity):
 		json['https://tent.io/types/info/basic/v0.1.0'] = entity.basic.__json__()
 	return jsonify(json)
 
-@entity.route('/followers', endpoint='followers')
-def profile(entity): 
-    if(request.method == "POST"):
-        pass
