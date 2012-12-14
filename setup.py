@@ -14,6 +14,7 @@ setup(
 	install_requires = [
 		'flask==0.9',
 		'Flask-SQLAlchemy==0.16',
+                'daemonize>=1.1'
 	],
 
 	entry_points = {
