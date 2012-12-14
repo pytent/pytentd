@@ -5,6 +5,7 @@ __version__ = "0.0.0"
 from os import getcwd
 from argparse import ArgumentParser
 from flask import Flask, Config
+from daemonize import Daemonize
 
 from tentd import defaults
 from tentd.blueprints.base import base
@@ -36,6 +37,9 @@ def run ():
 		help="show the configuration")
 	parser.add_argument("--norun", action="store_true",
 		help="stop after creating the app, useful with --show")
+
+        parser.add_argument("-d", "--daemonize", action="store_true",
+                help="Run the server in the background")
 
 	# Flask configuration
 	parser.add_argument("--debug", action="store_true",
@@ -69,6 +73,12 @@ def run ():
 	if args.show:
 		from pprint import pprint
 		pprint(dict(app.config))
-	
-	if not args.norun:
+
+        if args.daemonize:
+                pid = "/tmp/pytentd.pid"
+
+                daemon = Daemonize(app="pytentd", pid=pid, action=app.run)
+                daemon.start()
+
+	elif not args.norun:
 		app.run()
