@@ -68,17 +68,14 @@ class CoreProfile (db.Model):
 
 	tent_version = Column(String)
 
-	licenses = [] #TODO something along the lines of: db.relationship('License')
-
 	def __json__(self):
 		# The entity's API root
 		link = url_for('base.link', entity=self.entity, _external=True)
 			
 		return {
 			'entity': self.identifier or link,
-			'licences': self.licenses,
+			'licences': [],
 			'servers': [link],
-			'tent_version': self.tent_version,
 		}
 
 class Server (db.Model):
