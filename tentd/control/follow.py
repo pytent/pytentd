@@ -2,12 +2,13 @@
 import requests, re, time
 from requests import ConnectionError
 
+from flask import jsonify, url_for
+
 from tentd.errors import TentError
+from tentd.models.entity import Follower
 
 def start_following(details):
 	''' Start following a user. '''
-	response = dict()
-
 	entity_url = get_entity_url_from_link_header(details['entity'])
 	entity = get_entity(entity_url)
 
@@ -18,17 +19,18 @@ def start_following(details):
 
 	servers = entity['https://tent.io/types/info/core/v0.1.0']['servers']
 
-	# TODO use entity in some way here.
-	
-	response['entity'] = details['entity']
-	response['created_at'] = int(time.time())
-	response['permissions'] = dict(public=True)
-	response['id'] = ''
-	response['licenses'] = details['licenses']
-	response['types'] = details['types']
-	response['notification_path'] = details['notification_path']
+	# TODO use entity in some to create the following identity.
 
-	return response
+	
+	follower = Follower(canonical_entity_url or details['entity'], 
+		{'public': True}, 
+		details['licenses'],
+		details['types'],
+		details['notification_path'])
+
+	notify_following(follower)
+
+	return follower.__json__()
 
 def get_entity(entity_url):
 	''' Gets the actual entity details from an entity url. '''
@@ -52,6 +54,18 @@ def get_entity_url_from_link_header(entity_url):
 			raise TentError('No link header found.', 404)
 	except ConnectionError as e:
 		raise TentError(str(e), 404)
+
+def notify_following(follower):
+	data = {'id': follower.id,
+		'entity': follower.entity,
+		'action': 'create'}
+	data_json = jsonify(data)
+
+	print data_json
+
+	notification_url = url_for(follower.notification_path)
+	request = requests.post(notification_url, data=data_json)
+	print request
 
 def stop_following(follower_id):
 	''' Stops following a user. '''

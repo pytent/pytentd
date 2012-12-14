@@ -5,6 +5,8 @@ Data model for tent entities
 from flask import url_for
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 
+import time
+
 from tentd.models import db
 
 class Entity (db.Model):
@@ -63,6 +65,8 @@ class CoreProfile (db.Model):
 	
 	#: The entity's servers
 	servers = db.relationship('Server', backref='core')
+
+	tent_version = Column(String)
 
 	def __json__(self):
 		# The entity's API root
@@ -125,6 +129,32 @@ class License (db.Model):
 class Follower (db.Model):
 	""" A follower is an entity subscribed to the posts of another entity """
 	id = Column(String, primary_key=True)
+	entity = Column(String)
+	created_at = Column(Integer)
+	permissions = None
+	licenses = None
+	types = None
+	notification_path = Column(String)
+
+	def __init__(self, entity, permissions, licenses, types, notification_path):
+		self.entity = entity
+		self.permissions = permissions
+		self.licenses = licenses
+		self.types = types
+		self.notification_path = notification_path
+		self.created_at = int(time.time())
+
+	def __json__(self):
+		return {name: getattr(self, name) for name in [
+			'id',
+			'entity',
+			'created_at',
+			'notification_path',
+			'permissions',
+			'types',
+			'licenses'
+		]}
+	
 
 class Post (db.Model):
 	"""
