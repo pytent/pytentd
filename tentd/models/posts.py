@@ -2,7 +2,8 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+	Table, Column, DateTime, ForeignKey, Integer, String, UnicodeText)
 
 from tentd.models import db
 
@@ -97,5 +98,25 @@ class Status(Post):
 	
 	text = Column(String(256))
 	
-	def content_to_json (self):
+	def content_to_json(self):
 		return {'text': self.text}
+
+class Essay(Post):
+	"""The Essay post type
+
+	TODO: Support tags and excerpts
+	"""
+	__mapper_args__ = {'polymorphic_identity': 'essay'}
+	
+	type = "https://tent.io/types/post/essay/v0.1.0"
+	
+	title = Column(String)
+
+	body = Column(UnicodeText)
+	excerpt = Column(UnicodeText)
+	
+	def content_to_json(self):
+		return {
+			'title': self.title,
+			'body': self.body
+		}
