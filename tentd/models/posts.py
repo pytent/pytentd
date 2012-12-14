@@ -6,6 +6,7 @@ from sqlalchemy import (
 	Table, Column, DateTime, ForeignKey, Integer, String, UnicodeText)
 
 from tentd.models import db
+from tentd.models.entity import Entity
 
 class Post(db.Model):
 	"""A post belonging to an entity.
@@ -33,7 +34,8 @@ class Post(db.Model):
 	id = Column(Integer, primary_key=True)	
 	
 	entity_id = Column(Integer, ForeignKey('entity.id'))
-	entity = db.relationship('Entity', backref='posts')
+	entity = db.relationship(
+		'Entity', primaryjoin=entity_id==Entity.id, backref='posts')
 	
 	#: The time the post was published
 	published_at = Column(DateTime)
@@ -119,4 +121,25 @@ class Essay(Post):
 		return {
 			'title': self.title,
 			'body': self.body
+		}
+
+class Repost(Post):
+	"""The Repost post type"""
+
+	__mapper_args__ = {'polymorphic_identity': 'repost'}
+
+	original_entity_id = Column(Integer, ForeignKey('entity.id'))
+	original_entity = db.relationship(
+		'Entity', join_depth=2, primaryjoin=original_entity_id==Entity.id,
+		doc="The entity that a post is being reposted from")
+
+	original_post_id = Column(Integer, ForeignKey('post.id'))
+	original_post = db.relationship(
+		'Post', join_depth=2, primaryjoin=original_post_id==Post.id,
+		remote_side='Post.id', doc="The post that is being reposted")
+
+	def content_to_json (self):
+		return {
+			'entity': self.entity.core.identifier,
+			'id': self.original_post.id,
 		}

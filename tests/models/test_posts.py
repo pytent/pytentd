@@ -9,7 +9,7 @@ import tests
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.posts import Post, Status, Essay
+from tentd.models.posts import Post, Status, Essay, Repost
 
 class PostTest (tests.AppTestCase):
 	def before (self):
@@ -18,7 +18,6 @@ class PostTest (tests.AppTestCase):
 			entity=self.entity,
 			published_at='now',
 			text="Hello world")
-			
 		db.session.add(self.entity)
 		db.session.add(self.post)
 		db.session.commit()
@@ -59,5 +58,25 @@ This is a unicode tent symbol: ⛺.
 		db.session.add(essay)
 		db.session.commit()
 
+class RepostTest(tests.AppTestCase):
+	def before(self):
+		self.entity = Entity(name="Reposted")
+		self.post = Status(entity=self.entity, text="This will be reposted.")
+
+		self.repost_entity = Entity(name="Reposter")
+		self.repost = Repost(
+			entity=self.repost_entity,
+			original_entity=self.entity,
+			original_post=self.post
+		)
+
+		for i in (self.entity, self.post, self.repost_entity, self.repost):
+			db.session.add(i)
+		db.session.commit()
+
+	def test_repost (self):
+		self.assertEquals(self.entity, self.repost.original_entity)
+		self.assertEquals(self.post, self.repost.original_post)
+		
 if __name__ == "__main__":
     tests.main()
