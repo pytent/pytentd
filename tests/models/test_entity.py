@@ -6,25 +6,17 @@ from tentd import db
 from tentd.models.entity import Entity, Server, CoreProfile
 		
 class EntityTest (AppTestCase):
-	@classmethod
-	def setUpClass (cls):
-		super(EntityTest, cls).setUpClass()
-		
-		cls.entity = Entity(name="testuser")
+	def before (self):
+		self.entity = Entity(name="testuser")
+		db.session.add(self.entity)
 	
 	def test_create_entity (self):
-		db.session.add(self.entity)
-
 		queried_entity = Entity.query.filter_by(name=self.entity.name).first()
-
 		return self.entity is queried_entity
 		
 class CoreProfileTest (AppTestCase):
-	@classmethod
-	def setUpClass (cls):
-		super(CoreProfileTest, cls).setUpClass()
-		
-		cls.entity = Entity(name="test", core={
+	def before (self):	
+		self.entity = Entity(name="test", core={
 			'identifier': "http://example.com",
 		})
 		
@@ -35,9 +27,7 @@ class CoreProfileTest (AppTestCase):
 		self.assertEqual(self.entity.core.identifier, "http://example.com")
 
 class ServerTest (AppTestCase):
-	def setUp (self):
-		super(ServerTest, self).setUp()
-		
+	def before (self):		
 		self.entity = Entity(name="testuser")
 		self.ident1 = Server("http://example.com/abc", core=self.entity.core)
 		self.ident2 = Server("http://example.com/def", core=self.entity.core)

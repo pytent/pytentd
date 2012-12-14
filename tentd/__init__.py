@@ -9,26 +9,25 @@ from argparse import ArgumentParser
 from flask import Flask, Config
 from daemonize import Daemonize
 
-from tentd import defaults
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
-from tentd.models.entity import Entity
 
 tent_version = '0.2'
 
 def create_app (config=dict()):
-    """ Create an instance of the tentd flask application """
-    app = Flask('tentd')
-    # Load configuration
-    app.config.from_object(defaults)
-    app.config.update(config)
-    # Register the blueprints
-    app.register_blueprint(base)
-    app.register_blueprint(entity)
-    # Initialise the db for this app
-    db.init_app(app)
-    return app
+	""" Create an instance of the tentd flask application """
+	app = Flask('tentd')
+	# Load configuration
+	import tentd.defaults
+	app.config.from_object(defaults)
+	app.config.update(config)
+	# Register the blueprints
+	app.register_blueprint(base)
+	app.register_blueprint(entity)
+	# Initialise the db for this app
+	db.init_app(app)
+	return app
 
 def run ():
     """ Parse the command line arguments and run the application """
