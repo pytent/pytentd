@@ -6,6 +6,7 @@ from flask import url_for
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 
 from tentd.models import db
+import tentd
 
 class Entity (db.Model):
 	"""	A tent entity """
@@ -72,6 +73,7 @@ class CoreProfile (db.Model):
 			'entity': self.identifier or link,
 			'licences': [],
 			'servers': [link],
+			'tent_version': tentd.tent_version
 		}
 
 class Server (db.Model):
