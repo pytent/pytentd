@@ -15,9 +15,6 @@ class Entity (db.Model):
 	
 	#: The url identifier
 	name = Column(String(20), unique=True)
-	
-	#: Posts made by the entity
-	posts = db.relationship('Post', back_populates='owner')
 
 	# The entity's info types
 	core = db.relationship('CoreProfile', backref='entity', uselist=False)
@@ -125,34 +122,3 @@ class License (db.Model):
 class Follower (db.Model):
 	""" A follower is an entity subscribed to the posts of another entity """
 	id = Column(String, primary_key=True)
-
-class Post (db.Model):
-	"""
-	A post belonging to an entity.
-	
-	Posts are at the core of Tent. Posts are sent to followers immediately after
-	being created. The tent specifcation defines that there are two ways of
-	accessing posts:
-
-	`GET posts/` returns all posts, the parameters of the request define any
-	filtering. There may need to be extra filtering for server-side performance.
-
-	`GET posts/<id>` returns a post with the defined id.
-	
-	Valid post content types include:
-	 - status: a short (<256 character) message.
-	 - essay: a longer message.
-	 - photo: an image.
-	 - album: a collection of photos.
-	"""
-
-	id = Column(Integer, primary_key=True)	
-	
-	owner_id = Column(Integer, ForeignKey('entity.id'))
-	owner = db.relationship('Entity', back_populates='posts')
-
-	content_type = Column(String(20))
-
-	# The content associated with this post
-	# FIXME: This should be a foriegn key to the content type
-	content = Column(Text)

@@ -6,16 +6,15 @@ from os import getcwd
 from argparse import ArgumentParser
 from flask import Flask, Config
 
-from tentd import defaults
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
-from tentd.models.entity import Entity
 
 def create_app (config=dict()):
 	""" Create an instance of the tentd flask application """
 	app = Flask('tentd')
 	# Load configuration
+	import tentd.defaults
 	app.config.from_object(defaults)
 	app.config.update(config)
 	# Register the blueprints
