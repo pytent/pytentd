@@ -65,10 +65,12 @@ def run ():
 
     # Daemon mode
     daemon = subparsers.add_parser('daemon', help='run pytend as a daemon')
-    daemon.add_argument("-k", "--kill", action="store_true",
+    daemon.add_argument("--stop", "--kill", action="store_true",
         help="kill an existing daemon process")
-    daemon.add_argument("-s", "--start", action="store_true",
+    daemon.add_argument("--start", action="store_true",
         help="run the server in the background")
+    daemon.add_argument("--status", action="store_true",
+        help="show the status of the pytentd daemon")
 
     args = parser.parse_args()
     config = Config(os.getcwd())
@@ -98,23 +100,30 @@ def run ():
         pidfile = app.config.get("PIDFILE", "/tmp/pytentd.pid")
         pid = read_pid(pidfile)
 
-        # Kill an existing daemon
-        if args.kill:
-            if not pid:
-                print "No pytentd process to kill"
+        # Show the status of the daemon
+        if args.status:
+            if pid:
+                print "A pytentd daemon is already running [{}]".format(pid)
             else:
-                print "Killing existing pytentd process [{}]".format(pid)
+                print "No pytend daemon is running"
+
+        # Kill an existing daemon
+        if args.stop:
+            if pid:
+                print "Killing existing pytentd daemon [{}]".format(pid)
                 os.kill(int(pid), signal.SIGTERM)
+            else:
+                print "No pytentd process to kill"
 
         # Start pytentd in daemon mode
         if args.start:
-            if pid:
-                print "A pytentd server is already running [{}]".format(pid)
-            else:
-                daemon = Daemonize(app="pytentd", pid=pidfile, action=app.run)
+            if not pid or args.stop:
                 print "Starting pytentd server"
+                daemon = Daemonize(app="pytentd", pid=pidfile, action=app.run)
                 daemon.start()
+            else:
+                print "A pytentd daemon is already running [{}]".format(pid)
     
-    # Run the application with Flask's built in server
+    # Run the application
     elif not args.norun:
         app.run()
