@@ -27,11 +27,10 @@ class Post(db.Model):
 	model_type = Column(String(50))
 	
 	__mapper_args__ = {
-		'polymorphic_identity': 'employee',
 		'polymorphic_on': model_type,
 	}
 
-	id = Column(Integer, primary_key=True)	
+	id = Column(Integer, primary_key=True)
 	
 	entity_id = Column(Integer, ForeignKey('entity.id'))
 	entity = db.relationship(
