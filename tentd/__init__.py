@@ -10,7 +10,6 @@ import signal
 
 from argparse import ArgumentParser
 from flask import Flask, Config
-from daemonize import Daemonize
 
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
@@ -68,7 +67,7 @@ def run ():
     daemon = subparsers.add_parser('daemon', help='run pytend as a daemon')
     daemon.add_argument("-k", "--kill", action="store_true",
         help="kill an existing daemon process")
-    daemon.add_argument("-s", "--start", "--daemonize", action="store_true",
+    daemon.add_argument("-s", "--start", action="store_true",
         help="run the server in the background")
 
     args = parser.parse_args()
@@ -94,6 +93,8 @@ def run ():
 
     # Manage daemon mode
     if args.subcommand == 'daemon':
+        from daemonize import Daemonize
+        
         pidfile = app.config.get("PIDFILE", "/tmp/pytentd.pid")
         pid = read_pid(pidfile)
 

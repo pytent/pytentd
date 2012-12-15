@@ -1,26 +1,27 @@
 from setuptools import setup, find_packages
 
 setup(
-	name             = 'tentd',
-	version          = "0.0.0",
+    name             = 'tentd',
+    version          = '0.0.0',
+    author           = 'James Ravenscroft',
+    url              = 'https://github.com/ravenscroftj/pytentd',
+    description      = 'A http://tent.io/ server and application',
+    long_description = open('README.rst').read(),
 
-	author           = 'James Ravenscroft',
-	url              = 'https://github.com/ravenscroftj/pytentd',
+    packages = find_packages(),
+    include_package_data = True,
+    zip_safe = False,
 
-	description      = 'An implementation of the http://tent.io server protocol',
-	long_description = open('README.rst').read(),
+    install_requires = [
+        'flask==0.9',
+        'Flask-SQLAlchemy==0.16'
+    ],
 
-	packages         = find_packages(),
-	install_requires = [
-		'flask==0.9',
-		'Flask-SQLAlchemy==0.16',
-                'daemonize>=1.1'
-	],
+    extras_require = {
+        'daemon': ['daemonize==1.1']
+    },
 
-	entry_points = {
-		'console_scripts': ['tentd = tentd:run'],
-	},
-	
-	include_package_data = True,
-	zip_safe         = False,
+    entry_points = {
+        'console_scripts': ['tentd = tentd:run']
+    },
 )
