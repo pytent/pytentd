@@ -5,8 +5,8 @@ Data model for tent entities
 from flask import url_for
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 
+from tentd import __tent_version__ as tent_version
 from tentd.models import db
-import tentd
 
 class Entity (db.Model):
 	"""	A tent entity """
@@ -70,7 +70,7 @@ class CoreProfile (db.Model):
 			'entity': self.identifier or link,
 			'licences': [],
 			'servers': [link],
-			'tent_version': tentd.tent_version
+			'tent_version': tent_version
 		}
 
 class Server (db.Model):
