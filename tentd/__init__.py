@@ -97,7 +97,7 @@ def run ():
     if args.subcommand == 'daemon':
         from daemonize import Daemonize
         
-        pidfile = app.config.get("PIDFILE", "/tmp/pytentd.pid")
+        pidfile = app.config["PIDFILE"]
         pid = read_pid(pidfile)
 
         # Show the status of the daemon
