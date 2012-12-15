@@ -13,5 +13,6 @@ def add_and_commit (*items):
 db.add_and_commit = add_and_commit
 
 # Ensure all models are loaded
-from tentd.models.entity import Entity
-from tentd.models.posts import Post, Status
+import tentd.models.entity
+import tentd.models.profiles
+import tentd.models.posts
