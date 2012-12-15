@@ -1,6 +1,9 @@
-""" An implementation of the http://tent.io server protocol. """
+"""An implementation of the http://tent.io server protocol."""
+
+__all__ = ["__version__", "__tent_version__", "create_app", "run"]
 
 __version__ = "0.0.0"
+__tent_version__ = '0.2'
 
 import os
 import signal
@@ -13,22 +16,27 @@ from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
 
-tent_version = '0.2'
-
 def create_app (config=dict()):
-	""" Create an instance of the tentd flask application """
-	app = Flask('tentd')
-	# Load configuration
-	import tentd.defaults
-	app.config.from_object(defaults)
-	app.config.update(config)
-	# Register the blueprints
-	app.register_blueprint(base)
-	app.register_blueprint(entity)
-	# Initialise the db for this app
-	db.init_app(app)
-	return app
+    """ Create an instance of the tentd flask application """
+    app = Flask('tentd')
+    # Load configuration
+    import tentd.defaults
+    app.config.from_object(defaults)
+    app.config.update(config)
+    # Register the blueprints
+    app.register_blueprint(base)
+    app.register_blueprint(entity)
+    # Initialise the db for this app
+    db.init_app(app)
+    return app
 
+def read_pid (pidfile):
+    """Get the daemon's pid"""
+    if os.path.isfile(pidfile):
+        with open(pidfile, 'r') as f:
+            return f.read().strip()
+    return None
+            
 def run ():
     """ Parse the command line arguments and run the application """
     parser = ArgumentParser(description=__doc__)
@@ -40,10 +48,6 @@ def run ():
         help="show the configuration")
     parser.add_argument("--norun", action="store_true",
         help="stop after creating the app, useful with --show")
-    parser.add_argument("-k", "--killdaemon", action="store_true",
-                help="If a daemon process is running, kill it off")
-    parser.add_argument("-d", "--daemonize", action="store_true",
-                help="Run the server in the background")
 
     # Flask configuration
     parser.add_argument("--debug", action="store_true",
@@ -57,6 +61,15 @@ def run ():
 
     parser.add_argument('--db-echo', action='store_true',
         help='echo database actions')
+
+    subparsers = parser.add_subparsers(dest="subcommand")
+
+    # Daemon mode
+    daemon = subparsers.add_parser('daemon', help='run pytend as a daemon')
+    daemon.add_argument("-k", "--kill", action="store_true",
+        help="kill an existing daemon process")
+    daemon.add_argument("-s", "--start", "--daemonize", action="store_true",
+        help="run the server in the background")
 
     args = parser.parse_args()
     config = Config(os.getcwd())
@@ -77,31 +90,30 @@ def run ():
     if args.show:
         from pprint import pprint
         pprint(dict(app.config))
+        print vars(args)
 
+    # Manage daemon mode
+    if args.subcommand == 'daemon':
+        pidfile = app.config.get("PIDFILE", "/tmp/pytentd.pid")
+        pid = read_pid(pidfile)
 
-        pidfile = "/tmp/pytentd.pid"
-
-        if args.killdaemon:
-        
-            if( os.path.isfile(pidfile)):
-                print "Killing pytentd"
-                
-                with open(pidfile,'r') as filepointer:
-                    pid = filepointer.read()
-
-                os.kill(int(pid), signal.SIGTERM)
+        # Kill an existing daemon
+        if args.kill:
+            if not pid:
+                print "No pytentd process to kill"
             else:
-                print "No process to kill"
-         
+                print "Killing existing pytentd process [{}]".format(pid)
+                os.kill(int(pid), signal.SIGTERM)
 
-        if args.daemonize:
-
-            if( os.path.isfile( pidfile )):
-                print "Already running server. Exiting..."
-
+        # Start pytentd in daemon mode
+        if args.start:
+            if pid:
+                print "A pytentd server is already running [{}]".format(pid)
             else:
                 daemon = Daemonize(app="pytentd", pid=pidfile, action=app.run)
+                print "Starting pytentd server"
                 daemon.start()
-
-    if not args.norun and not args.daemonize and not args.killdaemon:
+    
+    # Run the application with Flask's built in server
+    elif not args.norun:
         app.run()
