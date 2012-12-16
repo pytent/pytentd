@@ -1,4 +1,3 @@
-=======
 pytentd
 =======
 
@@ -32,6 +31,16 @@ Documentation is also available on the configuration variables for `Flask`_ and 
 
 .. _Flask: http://flask.pocoo.org/docs/config/#builtin-configuration-values
 .. _SQLAlchemy: http://packages.python.org/Flask-SQLAlchemy/config.html
+
+Contributing
+============
+
+We use `Google's Python style guide <http://google-styleguide.googlecode.com/svn/trunk/pyguide.html>`_ with a couple changes:
+
+- Imports of global objects are acceptable, with the `from ... import ...` style being preferred.
+- `String.format()` should be used instead of the coercion operator (`%`).
+
+You should also try to write tests for any new code, which helps to ensure bugs get picked up more quickly.
 
 Running tests
 -------------
