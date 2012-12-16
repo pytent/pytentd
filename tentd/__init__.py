@@ -7,6 +7,7 @@ __tent_version__ = '0.2'
 
 from flask import Flask
 
+from tentd.blueprints.api import api
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
@@ -21,6 +22,7 @@ def create_app(config=dict()):
     app.config.update(config)
 
     # Register the blueprints
+    app.register_blueprint(api)
     app.register_blueprint(base)
     app.register_blueprint(entity)
 
