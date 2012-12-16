@@ -17,3 +17,7 @@ def profile(entity):
     """Return the info types belonging to the entity"""
     return jsonify({p.schema: p.to_json() for p in entity.profiles})
 
+@entity.route('/followers', endpoint='followers')
+def profile(entity): 
+    if(request.method == "POST"):
+        pass

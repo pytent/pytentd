@@ -1,1 +1,0 @@
-''' Control API endpoints. '''
