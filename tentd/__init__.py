@@ -45,8 +45,6 @@ def run ():
         help="a configuration file to use")
     parser.add_argument("--show", action="store_true",
         help="show the configuration")
-    parser.add_argument("--norun", action="store_true",
-        help="stop after creating the app, useful with --show")
 
     # Flask configuration
     parser.add_argument("--debug", action="store_true",
@@ -64,13 +62,15 @@ def run ():
     subparsers = parser.add_subparsers(dest="subcommand")
 
     # Daemon mode
-    daemon = subparsers.add_parser('daemon', help='run pytend as a daemon')
+    daemon = subparsers.add_parser('daemon', help='run pytentd as a daemon')
     daemon.add_argument("--stop", "--kill", action="store_true",
         help="kill an existing daemon process")
     daemon.add_argument("--start", action="store_true",
         help="run the server in the background")
     daemon.add_argument("--status", action="store_true",
         help="show the status of the pytentd daemon")
+
+    subparsers.add_parser('start', help="start a pytentd server")
 
     args = parser.parse_args()
     config = Config(os.getcwd())
@@ -105,7 +105,7 @@ def run ():
             if pid:
                 print "A pytentd daemon is already running [{}]".format(pid)
             else:
-                print "No pytend daemon is running"
+                print "No pytentd daemon is running"
 
         # Kill an existing daemon
         if args.stop:
@@ -125,5 +125,5 @@ def run ():
                 print "A pytentd daemon is already running [{}]".format(pid)
     
     # Run the application
-    elif not args.norun:
+    elif args.subcommand == 'start':
         app.run()
