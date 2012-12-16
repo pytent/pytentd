@@ -43,7 +43,7 @@ class Post(db.Model):
     #: The time we received the post from the publishing server
     received_at = Column(DateTime)
     
-    def __init__ (self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Creates a Post
     
         Automatically sets `published_at` and `received_at` to the current time
@@ -56,14 +56,16 @@ class Post(db.Model):
         super(Post, self).__init__(*args, **kwargs)
     
     @property
-    def schema (self):
-        raise NotImplementedError("Schema not defined for this Post model")
+    def schema(self):
+        raise NotImplementedError(
+            "This Post subclass or object has not defined a schema")
     
-    def content_to_json (self):
-        raise NotImplementedError("Post model has not implemented content_to_json()")
+    def content_to_json(self):
+        raise NotImplementedError(
+            "This Post subclass has not implemented content_to_json()")
 
-    def to_json (self):
-        """Returns the json for the post
+    def to_json(self):
+        """Returns the post as a python dictonary
     
         TODO: 'mentions'
         TODO: 'licenses'
@@ -162,7 +164,7 @@ class Repost(Post):
         'Post', join_depth=1, remote_side=[Post.id],
         doc="The post that is being reposted")
     
-    def content_to_json (self):
+    def content_to_json(self):
         return {
             'entity': self.entity.core.identifier,
             'id': self.original_post.id,

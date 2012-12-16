@@ -9,7 +9,7 @@ from tentd import __tent_version__ as tent_version
 from tentd.models import db
 from tentd.utils.types import JSONDict
 
-class Profile (db.Model):
+class Profile(db.Model):
     """A profile information type belonging to an entity
 
     The Profile class is an abstract type, defining the relationship between
@@ -40,7 +40,7 @@ class Profile (db.Model):
         'polymorphic_on': type,
     }
 
-    def __init__ (self, **kwargs):
+    def __init__(self, **kwargs):
         if self.__class__ == Profile:
             raise NotImplementedError(
                 "Don't create instances of Profile! "
@@ -52,7 +52,7 @@ class Profile (db.Model):
         if hasattr(self.__class__, '__schema__'):
             self.schema = self.__class__.__schema__
 
-class CoreProfile (Profile):
+class CoreProfile(Profile):
     """This model provides the Core profile info type.
 
     Documentation on this profile type can be found here:

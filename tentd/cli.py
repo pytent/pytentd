@@ -43,7 +43,7 @@ daemon.add_argument("--status", action="store_true",
 subparsers.add_parser('start', help="start a pytentd server")
 
 def run():
-    """ Parse the command line arguments and run the application """
+    """Parse the command line arguments and run the application"""
     args = parser.parse_args()
     config = Config(os.getcwd())
 

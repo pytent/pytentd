@@ -1,5 +1,4 @@
-"""
-Allow tentd to be run as a module
+"""Allow tentd to be run as a module
 
 python -m tentd ...
 """

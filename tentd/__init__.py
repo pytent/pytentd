@@ -11,8 +11,8 @@ from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.models import db
 
-def create_app (config=dict()):
-    """ Create an instance of the tentd flask application """
+def create_app(config=dict()):
+    """Create an instance of the tentd flask application"""
     app = Flask('tentd')
     
     # Load configuration

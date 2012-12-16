@@ -1,4 +1,4 @@
-""" Default arguments for tentd """
+"""Default arguments for tentd"""
 
 from os import getcwd
 
