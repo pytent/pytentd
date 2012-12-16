@@ -10,7 +10,12 @@ from tentd.models import db
 from tentd.utils.types import JSONDict
 
 class Profile (db.Model):
-    """An information type belonging to an entity
+    """A profile information type belonging to an entity
+
+    The Profile class is an abstract type, defining the relationship between
+    an entity and it's profiles, and holding the schema url for the type.
+
+    An entity cannot have multiple profiles with the same schema.
 
     See: https://tent.io/docs/info-types
     """
@@ -24,7 +29,6 @@ class Profile (db.Model):
     #: The info type schema
     schema = Column(String(256), nullable=False)
 
-    # Ensure that no entity has multipe profiles with the same schema
     __table_args__ = (
         UniqueConstraint("entity_id", "schema"),
     )
@@ -37,6 +41,11 @@ class Profile (db.Model):
     }
 
     def __init__ (self, **kwargs):
+        if self.__class__ == Profile:
+            raise NotImplementedError(
+                "Don't create instances of Profile! "
+                "Use profiles.Generic instead")
+        
         super(Profile, self).__init__(**kwargs)
         
         # Set the schema if the class has one defined

@@ -6,7 +6,12 @@ from sqlalchemy.exc import IntegrityError
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.profiles import Core, Generic
+from tentd.models.profiles import Profile, Core, Generic
+
+class ProfileTest(tests.AppTestCase):
+    def test_no_profile(self):
+        with self.assertRaises(NotImplementedError):
+            Profile()
 
 class CoreTest (tests.AppTestCase):
     def before (self):
