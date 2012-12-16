@@ -1,11 +1,13 @@
 """
 Data model for tent entities
 """
+from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, String, Text, ForeignKey
 
 from tentd.models import db
 from tentd.models.profiles import Profile, CoreProfile, BasicProfile
+from tentd.utils import json_attributes
 
 class Entity(db.Model):
     """A tent entity"""
@@ -38,3 +40,36 @@ class Entity(db.Model):
         so you should avoid changing this.
         """
         return self.name
+
+class Follower(db.Model):
+    """Someone following an Entity"""
+
+    id = Column(Integer, primary_key=True)
+
+    # TODO: Make this unique on the owner entity
+    identifier = Column(String, unique=True)
+
+    #: The time the follower was created
+    created_at = Column(DateTime)
+
+    permissions = None
+    licenses = None
+    types = None
+
+    notification_path = Column(String)
+
+    def __init__(self, **kwargs):
+        super(Follower, self).__init__(kwargs)
+        if not self.created_at:
+            self.created_at = datetime.utcnow()
+
+    def to_json(self):
+        return json_attributes(self,
+            'id',
+            'entity',
+            'created_at',
+            'notification_path',
+            'permissions',
+            'types',
+            'licenses'
+        )

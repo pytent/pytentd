@@ -5,7 +5,7 @@ from requests import ConnectionError
 from flask import jsonify, url_for
 
 from tentd.errors import TentError
-from tentd.models.follower import Follower
+from tentd.models.entity import Follower
 
 def start_following(details):
     ''' Start following a user. '''
@@ -30,7 +30,7 @@ def start_following(details):
 
     notify_following(follower)
 
-    return follower.__json__()
+    return follower.to_json()
 
 def get_entity(entity_url):
     ''' Gets the actual entity details from an entity url. '''

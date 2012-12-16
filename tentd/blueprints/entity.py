@@ -1,6 +1,6 @@
 """The entity endpoint"""
 
-from flask import Blueprint, jsonify, json
+from flask import Blueprint, jsonify, json, g
 
 from tentd.control import follow
 from tentd.errors import TentError
@@ -11,7 +11,9 @@ entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 @entity.url_value_preprocessor
 def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
-    values['entity'] = Entity.query.filter_by(name=values['entity']).first_or_404()
+    entity = Entity.query.filter_by(name=values['entity']).first_or_404()
+    values['entity'] = entity
+    g.entity = entity
 
 @entity.route('/profile')
 def profile(entity):
