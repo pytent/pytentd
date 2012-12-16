@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.profiles import Core
+from tentd.models.profiles import Core, Generic
 
 class CoreTest (tests.AppTestCase):
     def before (self):
@@ -18,7 +18,10 @@ class CoreTest (tests.AppTestCase):
     def test_schema(self):
         assert self.entity.core.schema == Core.__schema__
 
-    def test_autocreate_arguments(self):
+    def test_json(self):
+        assert 'entity' in self.entity.core.to_json()
+
+    def test_arguments(self):
         assert self.entity.core.identifier == "http://example.com"
 
     def test_profile_constraint(self):
@@ -28,3 +31,43 @@ class CoreTest (tests.AppTestCase):
         with self.assertRaises(IntegrityError):
             self.commit(Core(entity=entity, identifier="http://1.example.com"))
             self.commit(Core(entity=entity, identifier="http://2.example.com"))
+
+class GenericTest (tests.AppTestCase):
+    """This also tests tentd.utils.types.JSONDict"""
+    
+    def before(self):
+        self.entity = Entity(name="test")
+        self.profile = Generic(
+            entity=self.entity,
+            schema="https://tent.io/types/info/example/v0.0.0",
+            content={
+                'attr': 'value',
+                'dict': {'attr': 'value'},
+                'list': [1, 2, 3],
+            })
+        self.commit(self.entity, self.profile)
+
+    def test_attributes(self):
+        assert self.profile.content['attr'] == 'value'
+
+    def test_json(self):
+        assert 'attr' in self.profile.to_json()
+
+    def test_unique_schema(self):
+        with self.assertRaises(IntegrityError):
+            self.commit(Generic(
+                entity=self.entity,
+                schema="https://tent.io/types/info/example/v0.0.0"))
+
+    def test_mutable(self):
+        self.profile.content['attr'] = 'newvalue'
+        assert self.profile in db.session.dirty
+
+    def test_mutable_subkey(self):
+        """The top level of a JSONDict column is mutable, but any dictionaries
+        below it are of type dict(), and changes to them will not mark the
+        column as dirty: this needs to be done manually"""
+        self.profile.content['dict']['attr'] = 'newvalue'
+        self.profile.content['list'].append(4)
+        self.profile.content.changed()
+        assert self.profile in db.session.dirty

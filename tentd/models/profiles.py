@@ -7,6 +7,7 @@ from sqlalchemy.orm import backref
 
 from tentd import __tent_version__ as tent_version
 from tentd.models import db
+from tentd.utils.types import JSONDict
 
 class Profile (db.Model):
     """An information type belonging to an entity
@@ -21,7 +22,7 @@ class Profile (db.Model):
     entity_id = Column(Integer, ForeignKey('entity.id'), nullable=False)
 
     #: The info type schema
-    schema = Column(String(256))
+    schema = Column(String(256), nullable=False)
 
     # Ensure that no entity has multipe profiles with the same schema
     __table_args__ = (
@@ -101,3 +102,11 @@ class Basic (Profile):
             'birthdate',
             'bio'
         ]}
+
+class Generic(Profile):
+    __mapper_args__ = {'polymorphic_identity': 'generic'}
+
+    content = Column(JSONDict)
+
+    def to_json(self):
+        return self.content
