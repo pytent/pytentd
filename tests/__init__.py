@@ -1,4 +1,4 @@
-""" Tests for pytentd """
+"""Tests for pytentd"""
 
 from os import close, remove
 from tempfile import mkstemp
@@ -9,18 +9,18 @@ from werkzeug import cached_property
 
 from tentd import create_app, db
 
-class TestResponse (Response):
+class TestResponse(Response):
     @cached_property
-    def json (self):
+    def json(self):
         if not json_available:
             raise NotImplementedError
         elif not self.mimetype == 'application/json':
             return None
         return json.loads(self.data)
 
-class AppTestCase (TestCase):
-    """
-    A base test case for pytentd.
+class AppTestCase(TestCase):
+    """A base test case for pytentd
+
     It handles setting up the app and request contexts
     
     As it uses the ``setUp`` and ``tearDown`` methods heavily, it makes 
@@ -29,13 +29,12 @@ class AppTestCase (TestCase):
 
     The functions in this class are ordered by the order they are called in.
     """
+
+    # Setup and teardown functions
     
     @classmethod
-    def setUpClass (cls):
-        """
-        Place the app in testing mode (allowing exceptions to propagate,
-        and initialise the database
-        """
+    def setUpClass(cls):
+        """Place the app in testing mode and initialise the database"""
         cls.db_fd, cls.db_filename = mkstemp()
         
         config = {
@@ -54,7 +53,7 @@ class AppTestCase (TestCase):
     def beforeClass(cls):
         pass
         
-    def setUp (self):
+    def setUp(self):
         """ Create the database, and set up a request context """
         self.ctx = self.app.test_request_context()
         self.ctx.push()
@@ -63,20 +62,14 @@ class AppTestCase (TestCase):
         
         self.before()
         
-    def before (self):
-        pass
-
-    def commit (self, *objects):
-        """Commit several objects to the database"""
-        for o in objects:
-            db.session.add(o)
-        db.session.commit()
-    
-    def after (self):
+    def before(self):
         pass
     
-    def tearDown (self):
-        """ Clear the database, and the current request """
+    def after(self):
+        pass
+    
+    def tearDown(self):
+        """Clear the database, and the current request"""
         self.after()
         db.drop_all()
         try:
@@ -90,12 +83,20 @@ class AppTestCase (TestCase):
 
     @classmethod
     def tearDownClass (cls):
-        """ Close the database file, and delete it """
+        """Close the database file, and delete it"""
         cls.afterClass()
         close(cls.db_fd) 
         remove(cls.db_filename)
 
-    def assertStatus (self, response, status):
+    # Other functions
+        
+    def commit(self, *objects):
+        """Commit several objects to the database"""
+        for o in objects:
+            db.session.add(o)
+        db.session.commit()
+
+    def assertStatus(self, response, status):
         """Asserts that the response has returned a certain status code"""
         try:
             self.assertIn(response.status_code, status)

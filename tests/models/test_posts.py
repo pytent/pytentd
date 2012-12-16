@@ -11,8 +11,8 @@ from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.posts import Post, GenericPost, Status, Essay, Repost
 
-class PostTest (tests.AppTestCase):
-    def before (self):
+class PostTest(tests.AppTestCase):
+    def before(self):
         self.entity = Entity(name="Test")
         self.post = Status(
             entity=self.entity,
@@ -77,6 +77,7 @@ class RepostTest(tests.AppTestCase):
     def before(self):
         self.entity = Entity(name="Reposted")
         self.post = Status(entity=self.entity, text="This will be reposted.")
+        self.commit(self.entity, self.post)
 
         self.repost_entity = Entity(name="Reposter")
         self.repost = Repost(
@@ -84,10 +85,7 @@ class RepostTest(tests.AppTestCase):
             original_entity=self.entity,
             original_post=self.post
         )
-
-        for i in (self.entity, self.post, self.repost_entity, self.repost):
-            db.session.add(i)
-        db.session.commit()
+        self.commit(self.repost_entity, self.repost)
 
     def test_repost (self):
         self.assertEquals(self.entity, self.repost.original_entity)

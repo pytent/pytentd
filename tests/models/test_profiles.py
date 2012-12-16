@@ -13,8 +13,8 @@ class ProfileTest(tests.AppTestCase):
         with self.assertRaises(NotImplementedError):
             Profile()
 
-class CoreTest (tests.AppTestCase):
-    def before (self):
+class CoreTest(tests.AppTestCase):
+    def before(self):
         self.entity = Entity(name="test", core={
             'identifier': "http://example.com",
         })
@@ -37,7 +37,7 @@ class CoreTest (tests.AppTestCase):
             self.commit(CoreProfile(entity=entity))
             self.commit(CoreProfile(entity=entity))
 
-class GenericTest (tests.AppTestCase):
+class GenericTest(tests.AppTestCase):
     """This also tests tentd.utils.types.JSONDict"""
     
     def before(self):
