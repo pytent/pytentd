@@ -5,7 +5,7 @@ Data model for tent entities
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 
 from tentd.models import db
-from tentd.models.profiles import Profile, Core, Basic
+from tentd.models.profiles import Profile, CoreProfile, BasicProfile
 
 class Entity(db.Model):
     """A tent entity"""
@@ -20,14 +20,13 @@ class Entity(db.Model):
 
     @property
     def core (self):
-        return self.profiles.filter(Profile.schema==Core.__schema__).one()
+        return self.profiles.filter_by(schema=CoreProfile.__schema__).one()
 
     def __init__ (self, core={}, **kwargs):
-        """Creates an Entity and a Core profile"""
+        """Creates an Entity and a CoreProfile"""
         super(Entity, self).__init__(**kwargs)
         if not core is None:
-            db.session.add(Core(entity=self, **core))
-            db.session.add(Basic(entity=self))
+            db.session.add(CoreProfile(entity=self, **core))
     
     def __repr__ (self):
         return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)

@@ -52,8 +52,8 @@ class Profile (db.Model):
         if hasattr(self.__class__, '__schema__'):
             self.schema = self.__class__.__schema__
 
-class Core (Profile):
-    """This model provides the Core Profile info type.
+class CoreProfile (Profile):
+    """This model provides the Core profile info type.
 
     Documentation on this profile type can be found here:
     https://tent.io/docs/info-types#core
@@ -79,13 +79,13 @@ class Core (Profile):
             'tent_version': tent_version
         }
 
-class Basic (Profile):
-    """The Basic Profile info type.
+class BasicProfile(Profile):
+    """The Basic profile info type.
 
-    https://tent.io/docs/info-types#basic
-
-        The Basic Profile helps humanize users. All fields are optional but help
-        provide a context in which to place a user's details.
+    The Basic profile helps humanize users. All fields are optional but help
+    provide a context in which to place a user's details.
+        
+    See: https://tent.io/docs/info-types#basic
     """
 
     __schema__ = 'https://tent.io/types/info/basic/v0.1.0'
@@ -112,7 +112,7 @@ class Basic (Profile):
             'bio'
         ]}
 
-class Generic(Profile):
+class GenericProfile(Profile):
     __mapper_args__ = {'polymorphic_identity': 'generic'}
 
     content = Column(JSONDict)

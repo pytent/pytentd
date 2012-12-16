@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.profiles import Profile, Core, Generic
+from tentd.models.profiles import Profile, CoreProfile, GenericProfile
 
 class ProfileTest(tests.AppTestCase):
     def test_no_profile(self):
@@ -21,7 +21,7 @@ class CoreTest (tests.AppTestCase):
         self.commit(self.entity)
 
     def test_schema(self):
-        assert self.entity.core.schema == Core.__schema__
+        assert self.entity.core.schema == CoreProfile.__schema__
 
     def test_json(self):
         assert 'entity' in self.entity.core.to_json()
@@ -34,15 +34,15 @@ class CoreTest (tests.AppTestCase):
         entity = Entity(name="testuser", core=None)
         self.commit(entity)
         with self.assertRaises(IntegrityError):
-            self.commit(Core(entity=entity, identifier="http://1.example.com"))
-            self.commit(Core(entity=entity, identifier="http://2.example.com"))
+            self.commit(CoreProfile(entity=entity))
+            self.commit(CoreProfile(entity=entity))
 
 class GenericTest (tests.AppTestCase):
     """This also tests tentd.utils.types.JSONDict"""
     
     def before(self):
         self.entity = Entity(name="test")
-        self.profile = Generic(
+        self.profile = GenericProfile(
             entity=self.entity,
             schema="https://tent.io/types/info/example/v0.0.0",
             content={
@@ -60,7 +60,7 @@ class GenericTest (tests.AppTestCase):
 
     def test_unique_schema(self):
         with self.assertRaises(IntegrityError):
-            self.commit(Generic(
+            self.commit(GenericProfile(
                 entity=self.entity,
                 schema="https://tent.io/types/info/example/v0.0.0"))
 

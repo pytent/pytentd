@@ -144,7 +144,7 @@ class Repost(Post):
 			'id': self.original_post.id,
 		}
 
-class Generic(Post):
+class GenericPost(Post):
     __mapper_args__ = {'polymorphic_identity': 'generic'}
 
     content = Column(JSONDict)

@@ -78,9 +78,11 @@ class AppTestCase (TestCase):
     def tearDown (self):
         """ Clear the database, and the current request """
         self.after()
-        
         db.drop_all()
-        self.ctx.pop()
+        try:
+            self.ctx.pop()
+        except:
+            pass
     
     @classmethod
     def afterClass(cls):

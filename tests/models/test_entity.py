@@ -4,7 +4,7 @@ import tests
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.profiles import Core
+from tentd.models.profiles import CoreProfile
 		
 class EntityTest (tests.AppTestCase):
     def before (self):
@@ -16,4 +16,4 @@ class EntityTest (tests.AppTestCase):
         assert self.entity is entity
 
     def test_autocreate_core (self):
-        self.assertIsInstance(self.entity.core, Core)
+        self.assertIsInstance(self.entity.core, CoreProfile)
