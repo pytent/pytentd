@@ -19,18 +19,22 @@ class Entity(db.Model):
     profiles = db.relationship('Profile', lazy='dynamic')
 
     @property
-    def core (self):
+    def core(self):
         return self.profiles.filter_by(schema=CoreProfile.__schema__).one()
 
-    def __init__ (self, core={}, **kwargs):
+    def __init__(self, core={}, **kwargs):
         """Creates an Entity and a CoreProfile"""
         super(Entity, self).__init__(**kwargs)
         if not core is None:
             db.session.add(CoreProfile(entity=self, **core))
     
-    def __repr__ (self):
+    def __repr__(self):
         return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
     
-    def __str__ (self):
-        """ Used in urls, so don't change! """
+    def __str__(self):
+        """Returns the entities 'name'
+        
+        Warning: Entity are often used as an argument to url_for,
+        so you should avoid changing this.
+        """
         return self.name
