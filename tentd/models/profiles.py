@@ -7,6 +7,7 @@ from sqlalchemy.orm import backref
 
 from tentd import __tent_version__ as tent_version
 from tentd.models import db
+from tentd.utils import json_attributes
 from tentd.utils.types import JSONDict
 
 class Profile(db.Model):
@@ -103,14 +104,14 @@ class BasicProfile(Profile):
     bio        = Column(Text)
 
     def to_json(self):
-        return {name: getattr(self, name) for name in [
+        return json_attributes(self,
             'avatar_url',
             'name',
             'location',
             'gender',
             'birthdate',
             'bio'
-        ]}
+        )
 
 class GenericProfile(Profile):
     __mapper_args__ = {'polymorphic_identity': 'generic'}
