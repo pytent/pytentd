@@ -5,7 +5,7 @@ import tests
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.profiles import CoreProfile
-		
+        
 class EntityTest (tests.AppTestCase):
     def before (self):
         self.entity = Entity(name="testuser")

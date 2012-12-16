@@ -9,8 +9,8 @@ entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
 @entity.url_value_preprocessor
 def fetch_entity (endpoint, values):
-	"""	Replace `entity` (which is a string) with the actuall entity """
-	values['entity'] = Entity.query.filter_by(name=values['entity']).first_or_404()
+    """ Replace `entity` (which is a string) with the actuall entity """
+    values['entity'] = Entity.query.filter_by(name=values['entity']).first_or_404()
 
 @entity.route('/profile', endpoint='profile')
 def profile (entity):

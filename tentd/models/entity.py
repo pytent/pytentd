@@ -32,5 +32,5 @@ class Entity(db.Model):
         return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
     
     def __str__ (self):
-        """	Used in urls, so don't change! """
+        """ Used in urls, so don't change! """
         return self.name

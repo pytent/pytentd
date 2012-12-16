@@ -55,7 +55,7 @@ class AppTestCase (TestCase):
         pass
         
     def setUp (self):
-        """	Create the database, and set up a request context """
+        """ Create the database, and set up a request context """
         self.ctx = self.app.test_request_context()
         self.ctx.push()
         
@@ -90,7 +90,7 @@ class AppTestCase (TestCase):
 
     @classmethod
     def tearDownClass (cls):
-        """	Close the database file, and delete it """
+        """ Close the database file, and delete it """
         cls.afterClass()
         close(cls.db_fd) 
         remove(cls.db_filename)

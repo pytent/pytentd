@@ -1,1 +1,1 @@
-"""	Flask blueprints """
+""" Flask blueprints """
