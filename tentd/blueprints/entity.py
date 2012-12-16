@@ -2,7 +2,8 @@
 
 from flask import Blueprint, jsonify, json
 
-from tentd.models import db
+from tentd.control import follow
+from tentd.errors import TentError
 from tentd.models.entity import Entity
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
@@ -12,12 +13,20 @@ def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
     values['entity'] = Entity.query.filter_by(name=values['entity']).first_or_404()
 
-@entity.route('/profile', endpoint='profile')
+@entity.route('/profile')
 def profile(entity):
     """Return the info types belonging to the entity"""
     return jsonify({p.schema: p.to_json() for p in entity.profiles})
 
-@entity.route('/followers', endpoint='followers')
-def profile(entity): 
-    if(request.method == "POST"):
-        pass
+@entity.route('/followers', methods=['POST'])
+def followers(entity):
+    """Starts following a user, defined by the post data"""
+    if not request.data:
+        return jsonify({'error': "No POST data."}), 400
+
+    post_data = json.loads(request.data)
+    try:
+        follower = follow.start_following(post_data)
+        return jsonify(follower), 200
+    except TentError as e:
+        return jsonify(dict(error=e.reason)), e.status
