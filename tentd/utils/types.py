@@ -1,10 +1,10 @@
 """SQLAlchemy types"""
 
 from sqlalchemy.ext.mutable import Mutable
-from sqlalchemy.types import MutableType, TypeDecorator, Unicode
+from sqlalchemy.types import TypeDecorator, Unicode
 from flask import json
 
-class JSONDict(TypeDecorator, MutableType):
+class JSONDict(TypeDecorator):
     """Represents an immutable structure as a json-encoded string."""
 
     impl = Unicode
