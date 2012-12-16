@@ -7,6 +7,7 @@ from sqlalchemy import (
 
 from tentd.models import db
 from tentd.models.entity import Entity
+from tentd.utils.types import JSONDict
 
 class Post(db.Model):
 	"""A post belonging to an entity.
@@ -142,3 +143,11 @@ class Repost(Post):
 			'entity': self.entity.core.identifier,
 			'id': self.original_post.id,
 		}
+
+class Generic(Post):
+    __mapper_args__ = {'polymorphic_identity': 'generic'}
+
+    content = Column(JSONDict)
+
+    def to_json(self):
+        return self.content
