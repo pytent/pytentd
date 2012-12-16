@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+
 from setuptools import setup, find_packages
 
 setup(
     name             = 'tentd',
     version          = '0.0.0',
     author           = 'James Ravenscroft',
+    author_email     = 'ravenscroftj@gmail.com',
     url              = 'https://github.com/ravenscroftj/pytentd',
     description      = 'A http://tent.io/ server and application',
     long_description = open('README.rst').read(),
@@ -15,7 +18,7 @@ setup(
     install_requires = [
         'flask==0.9',
         'Flask-SQLAlchemy==0.16',
-        'requests==0.14',
+        'requests==0.14.2',
     ],
 
     extras_require = {
