@@ -22,6 +22,6 @@ setup(
     },
 
     entry_points = {
-        'console_scripts': ['tentd = tentd:run']
+        'console_scripts': ['tentd = tentd.cli:run']
     },
 )
