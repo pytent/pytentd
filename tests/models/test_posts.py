@@ -9,7 +9,7 @@ import tests
 
 from tentd import db
 from tentd.models.entity import Entity
-from tentd.models.posts import Post, Status, Essay, Repost
+from tentd.models.posts import Post, GenericPost, Status, Essay, Repost
 
 class PostTest (tests.AppTestCase):
 	def before (self):
@@ -28,6 +28,21 @@ class PostTest (tests.AppTestCase):
 	
 	def test_published_time(self):
 		self.assertIsInstance(self.post.published_at, datetime)
+
+class GenericPostTest(tests.AppTestCase):
+    def before(self):
+        self.entity = Entity(name="Test")
+        self.post = GenericPost(
+            entity=self.entity,
+            schema="https://tent.io/types/post/example/v0.0.0",
+            content={'attr': 'value'})
+        self.commit(self.entity, self.post)
+
+    def test_attributes(self):
+        assert 'attr' in self.post.content
+
+    def test_json(self):
+        assert 'attr' in self.post.to_json()['content']
 
 class StatusTest(tests.AppTestCase):
 	def before(self):
@@ -77,6 +92,3 @@ class RepostTest(tests.AppTestCase):
 	def test_repost (self):
 		self.assertEquals(self.entity, self.repost.original_entity)
 		self.assertEquals(self.post, self.repost.original_post)
-		
-if __name__ == "__main__":
-    tests.main()
