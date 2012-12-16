@@ -13,6 +13,7 @@ from flask import Flask, Config
 
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
+from tentd.blueprints.control import control
 from tentd.models import db
 
 def create_app (config=dict()):
@@ -25,6 +26,7 @@ def create_app (config=dict()):
     # Register the blueprints
     app.register_blueprint(base)
     app.register_blueprint(entity)
+    app.register_blueprint(control)
     # Initialise the db for this app
     db.init_app(app)
     return app
