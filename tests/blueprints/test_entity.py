@@ -1,6 +1,8 @@
-from json import loads
+from json import loads, dumps
 
 from tests import AppTestCase, main
+
+from flask import url_for
 
 from tentd import db
 from tentd.models.entity import Entity
@@ -34,3 +36,8 @@ class EntityBlueprintTest(AppTestCase):
         r = self.client.get('/testuser/profile')
         url = r.json['https://tent.io/types/info/core/v0.1.0']['entity']
         self.assertEquals(url, self.expected_api_root)
+
+    def test_entity_follow(self):
+        following_data = dumps(dict(entity='http://localhost/testuser', licences=[], types="all", notification_path="notification"))
+        r = self.client.post('/testuser/followers', data=following_data)
+        self.assertEquals(200, r.status_code)

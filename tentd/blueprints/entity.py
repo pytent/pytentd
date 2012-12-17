@@ -1,6 +1,6 @@
 """The entity endpoint"""
 
-from flask import Blueprint, jsonify, json, g
+from flask import Blueprint, jsonify, json, g, request
 
 from tentd.control import follow
 from tentd.errors import TentError

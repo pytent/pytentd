@@ -21,10 +21,10 @@ def start_following(details):
 
     # TODO use entity in some to create the following identity.
 
-
-    follower = Follower(entity = canonical_entity_url or details['entity'], 
+    print details
+    follower = Follower(identifier = canonical_entity_url or details['entity'], 
         permissions = {'public': True}, 
-        licenses = details['licenses'],
+        licenses = details['licences'],
         types = details['types'],
         notification_path = details['notification_path'])
 
@@ -57,11 +57,11 @@ def get_entity_url_from_link_header(entity_url):
 
 def notify_following(follower):
     data = {'id': follower.id,
-        'entity': follower.entity,
+        'entity': follower.identifier,
         'action': 'create'}
     data_json = jsonify(data)
 
-    print data_json
+    #print data_json
 # TODO perform notification.
 #    notification_url = url_for(follower.notification_path)
 #    request = requests.post(notification_url, data=data_json)
