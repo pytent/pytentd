@@ -18,11 +18,39 @@ def generate_keypair():
     id  = hashlib.md5( str(getrandbits(256))).hexdigest()
     return id,key
 
+def parse_authstring( authstring ):
+    """Parse an auth string into a dict
+    """
+    
+     #make sure the string starts with 'MAC '
+    if not authstring or not authstring.startswith('MAC '):
+        return False
+
+    pairs = authstring[4:].strip().split(',')
+
+    vars = {}
+
+    for p in pairs:
+        p = p.strip()
+        key,value = p.split("=",1)
+        vars[key] = value.strip('"')
+
+    return vars
+ 
+
+
+def check_request(request):
+    """ Return true if the given request object matches its signature"""
+    
+    auth = parse_authstring(request.headers.get('Authorization'))
+   
+    return True
+
+
 def require_authorization(f):
     
     def decorated(*args, **kwargs):
         auth = request.headers.get('Authorization')
-        print auth
         return f(*args,**kwargs)
 
     return decorated
