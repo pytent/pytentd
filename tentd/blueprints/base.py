@@ -5,9 +5,12 @@ from flask import Blueprint, jsonify, url_for, make_response
 from tentd import __version__, __doc__ as docstring
 from tentd.models.entity import Entity
 
+from tentd.utils.auth import require_authorization
+
 base = Blueprint('base', __name__)
 
 @base.route('/')
+@require_authorization
 def info ():
 	"""	Returns information about the server """
 	return jsonify(info=docstring, version=__version__)
