@@ -1,25 +1,30 @@
 """ 
 Set of functions for enforcing hmac authentication
 
-"""
-import hashlib
-import hmac
-import string
-import uuid
-import base64
+A set of utilities that implement HMAC authorization as described in the IETF
+specification and as required by the tent protocol.
 
-from random import randint, getrandbits
-from flask import request
+"""
+import hmac
+import base64
+import flask
+
+from hashlib import sha256, md5
+from random import getrandbits
 
 def generate_keypair():
     """Generate an id and 256-bit key for HMAC signing"""
     #generate the key - a uuid
-    key = hashlib.sha224(str(getrandbits(512))).hexdigest()
-    id  = hashlib.md5( str(getrandbits(256))).hexdigest()
-    return id,key
+    key = sha256(str(getrandbits(512))).hexdigest()
+    keyid  = md5( str(getrandbits(256))).hexdigest()
+    return keyid, key
 
 def parse_authstring( authstring ):
-    """Parse an auth string into a dict """
+    """Parse an auth string into a dict 
+    
+    Given an authentication header string [RFC2617], parse the fields and
+    return a dict object of each key/pair
+    """
     
      #make sure the string starts with 'MAC '
     if not authstring or not authstring.startswith('MAC '):
@@ -27,16 +32,23 @@ def parse_authstring( authstring ):
 
     pairs = authstring[4:].strip().split(',')
 
-    vars = {}
+    avars = {}
 
-    for p in pairs:
-        p = p.strip()
-        key,value = p.split("=",1)
-        vars[key] = value.strip('"')
+    for pair in pairs:
+        pair = pair.strip()
+        key, value = pair.split("=", 1)
+        avars[key] = value.strip('"')
 
-    return vars
+    return avars
 
 def normalize_request(request):
+    """Build a normalized request string from a request
+    
+    Take the flask request object and build a normalized request string 
+    as defined in the IETF MAC proposal document 
+
+    http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01
+    """
 
     auth = parse_authstring(request.headers.get('Authorization'))
     full_path = request.path + "?" + request.query_string
@@ -55,24 +67,37 @@ def normalize_request(request):
                                     80,
                                     ext)
 
-def check_request(request,key):
-    """ Return true if the given request object matches its signature"""
+def check_request(request, key):
+    """Return true if the given request object matches its signature
+    
+    This is the main test method that verifies that request
+    """
     
     auth = parse_authstring(request.headers.get('Authorization'))
     
     reqmac = auth['mac']
     norm = normalize_request(request)   
-    mac = hmac.new(key, norm, hashlib.sha256)
+    mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
 
     return reqmac == macstr
 
 
-def require_authorization(f):
+def require_authorization(func):
+    """Annotation that forces the view to do HMAC auth
     
+    Apply this decorator to your view to ensure that the browser is
+    authenticated. If they are not, they'll get a HTTP 401 and a
+    WWW-Authenticate header.
+    
+    """
+
     def decorated(*args, **kwargs):
-        auth = request.headers.get('Authorization')
-        return f(*args,**kwargs)
+        """Wrapped decorator function"""
+        
+        #TODO: actual implementation of this decorator.
+        auth = flask.request.headers.get('Authorization')
+        return func(*args, **kwargs)
 
     return decorated
