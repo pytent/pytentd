@@ -4,7 +4,7 @@ from os import close, remove
 from tempfile import mkstemp
 from unittest import TestCase, main
 
-from flask import Response, json_available, json
+from flask import Response, json_available, json, _request_ctx_stack
 from werkzeug import cached_property
 
 from tentd import create_app, db
@@ -74,8 +74,8 @@ class AppTestCase(TestCase):
         db.drop_all()
         try:
             self.ctx.pop()
-        except:
-            pass
+        finally:
+            self.assertEquals(_request_ctx_stack.top, None)
     
     @classmethod
     def afterClass(cls):
