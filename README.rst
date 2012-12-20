@@ -42,6 +42,8 @@ We use `Google's Python style guide <http://google-styleguide.googlecode.com/svn
 
 You should also try to write tests for any new code, which helps to ensure bugs get picked up more quickly.
 
+We currently hang around in #os on irc.aberwiki.org, feel free to join and come and chat to us :)
+
 Running tests
 -------------
 
