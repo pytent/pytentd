@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, json, g, request
 
 from tentd.control import follow
-from tentd.errors import TentError
+from tentd.errors import TentError, JSONBadRequest
 from tentd.models.entity import Entity
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
@@ -23,10 +23,14 @@ def profile(entity):
 @entity.route('/followers', methods=['POST'])
 def followers(entity):
     """Starts following a user, defined by the post data"""
-    if not request.data:
-        return jsonify({'error': "No POST data."}), 400
+    try:
+        post_data = json.loads(request.data)
+    except json.JSONDecodeError:
+        raise JSONBadRequest()
 
-    post_data = json.loads(request.data)
+    if not post_data:
+        raise JSONException("No POST data.")
+    
     try:
         follower = follow.start_following(post_data)
         return jsonify(follower), 200
