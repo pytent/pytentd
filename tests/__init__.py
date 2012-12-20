@@ -25,12 +25,12 @@ class AppTestCase(TestCase):
     
     As it uses the ``setUp`` and ``tearDown`` methods heavily, it makes 
     equivalent functions available under the names ``before`` and ``after``, so
-    that end users can avoid repeated calls to ``super()``.
-
-    The functions in this class are ordered by the order they are called in.
+    that end users can avoid repeated calls to ``super()``. The class versions
+    of these methods are ``beforeClass`` and ``afterClass``.
     """
 
     # Setup and teardown functions
+    # These functions are listed in the order they are called in
     
     @classmethod
     def setUpClass(cls):
@@ -40,6 +40,7 @@ class AppTestCase(TestCase):
         config = {
             'DEBUG': True,
             'TESTING': True,
+            'SERVER_NAME': 'tentd.example.com',
             'SQLALCHEMY_DATABASE_URI': "sqlite:///" + cls.db_filename
         }
         
@@ -89,6 +90,10 @@ class AppTestCase(TestCase):
         remove(cls.db_filename)
 
     # Other functions
+
+    @property
+    def base_url(self):
+        return 'http://' + self.app.config['SERVER_NAME'] + '/'
         
     def commit(self, *objects):
         """Commit several objects to the database"""
@@ -102,3 +107,6 @@ class AppTestCase(TestCase):
             self.assertIn(response.status_code, status)
         except TypeError:
             self.assertEquals(response.status_code, status)
+
+    def assertJSONError(self, response):
+        self.assertIn('error', response.json)
