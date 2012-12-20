@@ -2,13 +2,50 @@
 import requests, re, time
 from requests import ConnectionError
 
-from flask import jsonify, url_for
+from flask import jsonify, url_for, request
+from flask.exceptions import JSONHTTPException, JSONBadRequest
 
 from tentd.errors import TentError
 from tentd.models.entity import Follower
+from tentd.models.profiles import CoreProfile
 
+def discover_entity(identity):
+    """Find an entity from the given identity
+
+    - Fetch the identity, giving us a list of profiles
+    - Fetch a profile, giving us the entity's canonical identity url
+      and api endpoints
+    """
+
+    # https://tent.io/docs/server-protocol#server-discovery
+    # TODO: Parse html for links
+    try:
+        link = requests.head(entity_url).headers['Link']
+    except (ConnectionError, KeyError) as e:
+        raise TentError("Could not discover entity ({})".format(e), 404)
+
+    # TODO: deal with multiple headers
+    # https://tent.io/docs/server-protocol#http-codelinkcode-header
+    url = re.search('^<(.+)>; rel="https://tent.io/rels/profile"$', link).group(1)
+
+    # https://tent.io/docs/server-protocol#completing-the-discovery-process
+    # TODO: Accept: application/vnd.tent.v0+json
+    try:
+        profile = requests.get(entity_url).json
+        if CoreProfile.__schema__ not in profile:
+            # TODO: 404 is probably the wrong error code
+            raise TentError("Entity does not have a core profile.", 404)
+    except ConnectionError as e:
+        raise TentError("Could not fetch entity profile ({})".format(e), 404)
+
+    canonical_identity = profile[CoreProfile.__schema__]['entity']
+    
 def start_following(details):
     ''' Start following a user. '''
+
+    print "Trying to follow:", details['entity']
+    print "Our url root is:", request.url_root
+    
     entity_url = get_entity_url_from_link_header(details['entity'])
     entity = get_entity(entity_url)
 
@@ -22,7 +59,8 @@ def start_following(details):
     # TODO use entity in some to create the following identity.
 
     print details
-    follower = Follower(identifier = canonical_entity_url or details['entity'], 
+    follower = Follower(
+        identifier = canonical_entity_url or details['entity'], 
         permissions = {'public': True}, 
         licenses = details['licences'],
         types = details['types'],
