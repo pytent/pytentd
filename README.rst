@@ -37,8 +37,8 @@ Contributing
 
 We use `Google's Python style guide <http://google-styleguide.googlecode.com/svn/trunk/pyguide.html>`_ with a couple changes:
 
-- Imports of global objects are acceptable, with the `from ... import ...` style being preferred.
-- `String.format()` should be used instead of the coercion operator (`%`).
+- Imports of global objects are acceptable, with the ``from ... import ...`` style being preferred.
+- ``String.format()`` should be used instead of the coercion operator (``%``).
 
 You should also try to write tests for any new code, which helps to ensure bugs get picked up more quickly.
 
