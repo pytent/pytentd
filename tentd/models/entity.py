@@ -59,15 +59,15 @@ class Follower(db.Model):
     notification_path = Column(String)
 
     def __init__(self, **kwargs):
-        super(Follower, self).__init__(kwargs)
+        super(Follower, self).__init__(**kwargs)
         if not self.created_at:
             self.created_at = datetime.utcnow()
 
     def to_json(self):
         return json_attributes(self,
             'id',
-            'entity',
-            'created_at',
+            'identifier',
+#            'created_at',
             'notification_path',
             'permissions',
             'types',

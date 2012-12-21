@@ -4,7 +4,7 @@ from os import close, remove
 from tempfile import mkstemp
 from unittest import TestCase, main
 
-from flask import Response, json_available, json, _request_ctx_stack
+from flask import Response, json_available, json, Flask, make_response, jsonify, _request_ctx_stack
 from werkzeug import cached_property
 
 from tentd import create_app, db
@@ -25,12 +25,12 @@ class AppTestCase(TestCase):
     
     As it uses the ``setUp`` and ``tearDown`` methods heavily, it makes 
     equivalent functions available under the names ``before`` and ``after``, so
-    that end users can avoid repeated calls to ``super()``.
-
-    The functions in this class are ordered by the order they are called in.
+    that end users can avoid repeated calls to ``super()``. The class versions
+    of these methods are ``beforeClass`` and ``afterClass``.
     """
 
     # Setup and teardown functions
+    # These functions are listed in the order they are called in
     
     @classmethod
     def setUpClass(cls):
@@ -40,15 +40,64 @@ class AppTestCase(TestCase):
         config = {
             'DEBUG': True,
             'TESTING': True,
+            'SERVER_NAME': 'tentd.example.com',
             'SQLALCHEMY_DATABASE_URI': "sqlite:///" + cls.db_filename
         }
         
         cls.app = create_app(config)
         cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
+
+        external_config = {
+            'SERVER_NAME': 'localhost:5000'
+        }
+
+        cls.external_app = cls.mock_app(external_config)
         
         cls.beforeClass()
     
+    @classmethod
+    def mock_app(cls, config):
+        """ Creates a mock app which simulates our pytentd server. 
+
+        This should probably be externalised to another class. And possibly 
+        made into a real pytentd server rather than just a mocked one. However 
+        this works for now. """
+
+        # Create a basic flask mock
+        mock = Flask('testing')
+        mock.config['SERVER_NAME'] = config['SERVER_NAME']
+
+        # Create routes for it.
+        @mock.route('/testuser', methods=['HEAD'])
+        def entity_header():
+            """ Returns a hardcoded link to the entity_profile route. """
+            resp = make_response()
+            resp.headers['Link'] = '<{0}>; rel="{1}"'.format(
+                'http://localhost:5000/testuser/profile', 
+                'https://tent.io/rels/profile')
+            return resp
+
+        @mock.route('/testuser/profile', methods=['GET'])
+        def entity_profile():
+            """ Returns a hardcoded JSON which points to itself. """
+            return jsonify({"https://tent.io/types/info/core/v0.1.0": {
+                "licences": [], 
+                    "servers": [
+                        "http://pytentd.alexanderdbrown.com/testuser"
+                    ], 
+                    "tent_version": "0.2", 
+                    "entity": "http://localhost:5000/testuser"
+                }
+            }), 200
+
+        @mock.route('/testuser/notification', methods=['GET'])
+        def notify():
+            """ Returns with OK. It shouldn't need anything else. """
+            return 'OK', 200
+
+        return mock
+
     @classmethod
     def beforeClass(cls):
         pass
@@ -89,6 +138,14 @@ class AppTestCase(TestCase):
         remove(cls.db_filename)
 
     # Other functions
+
+    @property
+    def base_url(self):
+        return 'http://' + self.app.config['SERVER_NAME'] + '/'
+
+    @property
+    def external_base_url(self):
+        return 'http://' + self.external_app.config['SERVER_NAME'] + '/'
         
     def commit(self, *objects):
         """Commit several objects to the database"""
@@ -102,3 +159,6 @@ class AppTestCase(TestCase):
             self.assertIn(response.status_code, status)
         except TypeError:
             self.assertEquals(response.status_code, status)
+
+    def assertJSONError(self, response):
+        self.assertIn('error', response.json)

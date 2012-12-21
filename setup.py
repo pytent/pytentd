@@ -18,7 +18,8 @@ setup(
     install_requires = [
         'flask==0.9',
         'Flask-SQLAlchemy==0.16',
-        'requests>=0.14',
+        'requests==1.0.3',
+        'simplejson==2.6.2'
     ],
 
     extras_require = {
