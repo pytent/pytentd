@@ -19,6 +19,7 @@ setup(
         'flask==0.9',
         'Flask-SQLAlchemy==0.16',
         'requests==0.14.2',
+        'simplejson==2.6.2'
     ],
 
     extras_require = {

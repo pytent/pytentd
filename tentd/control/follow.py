@@ -1,9 +1,9 @@
 ''' Controls the following of entities. '''
-import requests, re, time
+import requests, re
 from requests import ConnectionError
 
-from flask import jsonify, url_for, request
-from flask.exceptions import JSONHTTPException, JSONBadRequest
+from flask import request
+#from flask.exceptions import JSONHTTPException, JSONBadRequest
 
 from tentd.errors import TentError
 from tentd.models.entity import Follower
@@ -20,47 +20,50 @@ def discover_entity(identity):
     # https://tent.io/docs/server-protocol#server-discovery
     # TODO: Parse html for links
     try:
-        link = requests.head(entity_url).headers['Link']
-    except (ConnectionError, KeyError) as e:
-        raise TentError("Could not discover entity ({})".format(e), 404)
+        link = requests.head(identity).headers['Link']
+        link = requests.head(identity).headers
+        print link
+    except (ConnectionError, KeyError) as ex:
+        raise TentError("Could not discover entity ({})".format(ex), 404)
+
 
     # TODO: deal with multiple headers
     # https://tent.io/docs/server-protocol#http-codelinkcode-header
-    url = re.search('^<(.+)>; rel="https://tent.io/rels/profile"$', link).group(1)
+    url = re.search('^<(.+)>; rel="https://tent.io/rels/profile"$', 
+        link).group(1)
 
     # https://tent.io/docs/server-protocol#completing-the-discovery-process
     # TODO: Accept: application/vnd.tent.v0+json
     try:
-        profile = requests.get(entity_url).json
+        profile = requests.get(url).json
         if CoreProfile.__schema__ not in profile:
             # TODO: 404 is probably the wrong error code
             raise TentError("Entity does not have a core profile.", 404)
-    except ConnectionError as e:
-        raise TentError("Could not fetch entity profile ({})".format(e), 404)
+    except ConnectionError as ex:
+        raise TentError("Could not fetch entity profile ({})".format(ex), 404)
 
     canonical_identity = profile[CoreProfile.__schema__]['entity']
+    if canonical_identity != url:
+        return discover_entity(canonical_identity)
+
+    return profile
     
 def start_following(details):
-    ''' Start following a user. '''
+    """ Peform all necessary steps to allow an entity to start follow the 
+    current entity.
+    This involves:
+    - Performing discovery on the entity wishing to follow the current entity.
+    - Making a GET request to the specified notification path which must return 200 OK.
+    - Creating a relationship in the DB.
+    - Returning the relationship in JSON. """
 
     print "Trying to follow:", details['entity']
     print "Our url root is:", request.url_root
     
-    entity_url = get_entity_url_from_link_header(details['entity'])
-    entity = get_entity(entity_url)
+    profile = discover_entity(details['entity'])
 
-    canonical_entity_url = entity['https://tent.io/types/info/core/v0.1.0']['entity']
-
-    if canonical_entity_url != entity_url and canonical_entity_url != details['entity']:
-        entity = get_entity(canonical_entity_url)
-
-    servers = entity['https://tent.io/types/info/core/v0.1.0']['servers']
-
-    # TODO use entity in some to create the following identity.
-
-    print details
     follower = Follower(
-        identifier = canonical_entity_url or details['entity'], 
+        identifier = profile[CoreProfile.__schema__]['entity'],
         permissions = {'public': True}, 
         licenses = details['licences'],
         types = details['types'],
@@ -70,39 +73,12 @@ def start_following(details):
 
     return follower.to_json()
 
-def get_entity(entity_url):
-    ''' Gets the actual entity details from an entity url. '''
-    try:
-        entity = requests.get(entity_url).json
-        if 'https://tent.io/types/info/core/v0.1.0' not in entity:
-            raise TentError('Entity does not have core profile.', 404)
-        return entity        
-    except ConnectionError as e:
-        # TODO improve this.
-        raise TentError(str(e), 404)
-
-def get_entity_url_from_link_header(entity_url):
-    ''' Gets the URL of an entity from the Link header of a given URL. '''
-    try:
-        entity_header = requests.head(entity_url).headers
-        if entity_header['Link']:
-            (url, type) = re.search('^<(.+)>; rel="(.+)"$', entity_header['Link']).groups()
-            return url
-        else:
-            raise TentError('No link header found.', 404)
-    except ConnectionError as e:
-        raise TentError(str(e), 404)
-
 def notify_following(follower):
-    data = {'id': follower.id,
-        'entity': follower.identifier,
-        'action': 'create'}
-    data_json = jsonify(data)
-
-    #print data_json
-# TODO perform notification.
+    """ Perform the GET request to the new follower's notification path.
+    It should return 200 OK if it's acceptable. """
+# TODO perform GET on the notification. Needs a notification engine.
 #    notification_url = url_for(follower.notification_path)
-#    request = requests.post(notification_url, data=data_json)
+#    request = requests.get(notification_url)
     return True
 
 def stop_following(follower_id):
