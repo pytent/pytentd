@@ -6,7 +6,7 @@ from tests import AppTestCase, main
 from flask import url_for
 
 from tentd import db
-from tentd.models.entity import Entity
+from tentd.models.entity import Entity, Follower
 
 import multiprocessing
 
@@ -55,9 +55,10 @@ class EntityBlueprintTest(AppTestCase):
             'types': 'all',
             'notification_path': 'notification'}))
 
+        # Clean up the external server.
         server.terminate()
         server.join()
-        print r.data
+
         self.assertEquals(200, r.status_code)
 
     def start_mock(self):
@@ -66,3 +67,17 @@ class EntityBlueprintTest(AppTestCase):
     def test_entity_follow_error(self):
         response = self.client.post('/testuser/followers', data='<invalid>')
         self.assertJSONError(response)
+
+    def test_entity_follow_delete(self):
+        # Add a follower to delete
+        follower = Follower(identifier="http://tent.example.com/test", notification_path="notification")
+        db.session.add(follower)
+        db.session.commit()
+
+        # Delete it.
+        response = self.client.delete('/testuser/followers/{}'.format(follower.id))
+        self.assertEquals(200, response.status_code)
+
+    def test_entity_follow_delete_non_existant(self):
+        response = self.client.delete('/testuser/followers/0')
+        self.assertEquals(404, response.status_code)

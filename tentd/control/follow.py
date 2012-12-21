@@ -1,12 +1,15 @@
 ''' Controls the following of entities. '''
-import requests
 import re
+
+import requests
 from requests import ConnectionError
 
 from flask import request
 #from flask.exceptions import JSONHTTPException, JSONBadRequest
 
 from tentd.errors import TentError
+
+from tentd.models import db
 from tentd.models.entity import Follower
 from tentd.models.profiles import CoreProfile
 
@@ -94,7 +97,13 @@ def notify_following(identifier, notification_path):
 
 def stop_following(follower_id):
     ''' Stops following a user. '''
-    pass
+    follower = Follower.query.get(follower_id)
+
+    if not follower:
+        raise TentError("User {} does not exist.".format(follower_id), 404)
+
+    db.session.delete(follower)
+    db.session.commit()
 
 def update_follower(follower_id, details):
     ''' Changes the way in which a user is followed. '''

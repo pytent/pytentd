@@ -37,6 +37,20 @@ def followers(entity):
     except TentError as e:
         return jsonify(dict(error=e.reason)), e.status
 
+@entity.route('/followers/<string:follower_id>', methods=['GET', 'PUT', 'DELETE'])
+def follower(entity, follower_id):
+    try:
+        if request.method == 'GET':
+            pass
+        if request.method == 'PUT':
+            pass
+        if request.method == 'DELETE':
+            follow.stop_following(follower_id)
+            return '', 200
+        return "Accessing: {}".format(follower_id), 200
+    except TentError as ex:
+        return jsonify(dict(error=ex.reason)), ex.status
+
 @entity.route('/notification', methods=['GET'])
 def get_notification(entity):
     """ Alerts of a notification """
