@@ -8,6 +8,8 @@ from flask import url_for
 from tentd import db
 from tentd.models.entity import Entity
 
+import multiprocessing
+
 class EntityBlueprintTest(AppTestCase):
     def before(self):
         self.name = 'testuser'
@@ -41,13 +43,25 @@ class EntityBlueprintTest(AppTestCase):
 
 #    @skip("This doesn't work yet")
     def test_entity_follow(self):
+        server = multiprocessing.Process(target=self.start_mock)
+        server.start()
+
+        import time
+        time.sleep(5)
+
         r = self.client.post('/testuser/followers', data=dumps({
-            'entity': self.base_url + 'testuser',
+            'entity': self.external_base_url + 'testuser',
             'licences': [],
             'types': 'all',
             'notification_path': 'notification'}))
+
+        server.terminate()
+        server.join()
         print r.data
         self.assertEquals(200, r.status_code)
+
+    def start_mock(self):
+        self.external_app.run()
 
     def test_entity_follow_error(self):
         response = self.client.post('/testuser/followers', data='<invalid>')
