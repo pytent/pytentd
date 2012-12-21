@@ -36,3 +36,8 @@ def followers(entity):
         return jsonify(follower), 200
     except TentError as e:
         return jsonify(dict(error=e.reason)), e.status
+
+@entity.route('/notification', methods=['GET'])
+def get_notification(entity):
+    """ Alerts of a notification """
+    return '', 200

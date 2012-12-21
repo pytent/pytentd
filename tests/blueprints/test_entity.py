@@ -39,7 +39,7 @@ class EntityBlueprintTest(AppTestCase):
         
         self.assertEquals(url, self.base_url + self.name)
 
-    @skip("This doesn't work yet")
+#    @skip("This doesn't work yet")
     def test_entity_follow(self):
         r = self.client.post('/testuser/followers', data=dumps({
             'entity': self.base_url + 'testuser',

@@ -40,7 +40,7 @@ class AppTestCase(TestCase):
         config = {
             'DEBUG': True,
             'TESTING': True,
-            'SERVER_NAME': 'tentd.example.com',
+            'SERVER_NAME': 'pytentd.alexanderdbrown.com',
             'SQLALCHEMY_DATABASE_URI': "sqlite:///" + cls.db_filename
         }
         
