@@ -21,8 +21,6 @@ def discover_entity(identity):
     # TODO: Parse html for links
     try:
         link = requests.head(identity).headers['Link']
-        link = requests.head(identity).headers
-        print link
     except (ConnectionError, KeyError) as ex:
         raise TentError("Could not discover entity ({})".format(ex), 404)
 
