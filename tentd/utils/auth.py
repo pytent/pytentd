@@ -77,9 +77,15 @@ def check_request(request, key):
     
     reqmac = auth['mac']
     norm = normalize_request(request)   
+
+    print norm
+
     mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
+
+    print "macstr " + macstr
+    print "reqmac " + reqmac
 
     return reqmac == macstr
 

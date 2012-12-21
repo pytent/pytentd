@@ -50,7 +50,7 @@ class AuthTest(tests.AppTestCase):
                                self.nonce,
                                 "GET",
                                 "/?apple=2",
-                                "localhost",
+                                self.app.config['SERVER_NAME'],
                                 80,
                                 "")
 
