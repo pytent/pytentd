@@ -78,20 +78,17 @@ def check_request(request, key):
     reqmac = auth['mac']
     norm = normalize_request(request)   
 
-    print norm
-
     mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
 
-    print "macstr " + macstr
-    print "reqmac " + reqmac
 
     return reqmac == macstr
 
 
 def require_authorization(func):
     """Annotation that forces the view to do HMAC auth
+
     
     Apply this decorator to your view to ensure that the browser is
     authenticated. If they are not, they'll get a HTTP 401 and a
