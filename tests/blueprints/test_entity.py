@@ -44,21 +44,25 @@ class EntityBlueprintTest(AppTestCase):
 #    @skip("This doesn't work yet")
     def test_entity_follow(self):
         server = multiprocessing.Process(target=self.start_mock)
-        server.start()
+        
+        if __name__ == "__main__":
+          multiprocessing.freeze_support()
+          server.start()
 
-        import time
-        time.sleep(5)
+          import time
+          time.sleep(5)
+          
+          
+          r = self.client.post('/testuser/followers', data=dumps({
+              'entity': self.external_base_url + 'testuser',
+              'licences': [],
+              'types': 'all',
+              'notification_path': 'notification'}))
 
-        r = self.client.post('/testuser/followers', data=dumps({
-            'entity': self.external_base_url + 'testuser',
-            'licences': [],
-            'types': 'all',
-            'notification_path': 'notification'}))
-
-        server.terminate()
-        server.join()
-        print r.data
-        self.assertEquals(200, r.status_code)
+          server.terminate()
+          server.join()
+          print r.data
+          self.assertEquals(200, r.status_code)
 
     def start_mock(self):
         self.external_app.run()
