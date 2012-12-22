@@ -18,7 +18,7 @@ def fetch_entity(endpoint, values):
 @entity.route('/profile')
 def profile(entity):
     """Return the info types belonging to the entity"""
-    return jsonify({p.schema: p.to_json() for p in entity.profiles})
+    return jsonify({p.schema: p.to_json() for p in entity.profiles}), 200
 
 @entity.route('/followers', methods=['POST'])
 def followers(entity):
@@ -41,9 +41,14 @@ def followers(entity):
 def follower(entity, follower_id):
     try:
         if request.method == 'GET':
-            pass
+            return jsonify(follow.get_follower(follower_id).to_json()), 200
         if request.method == 'PUT':
-            pass
+            try:
+                post_data = json.loads(request.data)
+            except json.JSONDecodeError:
+                raise JSONBadRequest()
+            updated_follower = follow.update_follower(follower_id, post_data)
+            return jsonify(updated_follower.to_json())
         if request.method == 'DELETE':
             follow.stop_following(follower_id)
             return '', 200

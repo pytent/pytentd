@@ -43,7 +43,6 @@ def discover_entity(identity):
     # TODO: Accept: application/vnd.tent.v0+json
     try:
         profile = requests.get(url).json()
-        print profile
         if CoreProfile.__schema__ not in profile:
             # TODO: 404 is probably the wrong error code
             raise TentError("Entity does not have a core profile.", 404)
@@ -54,8 +53,8 @@ def discover_entity(identity):
 
     # A slight bit of recursion here. Hopefully it'll never come to fruition
     if canonical_identity != url:
-         pass # recurses infinitely.
-#        return discover_entity(canonical_identity)
+        pass # recurses infinitely.
+#       return discover_entity(canonical_identity)
 
     return profile
     
@@ -68,9 +67,6 @@ def start_following(details):
     - Creating a relationship in the DB.
     - Returning the relationship in JSON. """
 
-    print "Trying to follow:", details['entity']
-    print "Our url root is:", request.url_root
-    
     profile = discover_entity(details['entity'])
     
     notify_resp = notify_following(profile[CoreProfile.__schema__]['entity'], 
@@ -83,6 +79,8 @@ def start_following(details):
             licenses = details['licences'],
             types = details['types'],
             notification_path = details['notification_path'])
+        db.session.add(follower)
+        db.session.commit()
         return follower.to_json()
     raise TentError("Could not notify to {}/{}".format(
         profile[CoreProfile.__schema__]['entity'],
@@ -97,21 +95,50 @@ def notify_following(identifier, notification_path):
 
 def stop_following(follower_id):
     ''' Stops following a user. '''
-    follower = Follower.query.get(follower_id)
-
-    if not follower:
-        raise TentError("User {} does not exist.".format(follower_id), 404)
-
-    db.session.delete(follower)
+    db.session.delete(get_follower(follower_id))
     db.session.commit()
 
 def update_follower(follower_id, details):
     ''' Changes the way in which a user is followed. '''
-    pass
+    follower = get_follower(follower_id)
 
+    # Set the new values.
+    if 'entity' in details:
+        follower.identity = details['entity']
+
+    if 'permissions' in details:
+        follower.permissions = details['permissions']
+
+    if 'licenses' in details:
+        follower.licenses = details['licenses']
+
+    if 'types' in details:
+        follower.types = details['types']
+
+    if 'notification_path' in details:
+        follower.notifcation_path = details['notification_path']
+
+    # Server discovery. I'm going to leave this like this as it should prbably
+    # check regardless of if the identity has actually changed.
+    profile = discover_entity(follower.identity)
+    follower.identity = profile[CoreProfile.__schema__]['entity']
+
+
+    # Do the update
+    db.session.commit()
+
+    db.session.expire(follower)
+    db.session.refresh(follower)
+
+    return follower
 def get_follower(follower_id):
     ''' Gets details for a followed user. '''
-    pass
+    follower = Follower.query.get(follower_id)
+
+    if not follower:
+        raise TentError("Follower {} does not exist.".format(follower_id), 404)
+
+    return follower
 
 def get_followers():
     ''' Gets the ids of all users being followed. '''
