@@ -42,7 +42,7 @@ def discover_entity(identity):
     # https://tent.io/docs/server-protocol#completing-the-discovery-process
     # TODO: Accept: application/vnd.tent.v0+json
     try:
-        profile = requests.get(url).json()
+        profile = requests.get(url).json
         if CoreProfile.__schema__ not in profile:
             # TODO: 404 is probably the wrong error code
             raise TentError("Entity does not have a core profile.", 404)
@@ -104,7 +104,7 @@ def update_follower(follower_id, details):
 
     # Set the new values.
     if 'entity' in details:
-        follower.identity = details['entity']
+        follower.identifier = details['entity']
 
     if 'permissions' in details:
         follower.permissions = details['permissions']
@@ -120,8 +120,8 @@ def update_follower(follower_id, details):
 
     # Server discovery. I'm going to leave this like this as it should prbably
     # check regardless of if the identity has actually changed.
-    profile = discover_entity(follower.identity)
-    follower.identity = profile[CoreProfile.__schema__]['entity']
+    profile = discover_entity(follower.identifier)
+    follower.identifier = profile[CoreProfile.__schema__]['entity']
 
 
     # Do the update

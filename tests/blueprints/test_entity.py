@@ -122,9 +122,8 @@ class EntityBlueprintTest(AppTestCase):
 
         # Ensure the update happened sucessfully in the JSON.
         self.assertEquals(follower.id, r.json['id'])
-        # TODO For some reason JSONifying the follower causes it to load the wrong identity.
-        # self.assertEquals(self.external_base_url + 'testuser', r.json['identifier'])
+        self.assertEquals(self.external_base_url + 'testuser', r.json['identifier'])
 
         # Ensure the DB was updated too.
         updated_follower = Follower.query.get(follower.id)
-        self.assertEquals(self.external_base_url + 'testuser', updated_follower.identity)
+        self.assertEquals(self.external_base_url + 'testuser', updated_follower.identifier)
