@@ -24,15 +24,15 @@ def discover_entity(identity):
     # https://tent.io/docs/server-protocol#server-discovery
     # TODO: Parse html for links
     try:
-        link = requests.head(identity).headers['Link']
-
-        # My version of Python doesn't raise this if it doesn't exist in the 
-        # above.
-        if not link: 
-            raise KeyError("Link")
-    except (ConnectionError, KeyError) as ex:
+        response = requests.head(identity)
+    except (ConnectionError) as ex:
         raise TentError("Could not discover entity ({})".format(ex), 404)
 
+    # TODO: 404 is probably the wrong error code
+    if not 'Link' in response.headers:
+        raise TentError("Entity '{}' has no Link header".format(identity), 404)
+    else:
+        link = response.headers['Link']
 
     # TODO: deal with multiple headers
     # https://tent.io/docs/server-protocol#http-codelinkcode-header
@@ -89,6 +89,8 @@ def start_following(details):
 def notify_following(identifier, notification_path):
     """ Perform the GET request to the new follower's notification path.
     It should return 200 OK if it's acceptable. """
+    # TODO: Adding a / is a potential bug.
+    # We may have to strip all identifiers of the trailing /
     notification_url = "{}/{}".format(identifier, notification_path)
     resp = requests.get(notification_url)
     return resp.status_code
