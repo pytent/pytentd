@@ -1,6 +1,7 @@
 """Tentd post types"""
 
 from datetime import datetime
+import time
 
 from sqlalchemy import (
     Table, Column, DateTime, ForeignKey, Integer, String, UnicodeText)
@@ -82,9 +83,9 @@ class Post(db.Model):
         if self.entity:
             json['entity'] = self.entity.core.identifier
         if self.published_at:
-            json['published_at'] = self.published_at.strftime("%s")
+            json['published_at'] = time.mktime(self.published_at.timetuple())
         if self.received_at:
-            json['received_at'] = self.received_at.strftime("%s")
+            json['received_at'] = time.mktime(self.received_at.timetuple())
         return json
         
 class GenericPost(Post):
