@@ -82,16 +82,21 @@ class FollowerTests(AppTestCase):
 
         # Urls used for the follower entity
         self.identity     = 'http://follower.example.com'
+        self.new_identity = 'http://changed.follower.example.com'
         self.profile      = 'http://follower.example.com/tentd/profile'
         self.notification = 'http://follower.example.com/tentd/notification'
 
         # Mocks for the server responses
         self.head = mock.patch('requests.head', new_callable=MockFunction)
         self.head.start()
+
+        profile_response = MockResponse(
+            headers={'Link':
+                '<{}>; rel="https://tent.io/rels/profile"'\
+                .format(self.profile)})
         
-        requests.head[self.identity] = MockResponse(
-            headers={'Link': '<{}>; rel="https://tent.io/rels/profile"'.format(
-                self.profile)})
+        requests.head[self.identity] = profile_response
+        requests.head[self.new_identity] = profile_response
 
         self.get = mock.patch('requests.get', new_callable=MockFunction)
         self.get.start()
@@ -136,22 +141,25 @@ class FollowerTests(AppTestCase):
         response = self.client.post('/localuser/followers', data='<invalid>')
         self.assertJSONError(response)
 
-    @skip("Requires mocks")
     def test_entity_follow_delete(self):
         # Add a follower to delete
-        follower = Follower(identifier="http://tent.example.com/test", notification_path="notification")
+        follower = Follower(
+            identifier="http://tent.example.com/test",
+            notification_path="notification")
         db.session.add(follower)
         db.session.commit()
 
         # Delete it.
-        response = self.client.delete('/testuser/followers/{}'.format(follower.id))
+        response = self.client.delete(
+            '/localuser/followers/{}'.format(follower.id))
         self.assertEquals(200, response.status_code)
 
     def test_entity_follow_delete_non_existant(self):
-        response = self.client.delete('/testuser/followers/0')
+        # TODO: This should use a JSON error, not a 404 code
+        response = self.client.delete('/localuser/followers/0')
         self.assertEquals(404, response.status_code)
 
-    @skip("Requires mocks")
+    @skip("This appears to not be updating the follower")
     def test_entity_follow_update(self):
         # Add a follower to delete
         follower = Follower(
@@ -159,20 +167,18 @@ class FollowerTests(AppTestCase):
             notification_path='notification')
         self.commit(follower)
 
-        new_identifier = 'http://changed.follower.example.com'
-
         response = self.client.put(
             '/localuser/followers/{}'.format(follower.id),
-            data=dumps({'entity': new_identifier}))
+            data=dumps({'entity': self.new_identity}))
         
         # Ensure the request was made sucessfully.
         self.assertIsNotNone(response)
         self.assertStatus(response, 200)
 
         # Ensure the update happened sucessfully in the JSON.
-        self.assertEquals(follower.id, r.json['id'])
-        self.assertEquals(new_identifier, r.json['identifier'])
+        self.assertEquals(follower.id, response.json['id'])
+        self.assertEquals(self.new_identity, response.json['identifier'])
 
         # Ensure the DB was updated
         updated_follower = Follower.query.get(follower.id)
-        self.assertEquals(new_identifier, updated_follower.identifier)
+        self.assertEquals(self.new_identity, updated_follower.identifier)
