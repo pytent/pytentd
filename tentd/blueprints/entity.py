@@ -8,6 +8,12 @@ from tentd.models.entity import Entity
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
+# TODO: Rename this to APIException?
+@entity.errorhandler(TentError)
+def exception_handler(e):
+    """Catch TentErrors and returns them as json"""
+    return jsonify(dict(error=e.reason)), e.status
+
 @entity.url_value_preprocessor
 def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
