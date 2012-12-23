@@ -1,19 +1,18 @@
 """Test the profile types"""
 
-import tests
-
 from sqlalchemy.exc import IntegrityError
 
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.profiles import Profile, CoreProfile, GenericProfile
+from tentd.tests import TentdTestCase
 
-class ProfileTest(tests.AppTestCase):
+class ProfileTest(TentdTestCase):
     def test_no_profile(self):
         with self.assertRaises(NotImplementedError):
             Profile()
 
-class CoreTest(tests.AppTestCase):
+class CoreTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="test", core={
             'identifier': "http://example.com",
@@ -37,7 +36,7 @@ class CoreTest(tests.AppTestCase):
             self.commit(CoreProfile(entity=entity))
             self.commit(CoreProfile(entity=entity))
 
-class GenericTest(tests.AppTestCase):
+class GenericTest(TentdTestCase):
     """This also tests tentd.utils.types.JSONDict"""
     
     def before(self):

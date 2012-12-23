@@ -4,10 +4,11 @@ from flask import url_for
 
 from tentd import db
 from tentd.models.entity import Entity, Follower
+from tentd.tests import TentdTestCase, patch, skip, MockFunction, MockResponse
 
-from tests import AppTestCase, skip
+import requests
 
-class EntityBlueprintTest(AppTestCase):
+class EntityBlueprintTest(TentdTestCase):
     def before(self):
         self.name = 'testuser'
         self.user = Entity(name=self.name)
@@ -36,42 +37,8 @@ class EntityBlueprintTest(AppTestCase):
         url = r.json['https://tent.io/types/info/core/v0.1.0']['entity']
         
         self.assertEquals(url, self.base_url + self.name)
-
-import mock
-import requests
-
-class MockFunction(dict):
-    """A callable argument->value dictionary for patching over a function
-
-    New argument->value pairs can be assigned in the same way as a dict,
-    and values can be returned by calling it as a function.
-    """
-    
-    def __call__(self, argument):
-        """Return the value, setting it's __argument__ attribute"""
-        if argument in self:
-            self[argument].__argument__ = argument
-            return self[argument]
-        raise KeyError("No mock response set for '{}'".format(argument))
-
-    def __repr__(self):
-        return "{}({})".format(
-            self.__class__.__name__,
-            super(MockFunction, self).__repr__())
-
-class MockResponse(mock.NonCallableMock):
-    """A mock response, for use with MockFunction"""
-
-    #: Use a default status code
-    status_code = 200
-
-    #: The argument the response is for
-    __argument__ = None
-
-    def __str__(self):
-        return "<MockResponse for {}>".format(self.__argument__)
-
-class FollowerTests(AppTestCase):
+        
+class FollowerTests(TentdTestCase):
     """
     TODO: Test connection errors
     """
@@ -87,7 +54,7 @@ class FollowerTests(AppTestCase):
         self.notification = 'http://follower.example.com/tentd/notification'
 
         # Mocks for the server responses
-        self.head = mock.patch('requests.head', new_callable=MockFunction)
+        self.head = patch('requests.head', new_callable=MockFunction)
         self.head.start()
 
         profile_response = MockResponse(
@@ -98,7 +65,7 @@ class FollowerTests(AppTestCase):
         requests.head[self.identity] = profile_response
         requests.head[self.new_identity] = profile_response
 
-        self.get = mock.patch('requests.get', new_callable=MockFunction)
+        self.get = patch('requests.get', new_callable=MockFunction)
         self.get.start()
         
         requests.get[self.profile] = MockResponse(

@@ -1,12 +1,11 @@
 """ Test cases for the user profile data """
 
-import tests
-
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.profiles import CoreProfile
-        
-class EntityTest(tests.AppTestCase):
+from tentd.tests import TentdTestCase
+
+class EntityTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="testuser")
         self.commit(self.entity)
