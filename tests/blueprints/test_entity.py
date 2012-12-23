@@ -37,54 +37,62 @@ class EntityBlueprintTest(AppTestCase):
         
         self.assertEquals(url, self.base_url + self.name)
 
-from mox import Mox
-import requests
-
-class MockResponse(object):
-    status_code = 200
-
+class Mock(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-class MoxTestCase (object):
-    def setUp(self):
-        super(MoxTestCase, self).setUp()
-        self.mox = Mox()
+    def __get_attribute__(self, name):
+        raise NotImplementedError("No attribute assigned to '{}'".format(name))
 
-    def tearDown(self):
-        super(MoxTestCase, self).tearDown()
-        self.mox.VerifyAll()
+class MockResponse(Mock):
+    #: Use a default status code
+    status_code = 200
 
-class FollowerTests(MoxTestCase, AppTestCase):
+class MockResponses(dict):
+    """A dictionary that can be used """
+    def __call__(self, url):
+        try:
+            return self[url]
+        except KeyError:
+            raise KeyError("No mock response set for url '{}'".format(url))
+
+from mock import patch, DEFAULT
+import requests
+
+class FollowerTests(AppTestCase):
+    """
+    TODO: Test connection errors
+    """
+    
     def before(self):
         self.user = Entity(name='localuser')
         self.commit(self.user)
-    
-    def test_entity_follow(self):
-        self.mox.StubOutWithMock(requests, 'head')
-        self.mox.StubOutWithMock(requests, 'get')
 
-        # The follower's identity
+    @patch.multiple(requests, head=DEFAULT, get=DEFAULT)
+    def test_entity_follow(self, head, get):
+        self.assertEquals(requests.head, head)
+        self.assertEquals(requests.get, get)
+
         identity = 'http://follower.example.com'
-        profile = 'http://follower.example.com/profile'
-        notification = 'http://follower.example.com/notification'
+        profile = 'http://follower.example.com/tentd/profile'
+        notification = 'http://follower.example.com/tentd/notification'
         
-        identity_response = MockResponse(headers={'Link':
-            '<{}>; rel="https://tent.io/rels/profile"'.format(profile)})
+        head.side_effect = MockResponses()
+        head.side_effect[identity] = MockResponse(
+            headers={'Link':
+                '<{}>; rel="https://tent.io/rels/profile"'.format(profile)})
 
-        profile_response = MockResponse(json={
-            "https://tent.io/types/info/core/v0.1.0": {
-                "licences": [],
-                "servers": [identity],
-                "tent_version": "0.2",
-                "entity": identity}})
+        get.side_effect = MockResponses()
+        get.side_effect[profile] = MockResponse(
+            json={
+                "https://tent.io/types/info/core/v0.1.0": {
+                    "licences": [],
+                    "servers": ["http://follower.example.com/tentd"],
+                    "tent_version": "0.2",
+                    "entity": identity}})
+        get.side_effect[notification] = MockResponse()
 
-        requests.head(identity).AndReturn(identity_response)
-        requests.get(profile).AndReturn(profile_response)
-        requests.get(notification).AndReturn(MockResponse())
-
-        self.mox.ReplayAll()
-                
+        
         response = self.client.post(
             '/localuser/followers',
             data=dumps({

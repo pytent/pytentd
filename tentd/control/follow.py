@@ -89,8 +89,10 @@ def start_following(details):
 def notify_following(identifier, notification_path):
     """ Perform the GET request to the new follower's notification path.
     It should return 200 OK if it's acceptable. """
+    # TODO: We can't use identifier for this!
+    #       The follower's server should be used instead.
     # TODO: Adding a / is a potential bug.
-    # We may have to strip all identifiers of the trailing /
+    #       We may have to strip all identifiers of the trailing /
     notification_url = "{}/{}".format(identifier, notification_path)
     resp = requests.get(notification_url)
     return resp.status_code

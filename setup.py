@@ -23,7 +23,7 @@ setup(
     ],
 
     tests_require = [
-        'mox',
+        'mock==1.0.1',
     ],
 
     extras_require = {

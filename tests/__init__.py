@@ -79,7 +79,6 @@ class AppTestCase(TestCase):
             self.ctx.pop()
         except:
             pass
-        self.assertEquals(_request_ctx_stack.top, None)
     
     @classmethod
     def afterClass(cls):
