@@ -11,9 +11,17 @@ setup(
     description      = 'A http://tent.io/ server and application',
     long_description = open('README.rst').read(),
 
+    # Package
+    
     packages = find_packages(),
     include_package_data = True,
     zip_safe = False,
+
+    entry_points = {
+        'console_scripts': ['tentd = tentd.cli:run']
+    },
+
+    # Requirements
 
     install_requires = [
         'flask==0.9',
@@ -22,15 +30,14 @@ setup(
         'simplejson==2.6.2'
     ],
 
-    tests_require = [
-        'mock==1.0.1',
-    ],
-
     extras_require = {
         'daemon': ['daemonize==1.1']
     },
 
-    entry_points = {
-        'console_scripts': ['tentd = tentd.cli:run']
-    },
+    # Tests
+    
+    test_suite = "tentd.tests",
+    tests_require = [
+        'mock==1.0.1',
+    ],
 )
