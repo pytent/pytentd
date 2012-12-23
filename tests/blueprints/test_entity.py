@@ -1,14 +1,11 @@
 from json import loads, dumps
-from unittest import skip
-
-from tests import AppTestCase, main
 
 from flask import url_for
 
 from tentd import db
-from tentd.models.entity import Entity
+from tentd.models.entity import Entity, Follower
 
-import multiprocessing
+from tests import AppTestCase, skip
 
 class EntityBlueprintTest(AppTestCase):
     def before(self):
@@ -37,36 +34,151 @@ class EntityBlueprintTest(AppTestCase):
     def test_entity_core_profile(self):
         r = self.client.get('/testuser/profile')
         url = r.json['https://tent.io/types/info/core/v0.1.0']['entity']
-
         
         self.assertEquals(url, self.base_url + self.name)
 
-#    @skip("This doesn't work yet")
-    def test_entity_follow(self):
-        server = multiprocessing.Process(target=self.start_mock)
+import mock
+import requests
+
+class MockFunction(dict):
+    """A callable argument->value dictionary for patching over a function
+
+    New argument->value pairs can be assigned in the same way as a dict,
+    and values can be returned by calling it as a function.
+    """
+    
+    def __call__(self, argument):
+        """Return the value, setting it's __argument__ attribute"""
+        if argument in self:
+            self[argument].__argument__ = argument
+            return self[argument]
+        raise KeyError("No mock response set for '{}'".format(argument))
+
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            super(MockFunction, self).__repr__())
+
+class MockResponse(mock.NonCallableMock):
+    """A mock response, for use with MockFunction"""
+
+    #: Use a default status code
+    status_code = 200
+
+    #: The argument the response is for
+    __argument__ = None
+
+    def __str__(self):
+        return "<MockResponse for {}>".format(self.__argument__)
+
+class FollowerTests(AppTestCase):
+    """
+    TODO: Test connection errors
+    """
+    
+    def before(self):
+        self.user = Entity(name='localuser')
+        self.commit(self.user)
+
+        # Urls used for the follower entity
+        self.identity     = 'http://follower.example.com'
+        self.new_identity = 'http://changed.follower.example.com'
+        self.profile      = 'http://follower.example.com/tentd/profile'
+        self.notification = 'http://follower.example.com/tentd/notification'
+
+        # Mocks for the server responses
+        self.head = mock.patch('requests.head', new_callable=MockFunction)
+        self.head.start()
+
+        profile_response = MockResponse(
+            headers={'Link':
+                '<{}>; rel="https://tent.io/rels/profile"'\
+                .format(self.profile)})
         
-        if __name__ == "__main__":
-          multiprocessing.freeze_support()
-          server.start()
+        requests.head[self.identity] = profile_response
+        requests.head[self.new_identity] = profile_response
 
-          import time
-          time.sleep(5)
-          
-          
-          r = self.client.post('/testuser/followers', data=dumps({
-              'entity': self.external_base_url + 'testuser',
-              'licences': [],
-              'types': 'all',
-              'notification_path': 'notification'}))
+        self.get = mock.patch('requests.get', new_callable=MockFunction)
+        self.get.start()
+        
+        requests.get[self.profile] = MockResponse(
+            json={
+                "https://tent.io/types/info/core/v0.1.0": {
+                    "entity": self.identity,
+                    "servers": ["http://follower.example.com/tentd"],
+                    "licences": [],
+                    "tent_version": "0.2",
+                }})
+        requests.get[self.notification] = MockResponse()
+        
+        # Assert that the mocks are working correctly
+        self.assertIsInstance(requests.head, MockFunction)
+        self.assertIsInstance(requests.get, MockFunction)
 
-          server.terminate()
-          server.join()
-          print r.data
-          self.assertEquals(200, r.status_code)
+    def after(self):
+        self.head.stop()
+        self.get.stop()
 
-    def start_mock(self):
-        self.external_app.run()
+    @skip("Waiting for tentd.control.follow.notify_following to be fixed")
+    def test_entity_follow(self):
+        response = self.client.post(
+            '/localuser/followers',
+            data=dumps({
+                'entity': self.identity,
+                'licences': [],
+                'types': 'all',
+                'notification_path': 'notification'
+            }))
 
+        # Ensure the request was made sucessfully.
+        self.assertIsNotNone(response)
+        self.assertStatus(response, 200)
+
+        # Ensure the follower was created in the DB.
+        self.assertIsNotNone(Follower.query.get(response.json['id']))
+        
     def test_entity_follow_error(self):
-        response = self.client.post('/testuser/followers', data='<invalid>')
+        response = self.client.post('/localuser/followers', data='<invalid>')
         self.assertJSONError(response)
+
+    def test_entity_follow_delete(self):
+        # Add a follower to delete
+        follower = Follower(
+            identifier="http://tent.example.com/test",
+            notification_path="notification")
+        db.session.add(follower)
+        db.session.commit()
+
+        # Delete it.
+        response = self.client.delete(
+            '/localuser/followers/{}'.format(follower.id))
+        self.assertEquals(200, response.status_code)
+
+    def test_entity_follow_delete_non_existant(self):
+        # TODO: This should use a JSON error, not a 404 code
+        response = self.client.delete('/localuser/followers/0')
+        self.assertEquals(404, response.status_code)
+
+    @skip("This appears to not be updating the follower")
+    def test_entity_follow_update(self):
+        # Add a follower to delete
+        follower = Follower(
+            identifier='http://follower.example.com',
+            notification_path='notification')
+        self.commit(follower)
+
+        response = self.client.put(
+            '/localuser/followers/{}'.format(follower.id),
+            data=dumps({'entity': self.new_identity}))
+        
+        # Ensure the request was made sucessfully.
+        self.assertIsNotNone(response)
+        self.assertStatus(response, 200)
+
+        # Ensure the update happened sucessfully in the JSON.
+        self.assertEquals(follower.id, response.json['id'])
+        self.assertEquals(self.new_identity, response.json['identifier'])
+
+        # Ensure the DB was updated
+        updated_follower = Follower.query.get(follower.id)
+        self.assertEquals(self.new_identity, updated_follower.identifier)

@@ -64,6 +64,7 @@ class Follower(db.Model):
             self.created_at = datetime.utcnow()
 
     def to_json(self):
+        print 'In model: {}'.format(self.identifier)
         return json_attributes(self,
             'id',
             'identifier',

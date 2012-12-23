@@ -22,6 +22,10 @@ setup(
         'simplejson==2.6.2'
     ],
 
+    tests_require = [
+        'mock==1.0.1',
+    ],
+
     extras_require = {
         'daemon': ['daemonize==1.1']
     },
