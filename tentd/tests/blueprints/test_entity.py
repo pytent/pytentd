@@ -86,7 +86,6 @@ class FollowerTests(TentdTestCase):
         self.head.stop()
         self.get.stop()
 
-    @skip("Waiting for tentd.control.follow.notify_following to be fixed")
     def test_entity_follow(self):
         response = self.client.post(
             '/localuser/followers',
