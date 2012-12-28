@@ -127,12 +127,9 @@ def update_follower(follower_id, details):
     profile = discover_entity(follower.identifier)
     follower.identifier = profile[CoreProfile.__schema__]['entity']
 
-
     # Do the update
+    temp = db.session.merge(follower)
     db.session.commit()
-
-    db.session.expire(follower)
-    db.session.refresh(follower)
 
     return follower
 def get_follower(follower_id):

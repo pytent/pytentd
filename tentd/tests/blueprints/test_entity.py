@@ -51,6 +51,7 @@ class FollowerTests(TentdTestCase):
         self.identity     = 'http://follower.example.com'
         self.new_identity = 'http://changed.follower.example.com'
         self.profile      = 'http://follower.example.com/tentd/profile'
+        self.new_profile  = 'http://changed.follower.example.com/tentd/profile'
         self.notification = 'http://follower.example.com/tentd/notification'
 
         # Mocks for the server responses
@@ -61,9 +62,14 @@ class FollowerTests(TentdTestCase):
             headers={'Link':
                 '<{}>; rel="https://tent.io/rels/profile"'\
                 .format(self.profile)})
+
+        new_profile_response = MockResponse(
+            headers={'Link':
+                '<{}>; rel="https://tent.io/rels/profile"'\
+                .format(self.new_profile)})
         
         requests.head[self.identity] = profile_response
-        requests.head[self.new_identity] = profile_response
+        requests.head[self.new_identity] = new_profile_response
 
         self.get = patch('requests.get', new_callable=MockFunction)
         self.get.start()
@@ -76,6 +82,16 @@ class FollowerTests(TentdTestCase):
                     "licences": [],
                     "tent_version": "0.2",
                 }})
+
+        requests.get[self.new_profile] = MockResponse(
+            json={
+                "https://tent.io/types/info/core/v0.1.0": {
+                    "entity": self.new_identity,
+                    "servers": ["http://follower.example.com/tentd"],
+                    "licences": [],
+                    "tent_version": "0.2",
+                }})
+
         requests.get[self.notification] = MockResponse()
         
         # Assert that the mocks are working correctly
@@ -125,7 +141,6 @@ class FollowerTests(TentdTestCase):
         response = self.client.delete('/localuser/followers/0')
         self.assertEquals(404, response.status_code)
 
-    @skip("This appears to not be updating the follower")
     def test_entity_follow_update(self):
         # Add a follower to delete
         follower = Follower(
