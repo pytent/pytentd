@@ -5,6 +5,10 @@ A Python `tent.io <http://tent.io/>`_ server and application.
 
 Currently, only the server is being developed.
 
+License
+---------------
+pytentd is licensed under the Apache License 2.0. For details, see the LICENSE file.
+
 Running pytentd
 ---------------
 
