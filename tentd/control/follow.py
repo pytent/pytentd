@@ -69,7 +69,7 @@ def start_following(details):
 
     profile = discover_entity(details['entity'])
     
-    notify_resp = notify_following(profile[CoreProfile.__schema__]['entity'], 
+    notify_resp = notify_following(profile, 
         details['notification_path'])
 
     if notify_resp == 200:
@@ -86,14 +86,14 @@ def start_following(details):
         profile[CoreProfile.__schema__]['entity'],
         details['notification_path']), notify_resp)
 
-def notify_following(identifier, notification_path):
+def notify_following(profile, notification_path):
     """ Perform the GET request to the new follower's notification path.
     It should return 200 OK if it's acceptable. """
     # TODO: We can't use identifier for this!
     #       The follower's server should be used instead.
     # TODO: Adding a / is a potential bug.
     #       We may have to strip all identifiers of the trailing /
-    notification_url = "{}/{}".format(identifier, notification_path)
+    notification_url = "{}/{}".format(profile[CoreProfile.__schema__]['servers'][0], notification_path)
     resp = requests.get(notification_url)
     return resp.status_code
 
@@ -127,12 +127,9 @@ def update_follower(follower_id, details):
     profile = discover_entity(follower.identifier)
     follower.identifier = profile[CoreProfile.__schema__]['entity']
 
-
     # Do the update
+    temp = db.session.merge(follower)
     db.session.commit()
-
-    db.session.expire(follower)
-    db.session.refresh(follower)
 
     return follower
 def get_follower(follower_id):
