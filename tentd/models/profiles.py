@@ -49,8 +49,8 @@ class Profile(db.Model):
         
         super(Profile, self).__init__(**kwargs)
         
-        # Set the schema if the class has one defined
-        if hasattr(self.__class__, '__schema__'):
+        # Set the schema if it is blank and the class has one defined
+        if not self.schema and hasattr(self.__class__, '__schema__'):
             self.schema = self.__class__.__schema__
 
 class CoreProfile(Profile):

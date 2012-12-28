@@ -5,6 +5,10 @@ A Python `tent.io <http://tent.io/>`_ server and application.
 
 Currently, only the server is being developed.
 
+License
+---------------
+pytentd is licensed under the Apache License 2.0. For details, see the LICENSE file.
+
 Running pytentd
 ---------------
 
@@ -47,13 +51,12 @@ We currently hang around in #os on irc.aberwiki.org, feel free to join and come 
 Running tests
 -------------
 
-The unittests can be run with `nose`_, run from the root of the repository.
-Alternatively, `sniffer`_ will run the tests whenever the source is changed.
+The unittests can be run with ``python setup.py test``. Alternatively, `nose`_ and optionaly `sniffer`_ make running the tests easier, and have a more readable output.
 
-While developing, `tabnanny`_ and `pylint`_ are useful for checking code quality.
+While developing, `pyflakes`_ and `pylint`_ are useful for checking code quality.
 
 .. _nose: https://nose.readthedocs.org/en/latest/index.html
 .. _sniffer: http://pypi.python.org/pypi/sniffer
 
-.. _tabnanny: http://docs.python.org/2/library/tabnanny.html
+.. _pyflakes: http://pypi.python.org/pypi/pyflakes
 .. _pylint: http://pypi.python.org/pypi/pylint

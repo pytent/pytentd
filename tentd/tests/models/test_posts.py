@@ -5,13 +5,12 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
-import tests
-
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.posts import Post, GenericPost, Status, Essay, Repost
+from tentd.tests import TentdTestCase
 
-class PostTest(tests.AppTestCase):
+class PostTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="Test")
         self.post = Status(
@@ -29,7 +28,7 @@ class PostTest(tests.AppTestCase):
     def test_published_time(self):
         self.assertIsInstance(self.post.published_at, datetime)
 
-class GenericPostTest(tests.AppTestCase):
+class GenericPostTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="Test")
         self.post = GenericPost(
@@ -44,7 +43,7 @@ class GenericPostTest(tests.AppTestCase):
     def test_json(self):
         assert 'attr' in self.post.to_json()['content']
 
-class StatusTest(tests.AppTestCase):
+class StatusTest(TentdTestCase):
     def before(self):
         self.status = Status(text="Hello world", published_at='now')
         db.session.add(self.status)
@@ -58,7 +57,7 @@ class StatusTest(tests.AppTestCase):
     def test_status_content(self):
         self.assertIn('text', self.status.to_json()['content'])
         
-class EssayTest(tests.AppTestCase):
+class EssayTest(TentdTestCase):
     def test_create_essay (self):
         essay = Essay(
             title="This is an essay post ⛺",
@@ -73,7 +72,7 @@ This is a unicode tent symbol: ⛺.
         db.session.add(essay)
         db.session.commit()
 
-class RepostTest(tests.AppTestCase):
+class RepostTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="Reposted")
         self.post = Status(entity=self.entity, text="This will be reposted.")

@@ -5,40 +5,46 @@ A set of utilities that implement HMAC authorization as described in the IETF
 specification and as required by the tent protocol.
 
 """
-import hmac
-import base64
-import flask
 
+__all__ = [
+    'generate_keypair',
+    'check_request',
+    'parse_authstring',
+    'normalize_request']
+
+import base64
+import hmac
 from hashlib import sha256, md5
+from functools import wraps
 from random import getrandbits
 
+from flask import request
+
 def generate_keypair():
-    """Generate an id and 256-bit key for HMAC signing"""
-    #generate the key - a uuid
-    key = sha256(str(getrandbits(512))).hexdigest()
-    keyid  = md5( str(getrandbits(256))).hexdigest()
+    """Generate an id and 256-bit uuid key for HMAC signing"""
+    key   = sha256(str(getrandbits(512))).hexdigest()
+    keyid =    md5(str(getrandbits(256))).hexdigest()
     return keyid, key
 
-def parse_authstring( authstring ):
+def parse_authstring(authstring):
     """Parse an auth string into a dict 
     
     Given an authentication header string [RFC2617], parse the fields and
     return a dict object of each key/pair
     """
     
-     #make sure the string starts with 'MAC '
+    # Ensure the string starts with 'MAC '
     if not authstring or not authstring.startswith('MAC '):
+        # TODO: Should this raise an error?
         return False
 
     pairs = authstring[4:].strip().split(',')
 
     avars = {}
-
     for pair in pairs:
-        pair = pair.strip()
-        key, value = pair.split("=", 1)
+        key, value = pair.strip().split("=", 1)
         avars[key] = value.strip('"')
-
+    
     return avars
 
 def normalize_request(request):
@@ -52,20 +58,11 @@ def normalize_request(request):
 
     auth = parse_authstring(request.headers.get('Authorization'))
     full_path = request.path + "?" + request.query_string
-   
-    if auth.has_key('ext'):
-        ext = auth['ext']
-    else:
-        ext = ""
+    ext = auth['ext'] if auth.has_key('ext') else ""
 
-    template = "{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}"
-    
-    return template.format(auth['ts'], auth['nonce'], 
-                                    request.method,
-                                    full_path,
-                                    request.host,
-                                    80,
-                                    ext)
+    return "\n".join([
+        str(auth['ts']), auth['nonce'], request.method,
+        full_path, request.host, str(80), ext])
 
 def check_request(request, key):
     """Return true if the given request object matches its signature
@@ -78,13 +75,11 @@ def check_request(request, key):
     reqmac = auth['mac']
     norm = normalize_request(request)   
 
+
     mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
-
-
     return reqmac == macstr
-
 
 def require_authorization(func):
     """Annotation that forces the view to do HMAC auth
@@ -95,12 +90,12 @@ def require_authorization(func):
     WWW-Authenticate header.
     
     """
-
+    @wraps(func)
     def decorated(*args, **kwargs):
-        """Wrapped decorator function"""
+        """Wrapped decorator function
         
-        #TODO: actual implementation of this decorator.
-        auth = flask.request.headers.get('Authorization')
+        TODO: actual implementation of this decorator.
+        """
+        auth = request.headers.get('Authorization')
         return func(*args, **kwargs)
-
     return decorated

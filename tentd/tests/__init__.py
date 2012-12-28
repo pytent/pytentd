@@ -1,10 +1,16 @@
-"""Tests for pytentd"""
+"""Tests for pytentd
+
+Also provides some imports from the testing libraries used.
+"""
+
+__all__ = ['TentdTestCase', 'MockResponse', 'MockFunction', 'patch' 'skip']
 
 from os import close, remove
 from tempfile import mkstemp
-from unittest import TestCase, main
+from unittest import TestCase, skip
 
-from flask import Response, json_available, json, Flask, make_response, jsonify, _request_ctx_stack
+from flask import json, jsonify, Response, _request_ctx_stack
+from mock import NonCallableMock, patch
 from werkzeug import cached_property
 
 from tentd import create_app, db
@@ -12,13 +18,46 @@ from tentd import create_app, db
 class TestResponse(Response):
     @cached_property
     def json(self):
-        if not json_available:
-            raise NotImplementedError
-        elif not self.mimetype == 'application/json':
-            return None
-        return json.loads(self.data)
+        if self.mimetype == 'application/json':
+            return json.loads(self.data)
+        return None
 
-class AppTestCase(TestCase):
+class MockResponse(NonCallableMock):
+    """A mock response, for use with MockFunction"""
+
+    #: Use a default status code
+    status_code = 200
+
+    #: The argument the response is for
+    __argument__ = None
+
+    def __str__(self):
+        return "<MockResponse for {}>".format(self.__argument__)
+
+class MockFunction(dict):
+    """A callable argument->value dictionary for patching over a function
+
+    New argument->value pairs can be assigned in the same way as a dict,
+    and values can be returned by calling it as a function.
+
+        with mock.patch('requests.head', new_callable=MockFunction) as head:
+            head['http://example.com'] = MockResponse(data="Hello world.")
+            ...
+    """
+
+    def __call__(self, argument):
+        """Return the value, setting it's __argument__ attribute"""
+        if argument in self:
+            self[argument].__argument__ = argument
+            return self[argument]
+        raise KeyError("No mock response set for '{}'".format(argument))
+
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            super(MockFunction, self).__repr__())
+
+class TentdTestCase(TestCase):
     """A base test case for pytentd
 
     It handles setting up the app and request contexts
@@ -48,55 +87,7 @@ class AppTestCase(TestCase):
         cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
 
-        external_config = {
-            'SERVER_NAME': 'localhost:5000'
-        }
-
-        cls.external_app = cls.mock_app(external_config)
-        
         cls.beforeClass()
-    
-    @classmethod
-    def mock_app(cls, config):
-        """ Creates a mock app which simulates our pytentd server. 
-
-        This should probably be externalised to another class. And possibly 
-        made into a real pytentd server rather than just a mocked one. However 
-        this works for now. """
-
-        # Create a basic flask mock
-        mock = Flask('testing')
-        mock.config['SERVER_NAME'] = config['SERVER_NAME']
-
-        # Create routes for it.
-        @mock.route('/testuser', methods=['HEAD'])
-        def entity_header():
-            """ Returns a hardcoded link to the entity_profile route. """
-            resp = make_response()
-            resp.headers['Link'] = '<{0}>; rel="{1}"'.format(
-                'http://localhost:5000/testuser/profile', 
-                'https://tent.io/rels/profile')
-            return resp
-
-        @mock.route('/testuser/profile', methods=['GET'])
-        def entity_profile():
-            """ Returns a hardcoded JSON which points to itself. """
-            return jsonify({"https://tent.io/types/info/core/v0.1.0": {
-                "licences": [], 
-                    "servers": [
-                        "http://pytentd.alexanderdbrown.com/testuser"
-                    ], 
-                    "tent_version": "0.2", 
-                    "entity": "http://localhost:5000/testuser"
-                }
-            }), 200
-
-        @mock.route('/testuser/notification', methods=['GET'])
-        def notify():
-            """ Returns with OK. It shouldn't need anything else. """
-            return 'OK', 200
-
-        return mock
 
     @classmethod
     def beforeClass(cls):
@@ -106,9 +97,7 @@ class AppTestCase(TestCase):
         """ Create the database, and set up a request context """
         self.ctx = self.app.test_request_context()
         self.ctx.push()
-        
         db.create_all(app=self.app)
-        
         self.before()
         
     def before(self):
@@ -123,8 +112,8 @@ class AppTestCase(TestCase):
         db.drop_all()
         try:
             self.ctx.pop()
-        finally:
-            self.assertEquals(_request_ctx_stack.top, None)
+        except:
+            pass
     
     @classmethod
     def afterClass(cls):
@@ -142,10 +131,6 @@ class AppTestCase(TestCase):
     @property
     def base_url(self):
         return 'http://' + self.app.config['SERVER_NAME'] + '/'
-
-    @property
-    def external_base_url(self):
-        return 'http://' + self.external_app.config['SERVER_NAME'] + '/'
         
     def commit(self, *objects):
         """Commit several objects to the database"""
