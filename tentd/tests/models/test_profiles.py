@@ -15,7 +15,7 @@ class ProfileTest(TentdTestCase):
 class CoreTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="test", core={
-            'identifier': "http://example.com",
+            'identity': "http://example.com",
         })
         self.commit(self.entity)
 
@@ -26,7 +26,7 @@ class CoreTest(TentdTestCase):
         assert 'entity' in self.entity.core.to_json()
 
     def test_arguments(self):
-        assert self.entity.core.identifier == "http://example.com"
+        assert self.entity.core.identity == "http://example.com"
 
     def test_profile_constraint(self):
         """Test that multiple profiles with the same schema cannot be added"""

@@ -126,7 +126,7 @@ class FollowerTests(TentdTestCase):
     def test_entity_follow_delete(self):
         # Add a follower to delete
         follower = Follower(
-            identifier="http://tent.example.com/test",
+            identity="http://tent.example.com/test",
             notification_path="notification")
         db.session.add(follower)
         db.session.commit()
@@ -144,7 +144,7 @@ class FollowerTests(TentdTestCase):
     def test_entity_follow_update(self):
         # Add a follower to delete
         follower = Follower(
-            identifier='http://follower.example.com',
+            identity='http://follower.example.com',
             notification_path='notification')
         self.commit(follower)
 
@@ -158,8 +158,8 @@ class FollowerTests(TentdTestCase):
 
         # Ensure the update happened sucessfully in the JSON.
         self.assertEquals(follower.id, response.json['id'])
-        self.assertEquals(self.new_identity, response.json['identifier'])
+        self.assertEquals(self.new_identity, response.json['identity'])
 
         # Ensure the DB was updated
         updated_follower = Follower.query.get(follower.id)
-        self.assertEquals(self.new_identity, updated_follower.identifier)
+        self.assertEquals(self.new_identity, updated_follower.identity)
