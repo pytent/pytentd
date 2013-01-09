@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, json, g, request
 from tentd.control import follow
 from tentd.errors import TentError, JSONBadRequest
 from tentd.models.entity import Entity
+from tentd.models.posts import Post
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
@@ -66,3 +67,16 @@ def follower(entity, follower_id):
 def get_notification(entity):
     """ Alerts of a notification """
     return '', 200
+
+@entity.route('/posts', methods=['GET'])
+def get_posts(entity):
+    """ Returns all public posts. Can be scoped. """
+    return jsonify(entity.posts), 200
+
+@entity.route('/posts/<string:post_id>', methods=['GET'])
+def get_post(entity, post_id):
+    """ Returns a single post with the given id. """
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    if post in entity.posts:
+        return jsonify(post), 200
+    return 'Post does not belong to entity.', 404
