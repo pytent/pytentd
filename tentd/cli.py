@@ -119,7 +119,7 @@ subparsers.add_parser('start',
     help="start a pytentd server")
 
 def start_command(app, args):
-    app.run()
+    app.run(threaded=True)
 
 def run():
     """Parse the command line arguments and run the application"""
