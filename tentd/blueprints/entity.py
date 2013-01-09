@@ -89,10 +89,25 @@ def get_posts(entity):
         #     follower.notify(post)
         
 
-@entity.route('/posts/<string:post_id>', methods=['GET'])
+@entity.route('/posts/<string:post_id>', methods=['GET', 'PUT', 'DELETE'])
 def get_post(entity, post_id):
     """ Returns a single post with the given id. """
     post = Post.query.filter_by(id=post_id).first_or_404()
-    if post in entity.posts:
+    if post not in entity.posts:
+        return 'Post does not belong to entity.', 404
+    if request.method == 'GET':
         return jsonify(post), 200
-    return 'Post does not belong to entity.', 404
+    if request.method == 'PUT':
+        # TODO update the post. Not sure if this way will work.
+        for item in post.__schema__:
+            if item in request.data:
+                post[item] = request.data[item]
+        post = db.session.merge(post)
+        db.session.commit()
+
+        return '', 200
+    if request.method == 'DELETE':
+        db.session.delete(post)
+        db.session.commit()
+        # TODO Send out a notification?
+        return '', 200
