@@ -68,7 +68,7 @@ def get_notification(entity):
     """ Alerts of a notification """
     return '', 200
 
-@entity.route('/posts', methods=['GET'])
+@entity.route('/posts', methods=['GET', 'POST'])
 def get_posts(entity):
     """ Returns all public posts. Can be scoped. """
     # TODO Filter to public posts only when that's included.
@@ -76,7 +76,18 @@ def get_posts(entity):
     #      We'll need to think about how we handle these filters as this is 
     #      potential unsanatised input from the user and is therefore vunerable
     #      to SQL injection attacks.
-    return jsonify(entity.posts), 200
+    if request.method == 'GET':
+        return jsonify(entity.posts), 200
+    if request.method == 'POST':
+        data = json.loads(request.data)
+        post = Post(data)
+        db.session.add(post)
+        db.session.commit()
+
+        # TODO add in something to this affect:
+        # for follower in entity.followers:
+        #     follower.notify(post)
+        
 
 @entity.route('/posts/<string:post_id>', methods=['GET'])
 def get_post(entity, post_id):
