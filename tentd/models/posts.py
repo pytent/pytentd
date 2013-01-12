@@ -1,16 +1,38 @@
 """Tentd post types"""
 
 from datetime import datetime
-import time
+from time import mktime
 
-from sqlalchemy import (
-    Table, Column, DateTime, ForeignKey, Integer, String, UnicodeText)
+from mongoengine import (DateTimeField, DictField, IntField, StringField, URLField)
 
 from tentd.models import db
 from tentd.models.entity import Entity
-from tentd.utils.types import JSONDict
 
-class Post(db.Model):
+EntityRefrence = lambda: ReferenceField(
+    'Entity', required=True, reverse_delete_rule='CASCADE')
+
+def time_to_string(time_field):
+    return mktime(time_field.timetuple())
+
+def maybe(object, dictonary, attribute_name, func=None):
+    """Adds a named attribute from object to a dictionary, only if the object
+    has such an attribute.
+
+    If no such attribute exists, the function does nothing.
+
+    :Parameters:
+    - object: The object to fetch the attribute from
+    - dictionary (dict): The dictionary to add to
+    - attribute_name (str): The name of the attribute to fetch
+    - func (function): A function that can modify the return value
+    """
+    if hasattr(object, attribute_name):
+        value = getattr(object, attribute_name)
+        if func is not None:
+            value = func(value)
+        dictonary[attribute_name] = value
+
+class Post(db.Document):
     """A post belonging to an entity.
     
     Posts are at the core of Tent. Posts are sent to followers immediately after
@@ -24,47 +46,20 @@ class Post(db.Model):
     
     This is documented at: https://tent.io/docs/post-types
     """
-    
-    #: The column used to identify the objects type
-    model_type = Column(String(50))
-    
-    __mapper_args__ = {
-        'polymorphic_on': model_type,
-    }
 
-    id = Column(Integer, primary_key=True)
-    
-    entity_id = Column(Integer, ForeignKey('entity.id'))
-    entity = db.relationship(
-        'Entity', primaryjoin=entity_id==Entity.id, backref='posts')
+    # TODO: Can we have backrefs?
+    entity = EntityRefrence()
     
     #: The time the post was published
-    published_at = Column(DateTime)
+    published_at = DateTimeField()
     
     #: The time we received the post from the publishing server
-    received_at = Column(DateTime)
-    
-    def __init__(self, *args, **kwargs):
-        """Creates a Post
-    
-        Automatically sets `published_at` and `received_at` to the current time
-        if they are equal to `'now'`.
-        """
-        for time in ('published_at', 'received_at'):
-            if kwargs.get(time, None) == 'now':
-                kwargs[time] = datetime.utcnow()
+    received_at = DateTimeField()
 
-        super(Post, self).__init__(*args, **kwargs)
-    
-    @property
-    def schema(self):
-        raise NotImplementedError(
-            "This Post subclass or object has not defined a schema")
-    
-    def content_to_json(self):
-        raise NotImplementedError(
-            "This Post subclass has not implemented content_to_json()")
+    schema = StringField(required=True)
 
+    content = DictField()
+    
     def to_json(self):
         """Returns the post as a python dictonary
     
@@ -76,97 +71,11 @@ class Post(db.Model):
         TODO: 'permissions'
         """
         json = {
-            'id': self.id,
+            'id': self._id,
             'type': self.schema,
-            'content': self.content_to_json(),
+            'content': self.content,
         }
-        if self.entity:
-            json['entity'] = self.entity.core.identity
-        if self.published_at:
-            json['published_at'] = time.mktime(self.published_at.timetuple())
-        if self.received_at:
-            json['received_at'] = time.mktime(self.received_at.timetuple())
+        maybe(self, json, 'entity', lambda value: value.core.identity)
+        maybe(self, json, 'published_at', time_to_string)
+        maybe(self, json, 'received_at', time_to_string)
         return json
-        
-class GenericPost(Post):
-    """A generic post type, for use when a post is unsupported by pytentd"""
-    
-    __mapper_args__ = {'polymorphic_identity': 'generic'}
-
-    id = Column(Integer, ForeignKey('post.id'), primary_key=True)
-
-    schema = Column(String(256), nullable=False)
-    
-    content = Column(JSONDict)
-
-    def content_to_json(self):
-        return self.content
-
-class Status(Post):
-    """The Status post type
-    
-    Contains either text, a location, or both.
-    
-    TODO: Locations are currently unsupported
-    
-    This is documented at: https://tent.io/docs/post-types#status
-    """
-    
-    __mapper_args__ = {'polymorphic_identity': 'status'}
-
-    id = Column(Integer, ForeignKey('post.id'), primary_key=True)
-    
-    schema = "https://tent.io/types/post/status/v0.1.0"
-
-    text = Column(String(256))
-    
-    def content_to_json(self):
-        return {'text': self.text}
-
-class Essay(Post):
-    """The Essay post type
-
-    TODO: Support tags and excerpts
-    """
-
-    __mapper_args__ = {'polymorphic_identity': 'essay'}
-
-    id = Column(Integer, ForeignKey('post.id'), primary_key=True)
-
-    schema = "https://tent.io/types/post/essay/v0.1.0"
-
-    title = Column(String)
-
-    body = Column(UnicodeText)
-    excerpt = Column(UnicodeText)
-    
-    def content_to_json(self):
-        return {
-            'title': self.title,
-            'body': self.body
-        }
-
-class Repost(Post):
-    """The Repost post type"""
-    
-    __mapper_args__ = {'polymorphic_identity': 'repost'}
-
-    # id = Column(Integer, ForeignKey('post.id'), primary_key=True)
-
-    schema = "https://tent.io/types/post/repost/v0.1.0"
-
-    original_entity_id = Column(Integer, ForeignKey('entity.id'))
-    original_entity = db.relationship(
-        'Entity', primaryjoin=original_entity_id==Entity.id,
-        doc="The entity that a post is being reposted from")
-
-    original_post_id = Column(Integer, ForeignKey('post.id'))
-    original_post = db.relationship(
-        'Post', join_depth=1, remote_side=[Post.id],
-        doc="The post that is being reposted")
-    
-    def content_to_json(self):
-        return {
-            'entity': self.entity.core.identity,
-            'id': self.original_post.id,
-        }

@@ -1,10 +1,10 @@
 """The database models"""
 
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.mongoengine import MongoEngine
 
-db = SQLAlchemy()
+db = MongoEngine()
 
 # Ensure all models are loaded
-import tentd.models.entity
-import tentd.models.profiles
-import tentd.models.posts
+from tentd.models.entity import *
+from tentd.models.profiles import *
+# from tentd.models.posts import *

@@ -1,61 +1,65 @@
-"""
-Data model for tent entities
-"""
-from datetime import datetime
+"""Data model for tent entities"""
 
-from sqlalchemy import Column, Integer, DateTime, String, Text, ForeignKey
+from datetime import datetime
+from mongoengine import (DateTimeField, DictField, IntField, ListField,
+    StringField, ReferenceField)
 
 from tentd.models import db
-from tentd.models.profiles import Profile, CoreProfile, BasicProfile
+from tentd.models.profiles import CoreProfile
 from tentd.utils import json_attributes
 
-class Entity(db.Model):
+class Entity(db.Document):
     """A tent entity"""
     
-    id = Column(Integer, primary_key=True)
-    
     #: The name used as the entities api root
-    name = Column(String(20), unique=True)
+    name = StringField(max_length=100, unique=True)
 
-    profiles = db.relationship('Profile', lazy='dynamic')
+    profiles = DictField()
+
+    #: The entities this entity is being followed by
+    followers = ListField()
+
+    #: The entities this entity is following
+    followings = ListField()
 
     @property
     def core(self):
+        """Fetch the core profile for the entity"""
         return self.profiles.filter_by(schema=CoreProfile.__schema__).one()
-
-    def __init__(self, core={}, **kwargs):
-        """Creates an Entity and a CoreProfile"""
-        super(Entity, self).__init__(**kwargs)
-        if not core is None:
-            db.session.add(CoreProfile(entity=self, **core))
     
     def __repr__(self):
-        return "<{} '{}' [{}]>".format(self.__class__.__name__, self.name, self.id)
+        return "<Entity '{}' [{}]>".format(self.name, self.id)
     
     def __str__(self):
-        """Returns the entities 'name'
-        
-        Warning: Entity are often used as an argument to url_for,
-        so you should avoid changing this.
+        """Returns self.name
+
+        Avoid changing this behaviour, as it allows the entity to be used in
+        url_for calls without explicitly stating that the name is being used
         """
         return self.name
 
-class Follower(db.Model):
+    def to_json(self):
+        return json_attributes(self,
+            'name',
+            'profiles',
+            'followers',
+            'followings')
+
+class Follower(db.Document):
     """Someone following an Entity"""
 
-    id = Column(Integer, primary_key=True)
+    owner = ReferenceField('Entity', reverse_delete_rule='CASCADE', dbref=False)
 
-    # TODO: Make this unique on the owner entity
-    identity = Column(String, unique=True)
+    identity = StringField(unique_with='owner')
 
     #: The time the follower was created
-    created_at = Column(DateTime)
+    created_at = DateTimeField()
 
     permissions = None
     licenses = None
     types = None
 
-    notification_path = Column(String)
+    notification_path = StringField()
 
     def __init__(self, **kwargs):
         super(Follower, self).__init__(**kwargs)
@@ -70,5 +74,4 @@ class Follower(db.Model):
             'notification_path',
             'permissions',
             'types',
-            'licenses'
-        )
+            'licenses')

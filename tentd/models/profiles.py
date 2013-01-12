@@ -1,16 +1,14 @@
 """Entity profile types"""
 
 from flask import url_for
-from sqlalchemy import (
-    Column, Integer, String, Text, ForeignKey, UniqueConstraint)
-from sqlalchemy.orm import backref
+from mongoengine import (
+    DateTimeField, DictField, IntField, StringField, URLField)
 
 from tentd import __tent_version__ as tent_version
 from tentd.models import db
 from tentd.utils import json_attributes
-from tentd.utils.types import JSONDict
 
-class Profile(db.Model):
+class BaseProfile(db.EmbeddedDocument):
     """A profile information type belonging to an entity
 
     The Profile class is an abstract type, defining the relationship between
@@ -20,40 +18,24 @@ class Profile(db.Model):
 
     See: https://tent.io/docs/info-types
     """
-    
-    id = Column(Integer, primary_key=True)
-    
-    #: The entity the profile belongs to
-    entity = db.relationship('Entity', back_populates='profiles')
-    entity_id = Column(Integer, ForeignKey('entity.id'), nullable=False)
 
     #: The info type schema
-    schema = Column(String(256), nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint("entity_id", "schema"),
-    )
-
-    #: The discriminator for the object type
-    type = Column(String(50))
-    
-    __mapper_args__ = {
-        'polymorphic_on': type,
-    }
+    schema = URLField(unique=True)
 
     def __init__(self, **kwargs):
         if self.__class__ == Profile:
             raise NotImplementedError(
-                "Don't create instances of Profile! "
-                "Use profiles.Generic instead")
+                "BaseProfile should be treated as an abstract class."
+                "Don't make instances of it.")
         
         super(Profile, self).__init__(**kwargs)
-        
-        # Set the schema if it is blank and the class has one defined
+
+        # Use the classes default schema if it is availible and no schema has
+        # been given. TODO: test this
         if not self.schema and hasattr(self.__class__, '__schema__'):
             self.schema = self.__class__.__schema__
 
-class CoreProfile(Profile):
+class CoreProfile(BaseProfile):
     """This model provides the Core profile info type.
 
     Documentation on this profile type can be found here:
@@ -62,25 +44,21 @@ class CoreProfile(Profile):
     TODO: Add licence and server relationships
     """
     __schema__ = 'https://tent.io/types/info/core/v0.1.0'
-    __mapper_args__ = {'polymorphic_identity': 'core'}
-
-    id = Column(Integer, ForeignKey('profile.id'), primary_key=True)
 
     #: The canonical entity identity
-    identity = Column(String, unique=True)
+    # The generated url for the entity can be found at
+    # url_for('base.link', entity=self.entity, _external=True)
+    identity = URLField(unique=True, required=True)
 
     def to_json(self):
-        # The entity's API root
-        link = url_for('base.link', entity=self.entity, _external=True)
-
         return {
-            'entity': self.identity or link,
+            'entity': self.identity,
             'licences': [],
-            'servers': [link],
+            'servers': [],
             'tent_version': tent_version
         }
 
-class BasicProfile(Profile):
+class BasicProfile(BaseProfile):
     """The Basic profile info type.
 
     The Basic profile helps humanize users. All fields are optional but help
@@ -90,18 +68,15 @@ class BasicProfile(Profile):
     """
 
     __schema__ = 'https://tent.io/types/info/basic/v0.1.0'
-    __mapper_args__ = {'polymorphic_identity': 'profile'}
 
-    id = Column(Integer, ForeignKey('profile.id'), primary_key=True)
+    avatar_url = URLField()
 
-    avatar_url = Column(String)
+    name       = StringField()
+    location   = StringField()
+    gender     = StringField()
 
-    name       = Column(String)
-    location   = Column(String)
-    gender     = Column(String)
-
-    birthdate  = Column(String)
-    bio        = Column(Text)
+    birthdate  = StringField() # TODO: ?
+    bio        = StringField()
 
     def to_json(self):
         return json_attributes(self,
@@ -113,10 +88,7 @@ class BasicProfile(Profile):
             'bio'
         )
 
-class GenericProfile(Profile):
-    __mapper_args__ = {'polymorphic_identity': 'generic'}
-
-    content = Column(JSONDict)
-
+class Profile(BaseProfile, db.DynamicEmbeddedDocument):
     def to_json(self):
-        return self.content
+        # TODO: test this
+        return json_attributes(self, *self._dynamic_fields)
