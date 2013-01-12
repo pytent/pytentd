@@ -12,10 +12,9 @@ from tentd.utils import json_attributes
 class Entity(db.Model):
     """A tent entity"""
     
-    #: The local identifier and primary key
     id = Column(Integer, primary_key=True)
     
-    #: The url identifier
+    #: The name used as the entities api root
     name = Column(String(20), unique=True)
 
     profiles = db.relationship('Profile', lazy='dynamic')
@@ -47,7 +46,7 @@ class Follower(db.Model):
     id = Column(Integer, primary_key=True)
 
     # TODO: Make this unique on the owner entity
-    identifier = Column(String, unique=True)
+    identity = Column(String, unique=True)
 
     #: The time the follower was created
     created_at = Column(DateTime)
@@ -64,10 +63,9 @@ class Follower(db.Model):
             self.created_at = datetime.utcnow()
 
     def to_json(self):
-        print 'In model: {}'.format(self.identifier)
         return json_attributes(self,
             'id',
-            'identifier',
+            'identity',
 #            'created_at',
             'notification_path',
             'permissions',

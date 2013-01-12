@@ -81,7 +81,7 @@ class Post(db.Model):
             'content': self.content_to_json(),
         }
         if self.entity:
-            json['entity'] = self.entity.core.identifier
+            json['entity'] = self.entity.core.identity
         if self.published_at:
             json['published_at'] = time.mktime(self.published_at.timetuple())
         if self.received_at:
@@ -167,6 +167,6 @@ class Repost(Post):
     
     def content_to_json(self):
         return {
-            'entity': self.entity.core.identifier,
+            'entity': self.entity.core.identity,
             'id': self.original_post.id,
         }

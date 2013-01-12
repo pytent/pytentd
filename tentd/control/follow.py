@@ -42,7 +42,7 @@ def discover_entity(identity):
     # https://tent.io/docs/server-protocol#completing-the-discovery-process
     # TODO: Accept: application/vnd.tent.v0+json
     try:
-        profile = requests.get(url).json
+        profile = requests.get(url).json()
         if CoreProfile.__schema__ not in profile:
             # TODO: 404 is probably the wrong error code
             raise TentError("Entity does not have a core profile.", 404)
@@ -74,7 +74,7 @@ def start_following(details):
 
     if notify_resp == 200:
         follower = Follower(
-            identifier = profile[CoreProfile.__schema__]['entity'],
+            identity = profile[CoreProfile.__schema__]['entity'],
             permissions = {'public': True}, 
             licenses = details['licences'],
             types = details['types'],
@@ -87,15 +87,17 @@ def start_following(details):
         details['notification_path']), notify_resp)
 
 def notify_following(profile, notification_path):
-    """ Perform the GET request to the new follower's notification path.
-    It should return 200 OK if it's acceptable. """
-    # TODO: We can't use identifier for this!
-    #       The follower's server should be used instead.
+    """Perform the GET request to the new follower's notification path.
+    
+    It should return 200 OK if it's acceptable."""
     # TODO: Adding a / is a potential bug.
-    #       We may have to strip all identifiers of the trailing /
-    notification_url = "{}/{}".format(profile[CoreProfile.__schema__]['servers'][0], notification_path)
-    resp = requests.get(notification_url)
-    return resp.status_code
+    #       We may have to strip all identities of trailing /'s
+    api_root = profile[CoreProfile.__schema__]['servers'][0]
+
+    if not api_root[-1] == '/':
+       api_root += '/'
+    
+    return requests.get(api_root + notification_path).status_code
 
 def stop_following(follower_id):
     ''' Stops following a user. '''
@@ -108,7 +110,8 @@ def update_follower(follower_id, details):
 
     # Set the new values.
     if 'entity' in details:
-        follower.identifier = details['entity']
+        profile = discover_entity(details['entity'])
+        follower.identity = profile[CoreProfile.__schema__]['entity']
 
     if 'permissions' in details:
         follower.permissions = details['permissions']
@@ -122,16 +125,12 @@ def update_follower(follower_id, details):
     if 'notification_path' in details:
         follower.notifcation_path = details['notification_path']
 
-    # Server discovery. I'm going to leave this like this as it should prbably
-    # check regardless of if the identity has actually changed.
-    profile = discover_entity(follower.identifier)
-    follower.identifier = profile[CoreProfile.__schema__]['entity']
-
     # Do the update
-    temp = db.session.merge(follower)
+    follower = db.session.merge(follower)
     db.session.commit()
 
     return follower
+    
 def get_follower(follower_id):
     ''' Gets details for a followed user. '''
     follower = Follower.query.get(follower_id)

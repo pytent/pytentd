@@ -1,30 +1,25 @@
+=======
 pytentd
 =======
 
-A Python `tent.io <http://tent.io/>`_ server and application.
-
-Currently, only the server is being developed.
-
-License
----------------
-pytentd is licensed under the Apache License 2.0. For details, see the LICENSE file.
+A Python `tent.io <http://tent.io/>`_ server.
 
 Running pytentd
----------------
+===============
 
 Running pytentd is easy::
 
-    $ tentd
+    $ tentd start
 
 Information on the command line options can be found with::
 
     $ tentd --help
-    $ tentd daemon --help
+    $ tentd [subcommand] --help
 
 Configuration
 -------------
 
-pytentd can load a configuration file into the Flask application.
+pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option.
 This file should be a python file containing capitalised variables.
 
 These configuration variables can be used for pytentd:
@@ -39,6 +34,9 @@ Documentation is also available on the configuration variables for `Flask`_ and 
 Contributing
 ============
 
+Coding Style
+------------
+
 We use `Google's Python style guide <http://google-styleguide.googlecode.com/svn/trunk/pyguide.html>`_ with a couple changes:
 
 - Imports of global objects are acceptable, with the ``from ... import ...`` style being preferred.
@@ -51,7 +49,20 @@ We currently hang around in #os on irc.aberwiki.org, feel free to join and come 
 Running tests
 -------------
 
-The unittests can be run with ``python setup.py test``. Alternatively, `nose`_ and optionaly `sniffer`_ make running the tests easier, and have a more readable output.
+To run the tests on the installed pytentd package::
+
+    python -m unittest discover tentd
+
+To run the tests on the pytentd source::
+
+    cd pytentd
+    python setup.py test
+
+Other tools
+-----------
+
+`nose`_ and `sniffer`_ are both useful test runners. Nose alone makes running tests a little easier, and can run the tests both from the source or on an installed module.
+Sniffer is a tool built on top of nose, and will run the tests each time the source is modified.
 
 While developing, `pyflakes`_ and `pylint`_ are useful for checking code quality.
 
@@ -60,3 +71,9 @@ While developing, `pyflakes`_ and `pylint`_ are useful for checking code quality
 
 .. _pyflakes: http://pypi.python.org/pypi/pyflakes
 .. _pylint: http://pypi.python.org/pypi/pylint
+
+License
+=======
+
+pytentd is licensed under the Apache License 2.0.
+For details, see the LICENSE file.

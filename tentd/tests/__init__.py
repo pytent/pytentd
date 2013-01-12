@@ -74,13 +74,11 @@ class TentdTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         """Place the app in testing mode and initialise the database"""
-        cls.db_fd, cls.db_filename = mkstemp()
-        
         config = {
             'DEBUG': True,
             'TESTING': True,
             'SERVER_NAME': 'tentd.example.com',
-            'SQLALCHEMY_DATABASE_URI': "sqlite:///" + cls.db_filename
+            'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:"
         }
         
         cls.app = create_app(config)
@@ -121,10 +119,7 @@ class TentdTestCase(TestCase):
 
     @classmethod
     def tearDownClass (cls):
-        """Close the database file, and delete it"""
         cls.afterClass()
-        close(cls.db_fd) 
-        remove(cls.db_filename)
 
     # Other functions
 

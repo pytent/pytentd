@@ -66,15 +66,15 @@ class CoreProfile(Profile):
 
     id = Column(Integer, ForeignKey('profile.id'), primary_key=True)
 
-    #: The canonical entity identifier (an url)
-    identifier = Column(String, unique=True)
+    #: The canonical entity identity
+    identity = Column(String, unique=True)
 
     def to_json(self):
         # The entity's API root
         link = url_for('base.link', entity=self.entity, _external=True)
 
         return {
-            'entity': self.identifier or link,
+            'entity': self.identity or link,
             'licences': [],
             'servers': [link],
             'tent_version': tent_version
