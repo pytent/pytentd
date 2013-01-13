@@ -5,8 +5,6 @@ Also provides some imports from the testing libraries used.
 
 __all__ = ['TentdTestCase', 'MockResponse', 'MockFunction', 'patch' 'skip']
 
-from os import close, remove
-from tempfile import mkstemp
 from unittest import TestCase, skip
 
 from flask import json, jsonify, Response, _request_ctx_stack
@@ -68,6 +66,8 @@ class TentdTestCase(TestCase):
     of these methods are ``beforeClass`` and ``afterClass``.
     """
 
+    dbname = 'tentd-testing'
+
     # Setup and teardown functions
     # These functions are listed in the order they are called in
     
@@ -78,7 +78,7 @@ class TentdTestCase(TestCase):
             'DEBUG': True,
             'TESTING': True,
             'SERVER_NAME': 'tentd.example.com',
-            'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:"
+            'MONGODB_SETTINGS': {'db': cls.dbname},
         }
         
         cls.app = create_app(config)
@@ -95,7 +95,6 @@ class TentdTestCase(TestCase):
         """ Create the database, and set up a request context """
         self.ctx = self.app.test_request_context()
         self.ctx.push()
-        db.create_all(app=self.app)
         self.before()
         
     def before(self):
@@ -107,7 +106,9 @@ class TentdTestCase(TestCase):
     def tearDown(self):
         """Clear the database, and the current request"""
         self.after()
-        db.drop_all()
+        for collection in db.connection[self.dbname].collection_names():
+            if not collection == 'system.indexes':
+                db.connection[self.dbname].drop_collection(collection)
         try:
             self.ctx.pop()
         except:
@@ -126,12 +127,6 @@ class TentdTestCase(TestCase):
     @property
     def base_url(self):
         return 'http://' + self.app.config['SERVER_NAME'] + '/'
-        
-    def commit(self, *objects):
-        """Commit several objects to the database"""
-        for o in objects:
-            db.session.add(o)
-        db.session.commit()
 
     def assertStatus(self, response, status):
         """Asserts that the response has returned a certain status code"""
@@ -141,4 +136,4 @@ class TentdTestCase(TestCase):
             self.assertEquals(response.status_code, status)
 
     def assertJSONError(self, response):
-        self.assertIn('error', response.json)
+        self.assertIn('error', response.json())

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from mongoengine import (DateTimeField, DictField, IntField, ListField,
-    StringField, ReferenceField)
+    StringField, ReferenceField, URLField)
 
 from tentd.models import db
 from tentd.models.profiles import CoreProfile
@@ -12,7 +12,9 @@ class Entity(db.Document):
     """A tent entity"""
     
     #: The name used as the entities api root
-    name = StringField(max_length=100, unique=True)
+    name = StringField(max_length=100, primary_key=True, unique=True)
+
+    test = StringField()
 
     profiles = DictField()
 
@@ -48,9 +50,11 @@ class Entity(db.Document):
 class Follower(db.Document):
     """Someone following an Entity"""
 
-    owner = ReferenceField('Entity', reverse_delete_rule='CASCADE', dbref=False)
+    #: The entity the follower is following
+    owner = ReferenceField(Entity, reverse_delete_rule='CASCADE', dbref=False)
 
-    identity = StringField(unique_with='owner')
+    #: The identity of the follower
+    identity = URLField(unique_with='owner')
 
     #: The time the follower was created
     created_at = DateTimeField()
@@ -70,7 +74,7 @@ class Follower(db.Document):
         return json_attributes(self,
             'id',
             'identity',
-#            'created_at',
+#           'created_at', # TODO: Modify json_attributes() to take a function?
             'notification_path',
             'permissions',
             'types',

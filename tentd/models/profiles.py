@@ -1,8 +1,7 @@
 """Entity profile types"""
 
 from flask import url_for
-from mongoengine import (
-    DateTimeField, DictField, IntField, StringField, URLField)
+from mongoengine import DictField, IntField, StringField, URLField
 
 from tentd import __tent_version__ as tent_version
 from tentd.models import db
@@ -23,10 +22,8 @@ class BaseProfile(db.EmbeddedDocument):
     schema = URLField(unique=True)
 
     def __init__(self, **kwargs):
-        if self.__class__ == Profile:
-            raise NotImplementedError(
-                "BaseProfile should be treated as an abstract class."
-                "Don't make instances of it.")
+        if self.__class__ is Profile:
+            raise NotImplementedError("This class is abstract.")
         
         super(Profile, self).__init__(**kwargs)
 

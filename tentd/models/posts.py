@@ -6,10 +6,6 @@ from time import mktime
 from mongoengine import (DateTimeField, DictField, IntField, StringField, URLField)
 
 from tentd.models import db
-from tentd.models.entity import Entity
-
-EntityRefrence = lambda: ReferenceField(
-    'Entity', required=True, reverse_delete_rule='CASCADE')
 
 def time_to_string(time_field):
     return mktime(time_field.timetuple())
@@ -47,8 +43,7 @@ class Post(db.Document):
     This is documented at: https://tent.io/docs/post-types
     """
 
-    # TODO: Can we have backrefs?
-    entity = EntityRefrence()
+    entity = ReferenceField('Entity', required=True, reverse_delete_rule='CASCADE')
     
     #: The time the post was published
     published_at = DateTimeField()
@@ -58,7 +53,7 @@ class Post(db.Document):
 
     schema = StringField(required=True)
 
-    content = DictField()
+    content = DictField(required=True)
     
     def to_json(self):
         """Returns the post as a python dictonary
