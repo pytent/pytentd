@@ -12,6 +12,7 @@ from mock import NonCallableMock, patch
 from werkzeug import cached_property
 
 from tentd import create_app, db
+from tentd.models import *
 
 class TestResponse(Response):
     @cached_property
@@ -85,6 +86,8 @@ class TentdTestCase(TestCase):
         cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
 
+        cls.clear_database()
+        
         cls.beforeClass()
 
     @classmethod
@@ -106,9 +109,7 @@ class TentdTestCase(TestCase):
     def tearDown(self):
         """Clear the database, and the current request"""
         self.after()
-        for collection in db.connection[self.dbname].collection_names():
-            if not collection == 'system.indexes':
-                db.connection[self.dbname].drop_collection(collection)
+        self.clear_database()
         try:
             self.ctx.pop()
         except:
@@ -123,6 +124,11 @@ class TentdTestCase(TestCase):
         cls.afterClass()
 
     # Other functions
+
+    @classmethod
+    def clear_database(cls):
+        for collection in (Entity, Follower, Post, BaseProfile):
+            collection.drop_collection()
 
     @property
     def base_url(self):

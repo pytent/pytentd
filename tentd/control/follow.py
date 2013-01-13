@@ -10,8 +10,7 @@ from flask import request
 from tentd.errors import TentError
 
 from tentd.models import db
-from tentd.models.entity import Follower
-from tentd.models.profiles import CoreProfile
+from tentd.models.entity import Follower, CoreProfile
 
 def discover_entity(identity):
     """Find an entity from the given identity

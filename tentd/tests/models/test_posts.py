@@ -6,86 +6,60 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from tentd import db
-from tentd.models.entity import Entity
-from tentd.models.posts import Post, GenericPost, Status, Essay, Repost
+from tentd.models.entity import Entity, BaseProfile, CoreProfile
+from tentd.models.posts import Post
 from tentd.tests import TentdTestCase
 
 class PostTest(TentdTestCase):
     def before(self):
-        self.entity = Entity(name="Test")
-        self.post = Status(
+        self.entity = Entity(name="testuser")
+        self.entity.save()
+        
+        self.core = CoreProfile(
             entity=self.entity,
-            published_at='now',
-            text="Hello world")
-        db.session.add(self.entity)
-        db.session.add(self.post)
-        db.session.commit()
+            identity="http://example.com",
+            servers=[
+                "http://tent.example.com",
+            ])
+        self.core.save()
+        
+        self.post = Post(
+            entity=self.entity,
+            schema='https://tent.io/types/post/status/v0.1.0',
+            content={'text': "Hello world"})
+        self.post.save()
     
     def test_post_owner(self):
-        self.assertIn(self.post, self.entity.posts)
-        self.assertEquals(self.post.entity, self.entity)
-    
-    def test_published_time(self):
-        self.assertIsInstance(self.post.published_at, datetime)
+        assert self.post in Post.objects(entity=self.entity)
+        assert self.post == Post.objects(entity=self.entity).first()
+        assert self.post.entity == self.entity
 
-class GenericPostTest(TentdTestCase):
+    def test_post_content(self):
+        post = Post.objects.get(entity=self.entity)
+        assert post.content['text'] == "Hello world"
+
+    def test_post_json(self):
+        assert 'content' in self.post.to_json()
+
+class UnicodePostTest(TentdTestCase):
     def before(self):
         self.entity = Entity(name="Test")
-        self.post = GenericPost(
+        self.entity.save()
+        
+        self.essay = Post(
             entity=self.entity,
-            schema="https://tent.io/types/post/example/v0.0.0",
-            content={'attr': 'value'})
-        self.commit(self.entity, self.post)
+            schema='https://tent.io/types/post/status/v0.1.0',
+            content={
+                'title': "This is an essay post ⛺",
+                'body': """
+                    This is a essay post, intended for longer texts.
+                    Unlike a status post there is no limit on size.
 
-    def test_attributes(self):
-        assert 'attr' in self.post.content
+                    This is a unicode tent symbol: ⛺
 
-    def test_json(self):
-        assert 'attr' in self.post.to_json()['content']
+                    This text does nothing.""".strip().replace('\t', '')
+            })
+        self.essay.save()
 
-class StatusTest(TentdTestCase):
-    def before(self):
-        self.status = Status(text="Hello world", published_at='now')
-        db.session.add(self.status)
-        db.session.commit()
-        
-    def test_status(self):
-        post = Post.query.all()[0]
-        self.assertEquals(post, self.status)
-        self.assertIsInstance(post, Status)
-    
-    def test_status_content(self):
-        self.assertIn('text', self.status.to_json()['content'])
-        
-class EssayTest(TentdTestCase):
-    def test_create_essay (self):
-        essay = Essay(
-            title="This is an essay post ⛺",
-            body="""
-This is a essay post, intended for longer texts.
-Unlike a status post there is no limit on size.
-
-However, I don't have much to write.
-
-This is a unicode tent symbol: ⛺.
-""".strip())
-        db.session.add(essay)
-        db.session.commit()
-
-class RepostTest(TentdTestCase):
-    def before(self):
-        self.entity = Entity(name="Reposted")
-        self.post = Status(entity=self.entity, text="This will be reposted.")
-        self.commit(self.entity, self.post)
-
-        self.repost_entity = Entity(name="Reposter")
-        self.repost = Repost(
-            entity=self.repost_entity,
-            original_entity=self.entity,
-            original_post=self.post
-        )
-        self.commit(self.repost_entity, self.repost)
-
-    def test_repost (self):
-        self.assertEquals(self.entity, self.repost.original_entity)
-        self.assertEquals(self.post, self.repost.original_post)
+    def test_post_content(self):
+        assert "⛺" in self.essay.content['body']

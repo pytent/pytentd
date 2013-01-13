@@ -1,32 +1,9 @@
 """Tentd post types"""
 
-from datetime import datetime
-from time import mktime
-
-from mongoengine import (DateTimeField, DictField, IntField, StringField, URLField)
+from mongoengine import *
 
 from tentd.models import db
-
-def time_to_string(time_field):
-    return mktime(time_field.timetuple())
-
-def maybe(object, dictonary, attribute_name, func=None):
-    """Adds a named attribute from object to a dictionary, only if the object
-    has such an attribute.
-
-    If no such attribute exists, the function does nothing.
-
-    :Parameters:
-    - object: The object to fetch the attribute from
-    - dictionary (dict): The dictionary to add to
-    - attribute_name (str): The name of the attribute to fetch
-    - func (function): A function that can modify the return value
-    """
-    if hasattr(object, attribute_name):
-        value = getattr(object, attribute_name)
-        if func is not None:
-            value = func(value)
-        dictonary[attribute_name] = value
+from tentd.utils import time_to_string, maybe
 
 class Post(db.Document):
     """A post belonging to an entity.
@@ -43,7 +20,7 @@ class Post(db.Document):
     This is documented at: https://tent.io/docs/post-types
     """
 
-    entity = ReferenceField('Entity', required=True, reverse_delete_rule='CASCADE')
+    entity = ReferenceField('Entity', required=True, reverse_delete_rule=CASCADE, dbref=False)
     
     #: The time the post was published
     published_at = DateTimeField()
@@ -66,11 +43,11 @@ class Post(db.Document):
         TODO: 'permissions'
         """
         json = {
-            'id': self._id,
+            'id': self.id,
+            'entity': self.entity.core.identity,
             'type': self.schema,
             'content': self.content,
         }
-        maybe(self, json, 'entity', lambda value: value.core.identity)
-        maybe(self, json, 'published_at', time_to_string)
-        maybe(self, json, 'received_at', time_to_string)
+        maybe(json, 'published_at', self.published_at, time_to_string)
+        maybe(json, 'received_at', self.received_at, time_to_string)
         return json
