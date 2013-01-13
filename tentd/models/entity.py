@@ -1,5 +1,7 @@
 """Data model for tent entities"""
 
+__all__ = ['Entity', 'EntityMixin', 'Follower', 'Following']
+
 from datetime import datetime
 
 from mongoengine import *
@@ -58,17 +60,15 @@ class EntityMixin(object):
     entity = ReferenceField('Entity',
         required=True, reverse_delete_rule=CASCADE, dbref=False)
 
-# Profile requires Entity to already be defined
+# Other models require Entity to already be defined
 from tentd.models.profiles import Profile, CoreProfile
+from tentd.models.posts import Post
 
-class Follower(db.Document):
+class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
 
-    #: The entity the follower is following
-    owner = ReferenceField(Entity, reverse_delete_rule='CASCADE', dbref=False)
-
     #: The identity of the follower
-    identity = URLField(unique_with='owner')
+    identity = URLField(unique_with='entity')
 
     #: The time the follower was created
     created_at = DateTimeField()
@@ -95,5 +95,5 @@ class Follower(db.Document):
             'types',
             'licenses')
 
-class Following(db.Document):
+class Following(EntityMixin, db.Document):
     pass

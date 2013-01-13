@@ -1,5 +1,7 @@
 """Profile info types - https://tent.io/docs/info-types"""
 
+__all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
+
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
