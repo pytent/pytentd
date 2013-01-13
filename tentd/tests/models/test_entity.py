@@ -3,12 +3,9 @@
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.profiles import CoreProfile
-from tentd.tests import TentdTestCase
+from tentd.tests import TentdTestCase, EntityTentdTestCase
 
-class EntityTest(TentdTestCase):
-    def before(self):
-        self.create_test_entity()
-        
+class EntityTest(EntityTentdTestCase):
     def test_create_entity(self):
         """Test creating and accessing an Entity"""
         assert self.entity == Entity.objects.get(name="testuser")

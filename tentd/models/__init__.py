@@ -6,5 +6,5 @@ db = MongoEngine()
 
 # Ensure all models are loaded
 from tentd.models.entity import *
+from tentd.models.profiles import *
 from tentd.models.posts import *
-

@@ -127,7 +127,7 @@ class TentdTestCase(TestCase):
 
     @classmethod
     def clear_database(cls):
-        for collection in (Entity, Follower, Post, BaseProfile):
+        for collection in (Entity, Follower, Post, Profile):
             collection.drop_collection()
 
     @property
@@ -143,3 +143,13 @@ class TentdTestCase(TestCase):
 
     def assertJSONError(self, response):
         self.assertIn('error', response.json())
+
+class EntityTentdTestCase(TentdTestCase):
+    """A test case that sets up an entity and it's core profile"""
+    def before(self):
+        self.entity = Entity(name="testuser")
+        self.entity.save()
+        self.entity.create_core(
+            identity= "http://example.com",
+            servers=["http://tent.example.com"]
+        )

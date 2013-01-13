@@ -6,22 +6,14 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from tentd import db
-from tentd.models.entity import Entity, BaseProfile, CoreProfile
+from tentd.models.entity import Entity
+from tentd.models.profiles import Profile, CoreProfile
 from tentd.models.posts import Post
-from tentd.tests import TentdTestCase
+from tentd.tests import TentdTestCase, EntityTentdTestCase
 
-class PostTest(TentdTestCase):
+class PostTest(EntityTentdTestCase):
     def before(self):
-        self.entity = Entity(name="testuser")
-        self.entity.save()
-        
-        self.core = CoreProfile(
-            entity=self.entity,
-            identity="http://example.com",
-            servers=[
-                "http://tent.example.com",
-            ])
-        self.core.save()
+        super(PostTest, self).before()
         
         self.post = Post(
             entity=self.entity,

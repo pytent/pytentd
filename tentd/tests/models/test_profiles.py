@@ -1,24 +1,18 @@
 """Test the profile types"""
 
-from sqlalchemy.exc import IntegrityError
+from mongoengine import NotUniqueError
 
 from tentd import db
 from tentd.models.entity import Entity
 from tentd.models.profiles import Profile, CoreProfile, GenericProfile
-from tentd.tests import TentdTestCase
+from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class ProfileTest(TentdTestCase):
     def test_no_profile(self):
         with self.assertRaises(NotImplementedError):
             Profile()
 
-class CoreTest(TentdTestCase):
-    def before(self):
-        self.entity = Entity(name="test", core={
-            'identity': "http://example.com",
-        })
-        self.commit(self.entity)
-
+class CoreProfileTest(EntityTentdTestCase):
     def test_schema(self):
         assert self.entity.core.schema == CoreProfile.__schema__
 
@@ -30,17 +24,16 @@ class CoreTest(TentdTestCase):
 
     def test_profile_constraint(self):
         """Test that multiple profiles with the same schema cannot be added"""
-        entity = Entity(name="testuser", core=None)
-        self.commit(entity)
-        with self.assertRaises(IntegrityError):
-            self.commit(CoreProfile(entity=entity))
-            self.commit(CoreProfile(entity=entity))
+        with self.assertRaises(Exception):
+            CoreProfile(
+                entity=self.entity,
+                identity="http://bad.example.com"
+            ).save()
 
-class GenericTest(TentdTestCase):
-    """This also tests tentd.utils.types.JSONDict"""
-    
+class GenericProfileTest(EntityTentdTestCase):    
     def before(self):
-        self.entity = Entity(name="test")
+        super(GenericProfileTest, self).before()
+        
         self.profile = GenericProfile(
             entity=self.entity,
             schema="https://tent.io/types/info/example/v0.0.0",
@@ -49,29 +42,17 @@ class GenericTest(TentdTestCase):
                 'dict': {'attr': 'value'},
                 'list': [1, 2, 3],
             })
-        self.commit(self.entity, self.profile)
+        self.profile.save()
 
     def test_attributes(self):
-        assert self.profile.content['attr'] == 'value'
+        assert self.profile.content['dict']['attr'] == 'value'
 
-    def test_json(self):
-        assert 'attr' in self.profile.to_json()
+    def test_json_attributes(self):
+        profile = Profile.objects.get(id=self.profile.id)
+        assert profile.to_json()['content']['dict']['attr'] == 'value'
 
     def test_unique_schema(self):
-        with self.assertRaises(IntegrityError):
-            self.commit(GenericProfile(
+        with self.assertRaises(NotUniqueError):
+            GenericProfile(
                 entity=self.entity,
-                schema="https://tent.io/types/info/example/v0.0.0"))
-
-    def test_mutable(self):
-        self.profile.content['attr'] = 'newvalue'
-        assert self.profile in db.session.dirty
-
-    def test_mutable_subkey(self):
-        """The top level of a JSONDict column is mutable, but any dictionaries
-        below it are of type dict(), and changes to them will not mark the
-        column as dirty: this needs to be done manually"""
-        self.profile.content['dict']['attr'] = 'newvalue'
-        self.profile.content['list'].append(4)
-        self.profile.content.changed()
-        assert self.profile in db.session.dirty
+                schema="https://tent.io/types/info/example/v0.0.0").save()
