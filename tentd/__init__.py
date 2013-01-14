@@ -5,7 +5,10 @@ __all__ = ['create_app']
 __version__ = '0.1.0'
 __tent_version__ = '0.2'
 
-from flask import Flask
+from os import getcwd
+from argparse import ArgumentParser
+
+from flask import Config, Flask
 
 from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
@@ -29,5 +32,38 @@ def create_app(config=dict()):
 
     return app
 
+parser = ArgumentParser(description=__doc__)
+
+# Basic arguments
+parser.add_argument("-c", "--conf",
+    help="a configuration file to use")
+parser.add_argument("-s", "--show", action="store_true",
+    help="show the configuration")
+parser.add_argument("-d", "--dev", "--debug", action="store_true",
+    help="run flask in debug mode")
+
+def run():
+    """Parse the command line arguments and run the application"""
+    args = parser.parse_args()
+    config = Config(getcwd())
+
+    # Set the configuration options from the file given
+    if args.conf:
+        config.from_pyfile(args.conf)
+
+    # Load the rest of the arguments, overriding the conf file
+    config['DEBUG'] = args.dev
+
+    # Create the application and create the database
+    app = create_app(config)
+
+    # Show the application config
+    if args.show:
+        from pprint import pprint
+        pprint(dict(app.config))
+        print vars(args)
+
+    app.run(threaded=True)
+
 if __name__ == '__main__':
-    create_app().run(debug=True, threaded=True)
+    run()
