@@ -5,7 +5,7 @@ from flask.views import MethodView
 from mongoengine import ValidationError
 
 from tentd.control import follow
-from tentd.errors import APIException, APIBadRequest
+from tentd.utils.exceptions import APIException, APIBadRequest
 from tentd.documents.entity import Entity, Follower
 
 def classroute(blueprint, rule, endpoint=None):

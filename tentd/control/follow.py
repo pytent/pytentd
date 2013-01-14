@@ -5,7 +5,7 @@ import re
 import requests
 from flask import request
 
-from tentd.errors import APIException
+from tentd.utils.exceptions import APIException
 from tentd.documents import db
 from tentd.documents.entity import Follower
 from tentd.documents.profiles import CoreProfile
