@@ -13,8 +13,6 @@ from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class PostTest(EntityTentdTestCase):
     def before(self):
-        super(PostTest, self).before()
-        
         self.post = Post(
             entity=self.entity,
             schema='https://tent.io/types/post/status/v0.1.0',
@@ -33,11 +31,8 @@ class PostTest(EntityTentdTestCase):
     def test_post_json(self):
         assert 'content' in self.post.to_json()
 
-class UnicodePostTest(TentdTestCase):
+class UnicodePostTest(EntityTentdTestCase):
     def before(self):
-        self.entity = Entity(name="Test")
-        self.entity.save()
-        
         self.essay = Post(
             entity=self.entity,
             schema='https://tent.io/types/post/status/v0.1.0',
@@ -54,4 +49,5 @@ class UnicodePostTest(TentdTestCase):
         self.essay.save()
 
     def test_post_content(self):
+        assert "⛺" in self.essay.content['title']
         assert "⛺" in self.essay.content['body']

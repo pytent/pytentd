@@ -2,7 +2,7 @@
 
 __all__ = ['create_app']
 
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 __tent_version__ = '0.2'
 
 from flask import Flask

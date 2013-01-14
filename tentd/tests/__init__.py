@@ -88,6 +88,9 @@ class TentdTestCase(TestCase):
     def tearDownClass (cls):
         cls.afterClass()
 
+        del cls.app
+        del cls.client
+
     # Other functions
 
     @classmethod
@@ -114,11 +117,11 @@ class EntityTentdTestCase(TentdTestCase):
     name = "testuser"
     
     def setUp(self):
-        super(EntityTentdTestCase, self).setUp()
-        
         self.entity = Entity(name=self.name)
         self.entity.save()
         self.entity.create_core(
             identity= "http://example.com",
             servers=["http://tent.example.com"]
         )
+        
+        super(EntityTentdTestCase, self).setUp()
