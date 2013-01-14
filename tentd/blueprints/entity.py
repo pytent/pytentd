@@ -1,19 +1,13 @@
 """The entity endpoint"""
 
-from flask import Blueprint, jsonify, json, g, request
+from flask import jsonify, json, g, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
 
+from tentd.flask import Blueprint
 from tentd.control import follow
 from tentd.utils.exceptions import APIException, APIBadRequest
 from tentd.documents.entity import Entity, Follower
-
-def classroute(blueprint, rule, endpoint=None):
-    def decorator(cls):
-        view = cls.as_view(endpoint or cls.__name__.lower())
-        blueprint.add_url_rule(rule, view_func=view)
-        return cls
-    return decorator
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
@@ -21,6 +15,16 @@ entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
     values['entity'] = Entity.objects.get_or_404(name=values['entity'])
+
+@entity.route('')
+def link(entity):
+    link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
+        url=url_for('entity.profile', entity=entity.name, _external=True))
+
+    resp = jsonify(entity.to_json())
+    resp.headers['Link'] = link
+    
+    return resp
 
 @entity.route('/profile')
 def profile(entity):
@@ -41,8 +45,10 @@ def followers(entity):
     follower = follow.start_following(entity, post_data)
     return jsonify(follower.to_json())
 
-@classroute(entity, '/followers/<string:follower_id>', endpoint='follower')
+@entity.route_class('/followers/<string:follower_id>')
 class FollowerView(MethodView):
+    endpoint = 'follower'
+    
     def get(self, entity, follower_id):
         """Returns the json representation of a follower"""
         return jsonify(entity.followers.get_or_404(id=follower_id).to_json())

@@ -8,7 +8,7 @@ from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
 from tentd.documents import db
-from tentd.utils import json_attributes, time_to_string
+from tentd.utils import json_attributes, iterable_to_json, time_to_string
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection
@@ -20,6 +20,10 @@ class QuerySetProperty(object):
     def __get__(self, instance, owner):
         return self.cls.objects(entity=instance)
 
+def filter_by_entity(entity, collection):
+    """Filters a collection for document owned by the entity"""
+    return collection.objects.filter(entity=entity)
+
 class Entity(db.Document):
     """A tent entity"""
 
@@ -28,10 +32,14 @@ class Entity(db.Document):
     #: The name used as the entities api root
     name = StringField(max_length=100, required=True, unique=True)
 
-    followers = property(lambda self: Follower.objects(entity=self))
-    profiles  = property(lambda self: Profile.objects(entity=self))
-    posts     = property(lambda self: Post.objects(entity=self))
-
+    # Querysets belonging to the Entity
+    # These are all hidden behind lambda functions, as the Documents are not
+    # availible at the time this class is defined.
+    profiles   = property(lambda self: filter_by_entity(self, Profile))
+    posts      = property(lambda self: filter_by_entity(self, Post))
+    followers  = property(lambda self: filter_by_entity(self, Follower))
+    followings = property(lambda self: [])
+    
     @property
     def core(self):
         """Fetch the core profile for the entity"""
@@ -57,9 +65,9 @@ class Entity(db.Document):
     def to_json(self):
         return json_attributes(self,
             'name',
-            'profiles',
-            'followers',
-            'followings')
+            ('profiles', iterable_to_json),
+            ('followers', iterable_to_json),
+            ('followings', iterable_to_json))
 
 class EntityMixin(object):
     """A document mixin which attaches each document to an entity"""
@@ -92,9 +100,9 @@ class Follower(EntityMixin, db.Document):
 
     def to_json(self):
         return json_attributes(self,
-            ('id', str),
+           ('id', str),
             'identity',
-            ('created_at', time_to_string),
+           ('created_at', time_to_string),
             'notification_path',
             'permissions',
             'types',

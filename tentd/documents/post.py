@@ -6,7 +6,7 @@ from mongoengine import *
 
 from tentd.documents import db
 from tentd.documents.entity import EntityMixin
-from tentd.utils import time_to_string, maybe
+from tentd.utils import time_to_string, maybe, json_attributes
 
 class Post(EntityMixin, db.Document):
     """A post belonging to an entity.
@@ -39,12 +39,11 @@ class Post(EntityMixin, db.Document):
         TODO: 'views'
         TODO: 'permissions'
         """
-        json = {
-            'id': self.id,
-            'entity': self.entity.core.identity,
-            'type': self.schema,
-            'content': self.content,
-        }
-        maybe(json, 'published_at', self.published_at, time_to_string)
-        maybe(json, 'received_at', self.received_at, time_to_string)
-        return json
+        return json_attributes(self,
+            'id',
+            'content',
+            ('published_at', time_to_string),
+            ('received_at', time_to_string),
+            entity=self.entity.core.identity,
+            type=self.schema
+        )

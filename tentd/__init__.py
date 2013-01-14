@@ -1,5 +1,7 @@
 """An implementation of the http://tent.io server protocol."""
 
+from __future__ import absolute_import
+
 __all__ = ['create_app']
 
 __version__ = '0.1.0'
@@ -8,15 +10,19 @@ __tent_version__ = '0.2'
 from os import getcwd
 from argparse import ArgumentParser
 
-from flask import Config, Flask
+from flask import Config, Flask, jsonify
 
-from tentd.blueprints.base import base
 from tentd.blueprints.entity import entity
 from tentd.documents import db
+
+def description():
+    """Returns information about the server"""
+    return jsonify(description=__doc__, version=__version__)
 
 def create_app(config=dict()):
     """Create an instance of the tentd flask application"""
     app = Flask('tentd')
+    app.add_url_rule('/', 'home', description)
     
     # Load configuration
     import tentd.defaults as defaults
@@ -27,7 +33,6 @@ def create_app(config=dict()):
     db.init_app(app)
 
     # Register the blueprints
-    app.register_blueprint(base)
     app.register_blueprint(entity)
 
     return app
@@ -61,10 +66,6 @@ def run():
     if args.show:
         from pprint import pprint
         pprint(dict(app.config))
-        print vars(args)
 
     # Run the application
     app.run(threaded=True)
-
-if __name__ == '__main__':
-    run()

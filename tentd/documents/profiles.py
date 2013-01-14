@@ -37,6 +37,9 @@ class Profile(EntityMixin, db.Document):
         if not self.schema and hasattr(self.__class__, '__schema__'):
             self.schema = self.__class__.__schema__
 
+    def __repr__(self):
+        return "<{}: {}>".format(self.__class__.__name__, self.schema)
+
 class CoreProfile(Profile):
     """This model provides the Core profile info type.
 
