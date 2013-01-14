@@ -1,31 +1,35 @@
 """The entity endpoint"""
 
-from flask import Blueprint, jsonify, json, g, request
+from flask import jsonify, json, g, request, url_for
+from flask.views import MethodView
+from mongoengine import ValidationError
 
+from tentd.flask import Blueprint
 from tentd.control import follow
-from tentd.errors import TentError, JSONBadRequest
-from tentd.models.entity import Entity
-from tentd.models.posts import Post
+from tentd.utils.exceptions import APIException, APIBadRequest
+from tentd.documents.entity import Entity, Follower, Post
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
-
-# TODO: Rename this to APIException?
-@entity.errorhandler(TentError)
-def exception_handler(e):
-    """Catch TentErrors and returns them as json"""
-    return jsonify(dict(error=e.reason)), e.status
 
 @entity.url_value_preprocessor
 def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
-    entity = Entity.query.filter_by(name=values['entity']).first_or_404()
-    values['entity'] = entity
-    g.entity = entity
+    values['entity'] = Entity.objects.get_or_404(name=values['entity'])
+
+@entity.route('')
+def link(entity):
+    link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
+        url=url_for('entity.profile', entity=entity.name, _external=True))
+
+    resp = jsonify(entity.to_json())
+    resp.headers['Link'] = link
+    
+    return resp
 
 @entity.route('/profile')
 def profile(entity):
     """Return the info types belonging to the entity"""
-    return jsonify({p.schema: p.to_json() for p in entity.profiles}), 200
+    return jsonify({p.schema: p.to_json() for p in entity.profiles})
 
 @entity.route('/followers', methods=['POST'])
 def followers(entity):
@@ -33,35 +37,36 @@ def followers(entity):
     try:
         post_data = json.loads(request.data)
     except json.JSONDecodeError:
-        raise JSONBadRequest()
+        raise APIBadRequest()
 
     if not post_data:
-        raise JSONException("No POST data.")
+        raise APIBadRequest("No POST data.")
     
-    try:
-        follower = follow.start_following(post_data)
-        return jsonify(follower), 200
-    except TentError as e:
-        return jsonify(dict(error=e.reason)), e.status
+    follower = follow.start_following(entity, post_data)
+    return jsonify(follower.to_json())
 
-@entity.route('/followers/<string:follower_id>', methods=['GET', 'PUT', 'DELETE'])
-def follower(entity, follower_id):
-    try:
-        if request.method == 'GET':
-            return jsonify(follow.get_follower(follower_id).to_json()), 200
-        if request.method == 'PUT':
-            try:
-                post_data = json.loads(request.data)
-            except json.JSONDecodeError:
-                raise JSONBadRequest()
-            updated_follower = follow.update_follower(follower_id, post_data)
-            return jsonify(updated_follower.to_json())
-        if request.method == 'DELETE':
-            follow.stop_following(follower_id)
+@entity.route_class('/followers/<string:follower_id>')
+class FollowerView(MethodView):
+    endpoint = 'follower'
+    
+    def get(self, entity, follower_id):
+        """Returns the json representation of a follower"""
+        return jsonify(entity.followers.get_or_404(id=follower_id).to_json())
+
+    def put(self, entity, follower_id):
+        try:
+            post_data = json.loads(request.data)
+        except json.JSONDecodeError:
+            raise JSONBadRequest()
+        updated_follower = follow.update_follower(entity, follower_id, post_data)
+        return jsonify(updated_follower.to_json())
+
+    def delete(self, entity, follower_id):
+        try:
+            follow.stop_following(entity, follower_id)
             return '', 200
-        return "Accessing: {}".format(follower_id), 200
-    except TentError as ex:
-        return jsonify(dict(error=ex.reason)), ex.status
+        except ValidationError:
+            raise APIBadRequest("The given follower id was invalid")
 
 @entity.route('/notification', methods=['GET'])
 def get_notification(entity):
@@ -77,37 +82,46 @@ def get_posts(entity):
     #      potential unsanatised input from the user and is therefore vunerable
     #      to SQL injection attacks.
     if request.method == 'GET':
-        return jsonify(entity.posts), 200
+        posts = []
+        for post in entity.posts:
+            print post.to_json()
+            posts.append(post.to_json())
+        return jsonify(posts), 200
     if request.method == 'POST':
-        data = json.loads(request.data)
-        post = Post(data)
-        db.session.add(post)
-        db.session.commit()
+        try:
+            data = json.loads(request.data)
+        except json.JSONDecodeError:
+            raise JSONBadRequest()
+        post = Post()
+        post.entity = entity
+        post.schema = data['schema']
+        post.content = data['content']
 
         # TODO add in something to this affect:
         # for follower in entity.followers:
         #     follower.notify(post)
+        post.save()
+        return post.to_json(), 200
+
         
 
 @entity.route('/posts/<string:post_id>', methods=['GET', 'PUT', 'DELETE'])
-def get_post(entity, post_id):
-    """ Returns a single post with the given id. """
-    post = Post.query.filter_by(id=post_id).first_or_404()
-    if post not in entity.posts:
-        return 'Post does not belong to entity.', 404
-    if request.method == 'GET':
-        return jsonify(post), 200
-    if request.method == 'PUT':
-        # TODO update the post. Not sure if this way will work.
-        for item in post.__schema__:
-            if item in request.data:
-                post[item] = request.data[item]
-        post = db.session.merge(post)
-        db.session.commit()
+class PostsView:
+    
+    def get(self, entity, post_id):
+        return entity.posts.get_or_404(id=post_id).to_json(), 200
+    def put(self, entity, post_id):
+        post = entity.posts.get_or_404(id=post_id)
+        try:
+            post_data = json.loads(request.data)
+        except json.JSONDecodeError:
+            raise JSONBadRequest()
+        
+        #TODO Perform the update
 
-        return '', 200
-    if request.method == 'DELETE':
-        db.session.delete(post)
-        db.session.commit()
-        # TODO Send out a notification?
-        return '', 200
+        post.save()
+        return post.to_json(), 200
+    def delete(self, entity, post_id):
+        post = entity.posts.get_or_404(id=post_id)
+        #TODO Notify?
+        return post.delete(), 200
