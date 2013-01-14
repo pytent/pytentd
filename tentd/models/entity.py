@@ -1,13 +1,13 @@
-"""Data model for tent entities"""
+"""Entity, follower and following documents"""
 
-__all__ = ['Entity', 'EntityMixin', 'Follower', 'Following']
+__all__ = ['Entity', 'Follower', 'Following']
 
 from datetime import datetime
 
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
-from tentd.models import db, EntityMixin
+from tentd.models import db
 from tentd.utils import json_attributes, time_to_string
 
 class QuerySetProperty(object):
@@ -29,7 +29,8 @@ class Entity(db.Document):
     name = StringField(max_length=100, required=True, unique=True)
 
     followers = property(lambda self: Follower.objects(entity=self))
-    profiles = property(lambda self: Profile.objects(entity=self))
+    profiles  = property(lambda self: Profile.objects(entity=self))
+    posts     = property(lambda self: Post.objects(entity=self))
 
     @property
     def core(self):
@@ -60,8 +61,14 @@ class Entity(db.Document):
             'followers',
             'followings')
 
-from tentd.models.profiles import Profile, CoreProfile
-from tentd.models.posts import Post
+class EntityMixin(object):
+    """A document mixin which attaches each document to an entity"""
+
+    #: The entity that owns the document
+    entity = ReferenceField('Entity',
+        reverse_delete_rule=CASCADE,
+        required=True,
+        dbref=False)
 
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
@@ -93,5 +100,8 @@ class Follower(EntityMixin, db.Document):
             'types',
             'licenses')
 
-class Following(EntityMixin, db.Document):
+class Following(db.Document):
     pass
+
+from tentd.models.post import Post
+from tentd.models.profiles import Profile, CoreProfile

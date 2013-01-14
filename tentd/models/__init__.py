@@ -5,14 +5,8 @@ from mongoengine import ReferenceField, CASCADE
 
 db = MongoEngine()
 
-class EntityMixin(object):
-    """A document mixin which attaches each document to an entity"""
-
-    #: The entity that owns the document
-    entity = ReferenceField('Entity', reverse_delete_rule=CASCADE, required=True, dbref=False)
-
-# Ensure all models are loaded (Loading order should be irrelevant, though
-# this is because all of the dependencies are one way)
-from tentd.models.entity import *
-from tentd.models.posts import *
+# Ensure all models are loaded. The entity model must be loaded first,
+# as it imports other models and needs to be defined before them.
+from tentd.models.entity import Entity, Follower, Following
+from tentd.models.post import Post
 from tentd.models.profiles import *

@@ -6,9 +6,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from tentd import db
-from tentd.models.entity import Entity
-from tentd.models.profiles import Profile, CoreProfile
-from tentd.models.posts import Post
+from tentd.models import Entity, Profile, CoreProfile, Post
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class PostTest(EntityTentdTestCase):
