@@ -9,7 +9,7 @@ Running pytentd
 
 Running pytentd is easy::
 
-    $ tentd start
+    $ tentd
 
 Information on the command line options can be found with::
 
@@ -19,17 +19,12 @@ Information on the command line options can be found with::
 Configuration
 -------------
 
-pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option.
-This file should be a python file containing capitalised variables.
+pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option. This file should be a python file containing capitalised variables.
 
-These configuration variables can be used for pytentd:
-
-- ``PIDFILE``: The path used for the pidfile in daemon mode.
-
-Documentation is also available on the configuration variables for `Flask`_ and `SQLAlchemy`_.
+Documentation is available on the configuration variables for `Flask`_ and `Flask-MongoEngine`_.
 
 .. _Flask: http://flask.pocoo.org/docs/config/#builtin-configuration-values
-.. _SQLAlchemy: http://packages.python.org/Flask-SQLAlchemy/config.html
+.. _Flask-MongoEngine: https://flask-mongoengine.readthedocs.org/en/latest/
 
 Contributing
 ============

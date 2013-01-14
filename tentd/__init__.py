@@ -35,11 +35,11 @@ def create_app(config=dict()):
 parser = ArgumentParser(description=__doc__)
 
 # Basic arguments
-parser.add_argument("-c", "--conf",
+parser.add_argument('-c', "--conf", metavar="[filename]",
     help="a configuration file to use")
-parser.add_argument("-s", "--show", action="store_true",
+parser.add_argument('-s', "--show", action="store_true",
     help="show the configuration")
-parser.add_argument("-d", "--dev", "--debug", action="store_true",
+parser.add_argument('-d', "--debug", action="store_true",
     help="run flask in debug mode")
 
 def run():
@@ -52,7 +52,7 @@ def run():
         config.from_pyfile(args.conf)
 
     # Load the rest of the arguments, overriding the conf file
-    config['DEBUG'] = args.dev
+    config['DEBUG'] = args.debug
 
     # Create the application and create the database
     app = create_app(config)
@@ -63,6 +63,7 @@ def run():
         pprint(dict(app.config))
         print vars(args)
 
+    # Run the application
     app.run(threaded=True)
 
 if __name__ == '__main__':
