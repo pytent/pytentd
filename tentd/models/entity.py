@@ -7,20 +7,29 @@ from datetime import datetime
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
-from tentd.models import db
-from tentd.utils import json_attributes
+from tentd.models import db, EntityMixin
+from tentd.utils import json_attributes, time_to_string
+
+class QuerySetProperty(object):
+    """A set of documents belonging to an entity from another collection
+
+    Basically, provides the functionality a backref would provide."""
+    def __init__(self, cls):
+        self.cls = cls
+
+    def __get__(self, instance, owner):
+        return self.cls.objects(entity=instance)
 
 class Entity(db.Document):
     """A tent entity"""
 
     meta = {'allow_inheritance': False}
-    
+
     #: The name used as the entities api root
     name = StringField(max_length=100, required=True, unique=True)
 
-    @property
-    def posts(self):
-        return Post.objects(entity=self)
+    followers = property(lambda self: Follower.objects(entity=self))
+    profiles = property(lambda self: Profile.objects(entity=self))
 
     @property
     def core(self):
@@ -32,10 +41,10 @@ class Entity(db.Document):
 
     def create_core(self, **kwargs):
         return CoreProfile(entity=self, **kwargs).save()
-    
+
     def __repr__(self):
         return "<Entity '{}' [{}]>".format(self.name, self.id)
-    
+
     def __str__(self):
         """Returns self.name
 
@@ -51,16 +60,6 @@ class Entity(db.Document):
             'followers',
             'followings')
 
-class EntityMixin(object):
-    """A document mixin which attaches instances of the document to an entity
-
-    Note: Documents using this mixin will be deleted with the entity"""
-
-    #: The entity that owns this document
-    entity = ReferenceField('Entity',
-        required=True, reverse_delete_rule=CASCADE, dbref=False)
-
-# Other models require Entity to already be defined
 from tentd.models.profiles import Profile, CoreProfile
 from tentd.models.posts import Post
 
@@ -86,10 +85,9 @@ class Follower(EntityMixin, db.Document):
 
     def to_json(self):
         return json_attributes(self,
-            'id',
+            ('id', str),
             'identity',
-            # 'created_at',
-            # TODO: Modify json_attributes() to take a function?
+            ('created_at', time_to_string),
             'notification_path',
             'permissions',
             'types',

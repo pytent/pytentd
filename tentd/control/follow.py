@@ -1,14 +1,11 @@
-''' Controls the following of entities. '''
+"""Controls the following of entities."""
+
 import re
 
 import requests
-from requests import ConnectionError
-
 from flask import request
-#from flask.exceptions import JSONHTTPException, JSONBadRequest
 
-from tentd.errors import TentError
-
+from tentd.errors import APIException
 from tentd.models import db
 from tentd.models.entity import Follower
 from tentd.models.profiles import CoreProfile
@@ -19,20 +16,22 @@ def discover_entity(identity):
     - Fetch the identity, giving us a list of profiles
     - Fetch a profile, giving us the entity's canonical identity url
       and api endpoints
+
+    TODO: Move this into a generic tent module?
     """
 
-    # https://tent.io/docs/server-protocol#server-discovery
     # TODO: Parse html for links
+    # https://tent.io/docs/server-protocol#server-discovery
     try:
         response = requests.head(identity)
-    except (ConnectionError) as ex:
-        raise TentError("Could not discover entity ({})".format(ex), 404)
+    except requests.ConnectionError as ex:
+        raise APIException("Could not discover entity ({})".format(ex), 404)
 
     # TODO: 404 is probably the wrong error code
     if not 'Link' in response.headers:
-        raise TentError("Entity '{}' has no Link header".format(identity), 404)
-    else:
-        link = response.headers['Link']
+        raise APIException("Entity has no 'Link' header", 404)
+
+    link = response.headers['Link']
 
     # TODO: deal with multiple headers
     # https://tent.io/docs/server-protocol#http-codelinkcode-header
@@ -45,46 +44,40 @@ def discover_entity(identity):
         profile = requests.get(url).json()
         if CoreProfile.__schema__ not in profile:
             # TODO: 404 is probably the wrong error code
-            raise TentError("Entity does not have a core profile.", 404)
-    except ConnectionError as ex:
-        raise TentError("Could not fetch entity profile ({})".format(ex), 404)
-
-    canonical_identity = profile[CoreProfile.__schema__]['entity']
-
-    # A slight bit of recursion here. Hopefully it'll never come to fruition
-    if canonical_identity != url:
-        pass # recurses infinitely.
-#       return discover_entity(canonical_identity)
+            raise APIException("Entity has no core profile.", 404)
+    except requests.ConnectionError as ex:
+        raise APIException(
+            "Could not fetch entity profile ({})".format(ex), 404)
 
     return profile
     
-def start_following(details):
-    """ Peform all necessary steps to allow an entity to start follow the 
+def start_following(entity, details):
+    """Peform all necessary steps to allow an entity to start follow the
     current entity.
+    
     This involves:
     - Performing discovery on the entity wishing to follow the current entity.
     - Making a GET request to the specified notification path which must return 200 OK.
     - Creating a relationship in the DB.
-    - Returning the relationship in JSON. """
+    - Returning the relationship in JSON."""
 
     profile = discover_entity(details['entity'])
-    
-    notify_resp = notify_following(profile, 
-        details['notification_path'])
 
-    if notify_resp == 200:
-        follower = Follower(
-            identity = profile[CoreProfile.__schema__]['entity'],
-            permissions = {'public': True}, 
-            licenses = details['licences'],
-            types = details['types'],
-            notification_path = details['notification_path'])
-        db.session.add(follower)
-        db.session.commit()
-        return follower.to_json()
-    raise TentError("Could not notify to {}/{}".format(
-        profile[CoreProfile.__schema__]['entity'],
-        details['notification_path']), notify_resp)
+    follower = Follower(
+        entity=entity,
+        identity=profile[CoreProfile.__schema__]['entity'],
+        licenses=details['licences'],
+        types=details['types'],
+        notification_path=details['notification_path'])
+    
+    notify_status = notify_following(profile, follower.notification_path)
+
+    if not notify_status == 200:
+        raise APIException("Could notify to {}/{}".format(
+            follower.identity,
+            follower.notification_path
+        ), notify_status)
+    return follower.save()
 
 def notify_following(profile, notification_path):
     """Perform the GET request to the new follower's notification path.
@@ -99,14 +92,14 @@ def notify_following(profile, notification_path):
     
     return requests.get(api_root + notification_path).status_code
 
-def stop_following(follower_id):
-    ''' Stops following a user. '''
-    db.session.delete(get_follower(follower_id))
-    db.session.commit()
+def stop_following(entity, id):
+    """Stops following a user."""
+    follower = Follower.objects.get(entity=entity, id=id)
+    follower.delete()
 
-def update_follower(follower_id, details):
-    ''' Changes the way in which a user is followed. '''
-    follower = get_follower(follower_id)
+def update_follower(entity, follower_id, details):
+    """Changes the way in which a user is followed."""
+    follower = Follower.objects.get(entity=entity, id=follower_id)
 
     # Set the new values.
     if 'entity' in details:
@@ -125,11 +118,7 @@ def update_follower(follower_id, details):
     if 'notification_path' in details:
         follower.notifcation_path = details['notification_path']
 
-    # Do the update
-    follower = db.session.merge(follower)
-    db.session.commit()
-
-    return follower
+    return follower.save()
     
 def get_follower(follower_id):
     ''' Gets details for a followed user. '''

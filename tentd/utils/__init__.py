@@ -5,8 +5,17 @@ from time import mktime
 
 # TODO: Test these
 
-def json_attributes(obj, *names):
-    return {name: getattr(obj, name) for name in names}
+def json_attributes(obj, *items):
+    json = {}
+    for item in items:
+        if isinstance(item, tuple):
+            name, func = item
+            json[name] = func(getattr(obj, name))
+        elif isinstance(item, basestring):
+            json[item] = getattr(obj, item)
+        else:
+            raise Exception("Unknown type passed to json_attributes")
+    return json
 
 def maybe(dictonary, name, value, func=None):
     """Adds a key and value to a dictionary, if the value is not None

@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify, url_for, make_response
 
 from tentd import __version__, __doc__ as docstring
 from tentd.models.entity import Entity
-
 from tentd.utils.auth import require_authorization
 
 base = Blueprint('base', __name__)
@@ -21,7 +20,10 @@ def link (entity):
     
     Returns a link to an entity's profile in the headers
     """
-    entity = Entity.query.filter_by(name=entity).first_or_404()
+    entity = Entity.objects.get_or_404(name=entity)
+    link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
+        url=url_for('entity.profile', entity=entity.name, _external=True))
+    
     resp = make_response()
-    resp.headers['Link'] = '<{0}>; rel="{1}"'.format(url_for('entity.profile', entity=entity.name, _external=True), 'https://tent.io/rels/profile')
+    resp.headers['Link'] = link
     return resp

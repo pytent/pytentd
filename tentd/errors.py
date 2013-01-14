@@ -6,14 +6,13 @@ class TentError(Exception):
         self.reason = message
         self.status = status
 
-class JSONException(JSONHTTPException):
+class APIException(JSONHTTPException):
     """Our base class for errors that should be returned as JSON"""
+    
     def get_body(self, environ):
         """Overrides Flask's JSONHTTPException to use 'error' as the key"""
-        return json.dumps(dict(error=self.get_description(environ)))
+        return json.dumps({'error': self.get_description(environ)})
 
-class JSONBadRequest(JSONException, BadRequest):
+class APIBadRequest(APIException, BadRequest):
     """Represents an HTTP ``400 Bad Request`` error, using a JSON response"""
-    description = (
-        "The browser (or proxy) sent a request"
-        "that this server could not understand.")
+    description = "Malformed request."

@@ -3,58 +3,23 @@
 Also provides some imports from the testing libraries used.
 """
 
-__all__ = ['TentdTestCase', 'MockResponse', 'MockFunction', 'patch' 'skip']
+__all__ = ['TentdTestCase', 'EntityTentdTestCase', 'skip']
 
 from unittest import TestCase, skip
 
 from flask import json, jsonify, Response, _request_ctx_stack
-from mock import NonCallableMock, patch
 from werkzeug import cached_property
 
 from tentd import create_app, db
 from tentd.models import *
 
 class TestResponse(Response):
-    @cached_property
     def json(self):
         if self.mimetype == 'application/json':
-            return json.loads(self.data)
+            if not hasattr(self, '_json'):
+                self._json = json.loads(self.data)
+            return self._json
         return None
-
-class MockResponse(NonCallableMock):
-    """A mock response, for use with MockFunction"""
-
-    #: Use a default status code
-    status_code = 200
-
-    #: The argument the response is for
-    __argument__ = None
-
-    def __str__(self):
-        return "<MockResponse for {}>".format(self.__argument__)
-
-class MockFunction(dict):
-    """A callable argument->value dictionary for patching over a function
-
-    New argument->value pairs can be assigned in the same way as a dict,
-    and values can be returned by calling it as a function.
-
-        with mock.patch('requests.head', new_callable=MockFunction) as head:
-            head['http://example.com'] = MockResponse(data="Hello world.")
-            ...
-    """
-
-    def __call__(self, argument):
-        """Return the value, setting it's __argument__ attribute"""
-        if argument in self:
-            self[argument].__argument__ = argument
-            return self[argument]
-        raise KeyError("No mock response set for '{}'".format(argument))
-
-    def __repr__(self):
-        return "{}({})".format(
-            self.__class__.__name__,
-            super(MockFunction, self).__repr__())
 
 class TentdTestCase(TestCase):
     """A base test case for pytentd
@@ -146,8 +111,12 @@ class TentdTestCase(TestCase):
 
 class EntityTentdTestCase(TentdTestCase):
     """A test case that sets up an entity and it's core profile"""
-    def before(self):
-        self.entity = Entity(name="testuser")
+    name = "testuser"
+    
+    def setUp(self):
+        super(EntityTentdTestCase, self).setUp()
+        
+        self.entity = Entity(name=self.name)
         self.entity.save()
         self.entity.create_core(
             identity= "http://example.com",
