@@ -6,7 +6,7 @@ import requests
 from flask import url_for
 
 from tentd import db
-from tentd.models.entity import Entity, Follower
+from tentd.documents.entity import Entity, Follower
 
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch

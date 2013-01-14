@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, url_for, make_response
 
-from tentd.models.entity import Entity, Follower
+from tentd.documents.entity import Entity, Follower
 
 export = Blueprint('export', __name__, url_prefix='/export')
 

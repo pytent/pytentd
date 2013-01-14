@@ -6,7 +6,7 @@ from mongoengine import ValidationError
 
 from tentd.control import follow
 from tentd.errors import APIException, APIBadRequest
-from tentd.models.entity import Entity, Follower
+from tentd.documents.entity import Entity, Follower
 
 def classroute(blueprint, rule, endpoint=None):
     def decorator(cls):

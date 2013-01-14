@@ -7,6 +7,6 @@ db = MongoEngine()
 
 # Ensure all models are loaded. The entity model must be loaded first,
 # as it imports other models and needs to be defined before them.
-from tentd.models.entity import Entity, Follower, Following
-from tentd.models.post import Post
-from tentd.models.profiles import *
+from tentd.documents.entity import Entity, Follower, Following
+from tentd.documents.post import Post
+from tentd.documents.profiles import *

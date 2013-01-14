@@ -11,7 +11,7 @@ from flask import json, jsonify, Response, _request_ctx_stack
 from werkzeug import cached_property
 
 from tentd import create_app, db
-from tentd.models import *
+from tentd.documents import *
 
 class TestResponse(Response):
     def json(self):

@@ -1,8 +1,8 @@
 """ Test cases for the user profile data """
 
 from tentd import db
-from tentd.models.entity import Entity
-from tentd.models.profiles import CoreProfile
+from tentd.documents.entity import Entity
+from tentd.documents.profiles import CoreProfile
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class EntityTest(EntityTentdTestCase):

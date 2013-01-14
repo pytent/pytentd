@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, url_for, make_response
 
 from tentd import __version__, __doc__ as docstring
-from tentd.models.entity import Entity
+from tentd.documents.entity import Entity
 from tentd.utils.auth import require_authorization
 
 base = Blueprint('base', __name__)

@@ -7,7 +7,7 @@ from datetime import datetime
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
-from tentd.models import db
+from tentd.documents import db
 from tentd.utils import json_attributes, time_to_string
 
 class QuerySetProperty(object):
@@ -103,5 +103,5 @@ class Follower(EntityMixin, db.Document):
 class Following(db.Document):
     pass
 
-from tentd.models.post import Post
-from tentd.models.profiles import Profile, CoreProfile
+from tentd.documents.post import Post
+from tentd.documents.profiles import Profile, CoreProfile

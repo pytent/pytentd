@@ -3,8 +3,8 @@
 from mongoengine import NotUniqueError
 
 from tentd import db
-from tentd.models.entity import Entity
-from tentd.models.profiles import Profile, CoreProfile, GenericProfile
+from tentd.documents.entity import Entity
+from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class ProfileTest(TentdTestCase):
