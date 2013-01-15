@@ -105,7 +105,8 @@ class FollowerTests(EntityTentdTestCase):
                     "tent_version": "0.2",
                 }})
 
-        requests.get[self.notification] = MockResponse()
+        self.notification_mock = MockResponse()
+        requests.get[self.notification] = self.notification_mock
 
     @classmethod
     def afterClass(self):
@@ -134,6 +135,8 @@ class FollowerTests(EntityTentdTestCase):
 
         # Ensure the follower was created in the DB.
         Follower.objects.get(id=response.json()['id'])
+
+        self.notification_mock.assertCalledOnceWith()
         
     def test_entity_follow_error(self):
         """Test that trying to follow an invalid entity will fail."""
