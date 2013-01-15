@@ -1,5 +1,6 @@
 """The entity endpoint"""
 
+from json import dumps
 from flask import jsonify, json, g, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
@@ -7,7 +8,7 @@ from mongoengine import ValidationError
 from tentd.flask import Blueprint
 from tentd.control import follow
 from tentd.utils.exceptions import APIException, APIBadRequest
-from tentd.documents.entity import Entity, Follower
+from tentd.documents.entity import Entity, Follower, Post
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
@@ -36,8 +37,8 @@ def followers(entity):
     """Starts following a user, defined by the post data"""
     try:
         post_data = json.loads(request.data)
-    except json.JSONDecodeError:
-        raise APIBadRequest()
+    except json.JSONDecodeError as e:
+        raise APIBadRequest(str(e))
 
     if not post_data:
         raise APIBadRequest("No POST data.")
@@ -56,8 +57,8 @@ class FollowerView(MethodView):
     def put(self, entity, follower_id):
         try:
             post_data = json.loads(request.data)
-        except json.JSONDecodeError:
-            raise JSONBadRequest()
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
         updated_follower = follow.update_follower(entity, follower_id, post_data)
         return jsonify(updated_follower.to_json())
 
@@ -72,3 +73,61 @@ class FollowerView(MethodView):
 def get_notification(entity):
     """ Alerts of a notification """
     return '', 200
+
+@entity.route('/posts', methods=['GET', 'POST'])
+def get_posts(entity):
+    """ Returns all public posts. Can be scoped. """
+    # TODO Filter to public posts only when that's included.
+    # TODO Apply other filters included as part of the GET.
+    #      We'll need to think about how we handle these filters as this is 
+    #      potential unsanatised input from the user and is therefore vunerable
+    #      to SQL injection attacks.
+    if request.method == 'GET':
+        all_posts=[post.to_json() for post in entity.posts]
+        if len(all_posts) == 0:
+            return jsonify({}), 200
+        return jsonify({'posts':all_posts}), 200
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.data)
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
+        post = Post()
+        post.entity = entity
+        post.schema = data['schema']
+        post.content = data['content']
+
+        # TODO add in something to this affect:
+        # for follower in entity.followers:
+        #     follower.notify(post)
+        post.save()
+        return jsonify(post.to_json()), 200
+
+        
+
+@entity.route_class('/posts/<string:post_id>')
+class PostsView(MethodView):
+    endpoint = 'post'
+    def get(self, entity, post_id):
+        return jsonify(entity.posts.get_or_404(id=post_id).to_json()), 200
+    def put(self, entity, post_id):
+        post = entity.posts.get_or_404(id=post_id)
+        try:
+            post_data = json.loads(request.data)
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
+       
+        if 'content' in post_data:
+            post.content = post_data['content']
+        if 'schema' in post_data:
+            post.schema = post_data['schema'] 
+
+        #TODO Versioning.
+
+        post.save()
+        return jsonify(post.to_json()), 200
+    def delete(self, entity, post_id):
+        post = entity.posts.get_or_404(id=post_id)
+        post.delete()
+        #TODO Notify?
+        return '', 200

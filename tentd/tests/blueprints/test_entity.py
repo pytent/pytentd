@@ -3,10 +3,10 @@
 from json import loads, dumps
 
 import requests
-from flask import url_for
+from flask import url_for, jsonify
 
 from tentd import db
-from tentd.documents.entity import Entity, Follower
+from tentd.documents.entity import Entity, Follower, Post
 
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
@@ -27,16 +27,14 @@ class EntityBlueprintTest(EntityTentdTestCase):
     
     def test_entity_profile_json(self):
         """Test that /profile returns json"""
-        r = self.client.get('/testuser/profile')
+        r = self.client.get('/{}/profile'.format(self.name))
         
         self.assertEquals(r.mimetype, 'application/json')
         self.assertIn('https://tent.io/types/info/core/v0.1.0', r.json())
         
     def test_entity_core_profile(self):
         """Test that the core profile is returned correctly"""
-        print url_for('entity.profile', entity=self.entity.name)
-        
-        r = self.client.get('/testuser/profile')
+        r = self.client.get('/{}/profile'.format(self.name))
         url = r.json()['https://tent.io/types/info/core/v0.1.0']['entity']
 
         entity = Entity.objects.get(name=self.name)
@@ -124,7 +122,7 @@ class FollowerTests(EntityTentdTestCase):
         Follower.objects.get(id=response.json()['id'])
         
     def test_entity_follow_error(self):
-        response = self.client.post('/localuser/followers', data='<invalid>')
+        response = self.client.post('/{}/followers'.format(self.name), data='<invalid>')
         self.assertJSONError(response)
 
     def test_entity_follow_delete(self):
@@ -136,12 +134,12 @@ class FollowerTests(EntityTentdTestCase):
 
         # Delete it.
         response = self.client.delete(
-            '/localuser/followers/{}'.format(follower.id))
+            '/{}/followers/{}'.format(self.name, follower.id))
         self.assertEquals(200, response.status_code)
 
     def test_entity_follow_delete_non_existant(self):
         # TODO: This should use a JSON error, not a 404 code
-        response = self.client.delete('/localuser/followers/0')
+        response = self.client.delete('/{}/followers/0'.format(self.name))
         self.assertEquals(400, response.status_code)
 
     def test_entity_follow_update(self):
@@ -152,7 +150,7 @@ class FollowerTests(EntityTentdTestCase):
             notification_path='notification').save()
 
         response = self.client.put(
-            '/localuser/followers/{}'.format(follower.id),
+            '/{}/followers/{}'.format(self.name, follower.id),
             data=dumps({'entity': self.new_identity}))
         
         # Ensure the request was made sucessfully.
@@ -166,3 +164,88 @@ class FollowerTests(EntityTentdTestCase):
         # Ensure the DB was updated
         updated_follower = Follower.objects.get(id=follower.id)
         self.assertEquals(self.new_identity, updated_follower.identity)
+
+
+class PostTests(EntityTentdTestCase):
+    def test_entity_get_empty_posts(self):
+        resp = self.client.get('/{}/posts'.format(self.name))
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), {})
+
+    def test_entity_get_posts(self):
+        #TODO Add a post or two.
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save() 
+        
+        resp = self.client.get('/{}/posts'.format(self.name))
+        self.assertStatus(resp, 200)
+
+        posts = [post.to_json() for post in self.entity.posts]
+        self.assertEquals(resp.json(), {'posts': posts})
+
+    def test_entity_new_post(self):
+        new_post = {'schema': 'https://tent.io/types/post/status/v0.1.0', 'content': {'text': 'test', 'location': None}}
+        resp = self.client.post('/{}/posts'.format(self.name), data=dumps(new_post))
+
+        self.assertStatus(resp, 200)
+
+        created_post = self.entity.posts.get(id=resp.json()['id'])
+        self.assertIsNotNone(created_post)
+        self.assertEquals(created_post.schema, new_post['schema'])
+        self.assertEquals(created_post.content, new_post['content'])
+
+    def test_entity_create_invalid_post(self):
+        resp = self.client.post('/{}/posts'.format(self.name), data='<invalid>')
+        self.assertJSONError(resp)
+
+    def test_entity_get_single_post(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+
+        resp = self.client.get('/{}/posts/{}'.format(self.name, new_post.id))
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), new_post.to_json())
+
+    def test_entity_update_single_post(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+
+        resp = self.client.put('/{}/posts/{}'.format(self.name, new_post.id), data=dumps({'content':{'text': 'updated', 'location': None}}))
+
+        new_post.content = {'text': 'updated', 'location': None}
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), new_post.to_json())
+
+    def test_entity_update_post_invalid(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+        
+        resp = self.client.put('/{}/posts/{}'.format(self.name, new_post.id), data='<invalid>')
+        
+        self.assertJSONError(resp)
+
+    def test_entity_delete_post(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+
+        resp = self.client.delete('/{}/posts/{}'.format(self.name, new_post.id))
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(self.entity.posts.filter(id=new_post.id).count(), 0)
