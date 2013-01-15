@@ -120,5 +120,6 @@ class PostsView(MethodView):
         return jsonify(post.to_json()), 200
     def delete(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
+        post.delete()
         #TODO Notify?
         return '', 200

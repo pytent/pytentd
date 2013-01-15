@@ -212,3 +212,40 @@ class PostTests(EntityTentdTestCase):
 
         self.assertStatus(resp, 200)
         self.assertEquals(resp.json(), new_post.to_json())
+
+    def test_entity_update_single_post(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+
+        resp = self.client.put('/{}/posts/{}'.format(self.name, new_post.id), data=dumps({'content':{'text': 'updated', 'location': None}}))
+
+        new_post.content = {'text': 'updated', 'location': None}
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), new_post.to_json())
+
+    def test_entity_update_post_invalid(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+        
+        resp = self.client.put('/{}/posts/{}'.format(self.name, new_post.id), data='<invalid>')
+        
+        self.assertJSONError(resp)
+
+    def test_entity_delete_post(self):
+        new_post = Post()
+        new_post.schema='https://tent.io/types/post/status/v0.1.0'
+        new_post.content = {'text': 'test', 'location': None}
+        new_post.entity = self.entity
+        new_post.save()
+
+        resp = self.client.delete('/{}/posts/{}'.format(self.name, new_post.id))
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(self.entity.posts.filter(id=new_post.id).count(), 0)
