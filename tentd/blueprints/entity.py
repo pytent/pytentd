@@ -12,20 +12,22 @@ from tentd.documents.entity import Entity, Follower, Post
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
+@entity.route_class('')
+class EntityView(MethodView):
+    endpoint = 'deafult'
+    def head(self, entity, **kargs):
+        link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
+            url=url_for('entity.profile', entity=entity.name, _external=True))
+        resp = jsonify(entity.to_json())
+        resp.headers['Link'] = link
+    
+        return resp
+        
+
 @entity.url_value_preprocessor
 def fetch_entity(endpoint, values):
     """Replace `entity` (which is a string) with the actuall entity"""
     values['entity'] = Entity.objects.get_or_404(name=values['entity'])
-
-@entity.route('')
-def link(entity):
-    link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
-        url=url_for('entity.profile', entity=entity.name, _external=True))
-
-    resp = jsonify(entity.to_json())
-    resp.headers['Link'] = link
-    
-    return resp
 
 @entity.route('/profile')
 def profile(entity):
@@ -47,7 +49,7 @@ def followers(entity):
     return jsonify(follower.to_json())
 
 @entity.route_class('/followers/<string:follower_id>')
-class FollowerView(MethodView):
+class FollowerView(EntityView):
     endpoint = 'follower'
     
     def get(self, entity, follower_id):
@@ -74,20 +76,17 @@ def get_notification(entity):
     """ Alerts of a notification """
     return '', 200
 
-@entity.route('/posts', methods=['GET', 'POST'])
-def get_posts(entity):
-    """ Returns all public posts. Can be scoped. """
-    # TODO Filter to public posts only when that's included.
-    # TODO Apply other filters included as part of the GET.
-    #      We'll need to think about how we handle these filters as this is 
-    #      potential unsanatised input from the user and is therefore vunerable
-    #      to SQL injection attacks.
-    if request.method == 'GET':
+@entity.route_class('/posts')
+class PostView(MethodView):
+    endpoint = "posts"
+
+    def get(self, entity):
         all_posts=[post.to_json() for post in entity.posts]
         if len(all_posts) == 0:
             return jsonify({}), 200
         return jsonify({'posts':all_posts}), 200
-    if request.method == 'POST':
+
+    def post(self, entity):
         try:
             data = json.loads(request.data)
         except json.JSONDecodeError as e:
@@ -97,13 +96,10 @@ def get_posts(entity):
         post.schema = data['schema']
         post.content = data['content']
 
-        # TODO add in something to this affect:
-        # for follower in entity.followers:
-        #     follower.notify(post)
+        #TODO Notify
+
         post.save()
         return jsonify(post.to_json()), 200
-
-        
 
 @entity.route_class('/posts/<string:post_id>')
 class PostsView(MethodView):
