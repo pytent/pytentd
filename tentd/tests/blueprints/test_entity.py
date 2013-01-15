@@ -111,7 +111,7 @@ class FollowerTests(EntityTentdTestCase):
         """Assert that the mocks are working correctly"""
         self.assertIsInstance(requests.head, MockFunction)
         self.assertIsInstance(requests.get, MockFunction)
-    
+
     def test_entity_link_follower(self):
         """ Test that getting the entity header on the entity followers returns correctly."""
         self.assertEntityHeader('/{}/followers'.format(self.name))
@@ -141,7 +141,7 @@ class FollowerTests(EntityTentdTestCase):
         response = self.client.post('/{}/followers'.format(self.name), \
             data='<invalid>')
         self.assertJSONError(response)
-        self.assertFalse(requests.get[self.notification].called)
+        requests.get.assert_not_called(self.notification)
 
     def test_entity_follow_delete(self):
         """Test that an entity can stop being followed."""
@@ -286,18 +286,43 @@ class NotificationTest(EntityTentdTestCase):
 
     @classmethod
     def beforeClass(cls):
+        cls.identity = 'http://follower.example.com/tentd'
+        cls.profile = 'http://follower.example.com/tentd/profile'
         cls.notification = 'http://follower.example.com/tentd/notification'
+
+        cls.head = patch('requests.head', new_callable=MockFunction)
+        cls.head.start()
+        requests.head[cls.identity] = MockResponse(
+            headers={'Link':
+                '<{}>; rel="https://tent.io/rels/profile"'\
+                .format(cls.profile)})
+
+        cls.get = patch('requests.get', new_callable=MockFunction)
+        cls.get.start()
+        requests.get[cls.profile] = MockResponse(
+            json={
+                "https://tent.io/types/info/core/v0.1.0": {
+                    "entity": cls.identity,
+                    "servers": ["http://follower.example.com/tentd"],
+                    "licences": [],
+                    "tent_version": "0.2",
+                }})
 
         cls.post = patch('requests.post', new_callable=MockFunction)
         cls.post.start()
         requests.post[cls.notification] = MockResponse()
+
         
     @classmethod
     def afterClass(cls):
+        cls.head.stop()
+        cls.get.stop()
         cls.post.stop()
 
     def before(self):
         self.assertIsInstance(requests.post, MockFunction)
+        self.assertIsInstance(requests.get, MockFunction)
+
         self.follower = Follower(
             entity=self.entity,
             identity='http://follower.example.com/tentd',
@@ -314,9 +339,9 @@ class NotificationTest(EntityTentdTestCase):
             'schema': 'https://tent.io/types/post/status/v0.1.0', 
             'content': {'text': 'test', 'location': None}
         }
-        resp = self.client.post('/{}/posts'.format(self.name), \
+        resp = self.client.post('/{}/posts'.format(self.name),
             data=dumps(post_details))
 
         # Even though we've checked this, make sure the response was sucessful.
         self.assertStatus(resp, 200)
-        requests.post[self.notification].assert_called()
+        requests.post.assert_called(self.notification)

@@ -1,5 +1,7 @@
 """The entity endpoint"""
 
+import requests
+
 from json import dumps
 from flask import jsonify, json, g, request, url_for
 from flask.views import MethodView
@@ -108,17 +110,19 @@ class PostView(EntityView):
             data = json.loads(request.data)
         except json.JSONDecodeError as e:
             raise APIBadRequest(str(e))
-        post = Post()
-        post.entity = entity
-        post.schema = data['schema']
-        post.content = data['content']
+        new_post = Post()
+        new_post.entity = entity
+        new_post.schema = data['schema']
+        new_post.content = data['content']
 
-        for follower in entity.followers:
-            #TODO Notify
-            pass
+        new_post.save()
 
-        post.save()
-        return jsonify(post.to_json()), 200
+        for to_notify in entity.followers:
+            notification_link = follow.get_notification_link(to_notify)
+            requests.post(notification_link, data=jsonify(new_post.to_json()))
+            #TODO Handle failled notifications somehow
+
+        return jsonify(new_post.to_json()), 200
 
 @entity.route_class('/posts/<string:post_id>')
 class PostsView(EntityView):

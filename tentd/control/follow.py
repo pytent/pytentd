@@ -5,7 +5,7 @@ import re
 import requests
 from flask import request
 
-from tentd.utils.exceptions import APIException
+from tentd.utils.exceptions import APIBadRequest
 from tentd.documents import db
 from tentd.documents.entity import Follower
 from tentd.documents.profiles import CoreProfile
@@ -25,11 +25,11 @@ def discover_entity(identity):
     try:
         response = requests.head(identity)
     except requests.ConnectionError as ex:
-        raise APIException("Could not discover entity ({})".format(ex), 404)
+        raise APIBadRequest("Could not discover entity ({})".format(ex))
 
     # TODO: 404 is probably the wrong error code
     if not 'Link' in response.headers:
-        raise APIException("Entity has no 'Link' header", 404)
+        raise APIBadRequest("Entity has no 'Link' header")
 
     link = response.headers['Link']
 
@@ -69,7 +69,7 @@ def start_following(entity, details):
         types=details['types'],
         notification_path=details['notification_path'])
     
-    notify_status = notify_following(profile, follower.notification_path)
+    notify_status = notify_following(follower)
 
     if not notify_status == 200:
         raise APIException("Could notify to {}/{}".format(
@@ -78,19 +78,25 @@ def start_following(entity, details):
         ), notify_status)
     return follower.save()
 
-def notify_following(profile, notification_path):
+def notify_following(follower):
     """Perform the GET request to the new follower's notification path.
     
     It should return 200 OK if it's acceptable."""
+    resp = requests.get(get_notification_link(follower))
+    return resp.status_code
+
+def get_notification_link(follower):
+    """Gets the absolute link of the notification path.""" 
     # TODO: Adding a / is a potential bug.
     #       We may have to strip all identities of trailing /'s
+
+    profile = discover_entity(follower.identity)
     api_root = profile[CoreProfile.__schema__]['servers'][0]
 
     if not api_root[-1] == '/':
        api_root += '/'
-   
-    resp = requests.get('{}{}'.format(api_root, notification_path))
-    return resp.status_code
+
+    return api_root + follower.notification_path
 
 def stop_following(entity, id):
     """Stops following a user."""
