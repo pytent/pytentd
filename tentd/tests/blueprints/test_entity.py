@@ -11,20 +11,12 @@ from tentd.documents.entity import Entity, Follower, Post
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
+
+
 class EntityBlueprintTest(EntityTentdTestCase):
     def test_entity_link(self):
         """ Test that getting the entity header on the entity page returns correctly."""
-        self.assertEquals(
-            self.client.head('/' + self.name).headers['Link'],
-            '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
-                self.base_url, self.name))
-    
-    def test_entity_link_pages(self):
-        """Test that getting the entity header on any entity page returns correctly."""
-        self.assertEquals(
-            self.client.head('/{}/followers/1'.format(self.name)).headers['Link'],
-            '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
-                self.base_url, self.name))
+        self.assertEntityHeader('/{}'.format(self.name))
     
     def test_entity_link_404(self):
         """Test that getting the entity header of an invalid user returns 404."""
@@ -34,7 +26,11 @@ class EntityBlueprintTest(EntityTentdTestCase):
         """Test the the profile of a non-existent user returns 404."""
         self.assertStatus(
             self.client.head('/non-existent-user/profile'), 404)
-    
+   
+    def test_entity_profile_link(self):
+        """ Test that getting the entity header on the entity profile returns correctly."""
+        self.assertEntityHeader('/{}/profile'.format(self.name))
+ 
     def test_entity_profile_json(self):
         """Test that /profile returns json"""
         r = self.client.get('/{}/profile'.format(self.name))
@@ -118,6 +114,10 @@ class FollowerTests(EntityTentdTestCase):
         """Assert that the mocks are working correctly"""
         self.assertIsInstance(requests.head, MockFunction)
         self.assertIsInstance(requests.get, MockFunction)
+    
+    def test_entity_link_follower(self):
+        """ Test that getting the entity header on the entity followers returns correctly."""
+        self.assertEntityHeader('/{}/followers'.format(self.name))
 
     def test_entity_follow(self):
         """Test that you can start following an entity."""
@@ -188,18 +188,25 @@ class FollowerTests(EntityTentdTestCase):
         updated_follower = Follower.objects.get(id=follower.id)
         self.assertEquals(self.new_identity, updated_follower.identity)
 
-
 class PostTests(EntityTentdTestCase):
+    """Tests relating to the post routes."""
+    
     def before(self):
+        """Create a post in the DB."""
         self.new_post = Post()
         self.new_post.schema='https://tent.io/types/post/status/v0.1.0'
         self.new_post.content = {'text': 'test', 'location': None}
         self.new_post.entity = self.entity
         self.new_post.save()
 
-    """Tests relating to the post routes."""
+    def test_entity_header_posts(self):
+        """Test the entity header is returned from the posts route."""
+        self.assertEntityHeader('/{}/posts'.format(self.name))
+        
+
     def test_entity_get_empty_posts(self):
         """Test that getting all posts when there are no posts works correctly."""
+        # Remove the existing post.
         self.new_post.delete()
         resp = self.client.get('/{}/posts'.format(self.name))
         self.assertStatus(resp, 200)
@@ -248,7 +255,6 @@ class PostTests(EntityTentdTestCase):
             data=dumps({'content':{'text': 'updated', 'location': None}}))
 
         self.new_post.content = {'text': 'updated', 'location': None}
-
         self.assertStatus(resp, 200)
         self.assertEquals(resp.json(), self.new_post.to_json())
 
@@ -257,7 +263,6 @@ class PostTests(EntityTentdTestCase):
         resp = self.client.put(
             '/{}/posts/{}'.format(self.name, self.new_post.id),
             data='<invalid>')
-        
         self.assertJSONError(resp)
 
     def test_entity_update_non_existant_post(self):
