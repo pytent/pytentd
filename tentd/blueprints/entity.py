@@ -77,7 +77,7 @@ def get_notification(entity):
     return '', 200
 
 @entity.route_class('/posts')
-class PostView(MethodView):
+class PostView(EntityView):
     endpoint = "posts"
 
     def get(self, entity):
@@ -102,7 +102,7 @@ class PostView(MethodView):
         return jsonify(post.to_json()), 200
 
 @entity.route_class('/posts/<string:post_id>')
-class PostsView(MethodView):
+class PostsView(EntityView):
     endpoint = 'post'
     def get(self, entity, post_id):
         return jsonify(entity.posts.get_or_404(id=post_id).to_json()), 200
