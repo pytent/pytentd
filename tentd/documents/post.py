@@ -40,7 +40,7 @@ class Post(EntityMixin, db.Document):
         TODO: 'permissions'
         """
         return json_attributes(self,
-            'id',
+            ('id', str),
             'content',
             ('published_at', time_to_string),
             ('received_at', time_to_string),

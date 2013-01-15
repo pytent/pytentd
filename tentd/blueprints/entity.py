@@ -98,15 +98,15 @@ def get_posts(entity):
         # for follower in entity.followers:
         #     follower.notify(post)
         post.save()
-        return post.to_json(), 200
+        return jsonify(post.to_json()), 200
 
         
 
-@entity.route('/posts/<string:post_id>', methods=['GET', 'PUT', 'DELETE'])
-class PostsView:
-    
+@entity.route_class('/posts/<string:post_id>')
+class PostsView(MethodView):
+    endpoint = 'post'
     def get(self, entity, post_id):
-        return entity.posts.get_or_404(id=post_id).to_json(), 200
+        return jsonify(entity.posts.get_or_404(id=post_id).to_json()), 200
     def put(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         try:
@@ -117,8 +117,8 @@ class PostsView:
         #TODO Perform the update
 
         post.save()
-        return post.to_json(), 200
+        return jsonify(post.to_json()), 200
     def delete(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         #TODO Notify?
-        return post.delete(), 200
+        return '', 200
