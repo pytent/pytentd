@@ -36,8 +36,8 @@ def followers(entity):
     """Starts following a user, defined by the post data"""
     try:
         post_data = json.loads(request.data)
-    except json.JSONDecodeError:
-        raise APIBadRequest()
+    except json.JSONDecodeError as e:
+        raise APIBadRequest(str(e))
 
     if not post_data:
         raise APIBadRequest("No POST data.")
@@ -56,8 +56,8 @@ class FollowerView(MethodView):
     def put(self, entity, follower_id):
         try:
             post_data = json.loads(request.data)
-        except json.JSONDecodeError:
-            raise JSONBadRequest()
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
         updated_follower = follow.update_follower(entity, follower_id, post_data)
         return jsonify(updated_follower.to_json())
 
@@ -83,13 +83,12 @@ def get_posts(entity):
     #      to SQL injection attacks.
     if request.method == 'GET':
         posts=[post.to_json() for post in entity.posts]
-        print posts
         return jsonify(posts), 200
     if request.method == 'POST':
         try:
             data = json.loads(request.data)
-        except json.JSONDecodeError:
-            raise APIBadRequest()
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
         post = Post()
         post.entity = entity
         post.schema = data['schema']
@@ -112,8 +111,8 @@ class PostsView:
         post = entity.posts.get_or_404(id=post_id)
         try:
             post_data = json.loads(request.data)
-        except json.JSONDecodeError:
-            raise APIBadRequest()
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
         
         #TODO Perform the update
 
