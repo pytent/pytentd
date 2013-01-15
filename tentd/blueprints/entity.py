@@ -82,16 +82,14 @@ def get_posts(entity):
     #      potential unsanatised input from the user and is therefore vunerable
     #      to SQL injection attacks.
     if request.method == 'GET':
-        posts = []
-        for post in entity.posts:
-            print post.to_json()
-            posts.append(post.to_json())
+        posts=[post.to_json() for post in entity.posts]
+        print posts
         return jsonify(posts), 200
     if request.method == 'POST':
         try:
             data = json.loads(request.data)
         except json.JSONDecodeError:
-            raise JSONBadRequest()
+            raise APIBadRequest()
         post = Post()
         post.entity = entity
         post.schema = data['schema']
@@ -115,7 +113,7 @@ class PostsView:
         try:
             post_data = json.loads(request.data)
         except json.JSONDecodeError:
-            raise JSONBadRequest()
+            raise APIBadRequest()
         
         #TODO Perform the update
 

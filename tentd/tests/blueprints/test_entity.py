@@ -3,7 +3,7 @@
 from json import loads, dumps
 
 import requests
-from flask import url_for
+from flask import url_for, jsonify
 
 from tentd import db
 from tentd.documents.entity import Entity, Follower, Post
@@ -179,28 +179,25 @@ class PostTests(EntityTentdTestCase):
         #TODO Add a post or two.
         new_post = Post()
         new_post.schema='https://tent.io/types/post/status/v0.1.0'
-        new_post.content = {'thing': 'thing'}
+        new_post.content = {'text': 'test', 'location': None}
         new_post.entity = self.entity
         new_post.save() 
         
         resp = self.client.get('/{}/posts'.format(self.name))
         self.assertStatus(resp, 200)
 
-        posts = []
-        for post in self.entity.posts:
-            posts.append(post.to_json())
+        posts = [post.to_json() for post in self.entity.posts]
         self.assertEquals(resp.json(), posts)
 
     @skip('For some reason the dumps() doesn\'t work on a dict() object. Perhaps use jsonify() instead?')
     def test_entity_new_post(self):
-        post = {'schema': 'https://tent.io/types/post/status/v0.1.0', 'content': {'thing':'thing'}}
-        resp = self.client.post('/{}/posts'.format(self.name), data=dumps(post))
+        new_post = {'schema': 'https://tent.io/types/post/status/v0.1.0', 'content': {'text': 'test', 'location': None}}
+        resp = self.client.post('/{}/posts'.format(self.name), data=dumps(new_post))
 
         self.assertStatus(resp, 200)
         #TODO check post exists in DB.
         print resp.json()['id']
 
-    @skip('Requires JSONBadRequest to be included in tentd/blueprints/entity.py')
     def test_entity_create_invalid_post(self):
         resp = self.client.post('/{}/posts'.format(self.name), data='<invalid>')
-        self.assertStatus(resp, 400)
+        self.assertJSONError(resp)
