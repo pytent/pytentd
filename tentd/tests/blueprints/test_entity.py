@@ -172,7 +172,6 @@ class PostTests(EntityTentdTestCase):
         self.assertStatus(resp, 200)
         self.assertEquals(resp.json(), {})
 
-    @skip('Raises: "ValueError: dictionary update sequence element #0 has length 4; 2 is required" for some reason. Further investigation is required.')
     def test_entity_get_posts(self):
         #TODO Add a post or two.
         new_post = Post()
@@ -185,7 +184,7 @@ class PostTests(EntityTentdTestCase):
         self.assertStatus(resp, 200)
 
         posts = [post.to_json() for post in self.entity.posts]
-        self.assertEquals(resp.json(), posts)
+        self.assertEquals(resp.json(), {'posts': posts})
 
     def test_entity_new_post(self):
         new_post = {'schema': 'https://tent.io/types/post/status/v0.1.0', 'content': {'text': 'test', 'location': None}}

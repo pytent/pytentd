@@ -1,5 +1,6 @@
 """The entity endpoint"""
 
+from json import dumps
 from flask import jsonify, json, g, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
@@ -82,8 +83,10 @@ def get_posts(entity):
     #      potential unsanatised input from the user and is therefore vunerable
     #      to SQL injection attacks.
     if request.method == 'GET':
-        posts=[post.to_json() for post in entity.posts]
-        return jsonify(posts), 200
+        all_posts=[post.to_json() for post in entity.posts]
+        if len(all_posts) == 0:
+            return jsonify({}), 200
+        return jsonify({'posts':all_posts}), 200
     if request.method == 'POST':
         try:
             data = json.loads(request.data)
