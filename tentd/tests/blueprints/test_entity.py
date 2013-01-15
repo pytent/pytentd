@@ -11,8 +11,6 @@ from tentd.documents.entity import Entity, Follower, Post
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
-
-
 class EntityBlueprintTest(EntityTentdTestCase):
     def test_entity_link(self):
         """ Test that getting the entity header on the entity page returns correctly."""
@@ -135,8 +133,8 @@ class FollowerTests(EntityTentdTestCase):
         # Ensure the follower was created in the DB.
         Follower.objects.get(id=response.json()['id'])
 
-        requests.get(self.notification).call
-        requests.get[self.notification].assert_called_once_with()
+        requests.get(self.notification)
+        requests.get.assert_called(self.notification)
         
     def test_entity_follow_error(self):
         """Test that trying to follow an invalid entity will fail."""
@@ -203,7 +201,6 @@ class PostTests(EntityTentdTestCase):
     def test_entity_header_posts(self):
         """Test the entity header is returned from the posts route."""
         self.assertEntityHeader('/{}/posts'.format(self.name))
-        
 
     def test_entity_get_empty_posts(self):
         """Test that getting all posts when there are no posts works correctly."""
@@ -290,10 +287,10 @@ class NotificationTest(EntityTentdTestCase):
     @classmethod
     def beforeClass(cls):
         cls.notification = 'http://follower.example.com/tentd/notification'
+
         cls.post = patch('requests.post', new_callable=MockFunction)
         cls.post.start()
-        cls.notification_post_mock = MockResponse()
-        requests.post[cls.notification] = cls.notification_post_mock
+        requests.post[cls.notification] = MockResponse()
         
     @classmethod
     def afterClass(cls):
@@ -322,5 +319,4 @@ class NotificationTest(EntityTentdTestCase):
 
         # Even though we've checked this, make sure the response was sucessful.
         self.assertStatus(resp, 200)
-
-        self.notification_post_mock.assert_called_once_with(resp.json())
+        requests.post[self.notification].assert_called()
