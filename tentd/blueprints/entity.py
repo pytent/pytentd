@@ -113,7 +113,9 @@ class PostView(EntityView):
         post.schema = data['schema']
         post.content = data['content']
 
-        #TODO Notify
+        for follower in entity.followers:
+            #TODO Notify
+            pass
 
         post.save()
         return jsonify(post.to_json()), 200
