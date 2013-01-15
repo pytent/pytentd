@@ -5,8 +5,15 @@ from mongoengine import ReferenceField, CASCADE
 
 db = MongoEngine()
 
-# Ensure all models are loaded. The entity model must be loaded first,
-# as it imports other models and needs to be defined before them.
-from tentd.documents.entity import Entity, Follower, Following
+class EntityMixin(object):
+    """A document mixin which attaches each document to an entity"""
+
+    #: The entity that owns the document
+    entity = ReferenceField('Entity', required=True, dbref=False)
+
+# Ensure all models are loaded and imported into the current namespace
+
 from tentd.documents.post import Post
 from tentd.documents.profiles import *
+
+from tentd.documents.entity import Entity, Follower, Following
