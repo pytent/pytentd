@@ -113,8 +113,13 @@ class PostsView(MethodView):
             post_data = json.loads(request.data)
         except json.JSONDecodeError as e:
             raise APIBadRequest(str(e))
-        
-        #TODO Perform the update
+       
+        if 'content' in post_data:
+            post.content = post_data['content']
+        if 'schema' in post_data:
+            post.schema = post_data['schema'] 
+
+        #TODO Versioning.
 
         post.save()
         return jsonify(post.to_json()), 200

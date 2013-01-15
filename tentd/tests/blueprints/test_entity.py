@@ -34,8 +34,6 @@ class EntityBlueprintTest(EntityTentdTestCase):
         
     def test_entity_core_profile(self):
         """Test that the core profile is returned correctly"""
-        print url_for('entity.profile', entity=self.entity.name)
-        
         r = self.client.get('/{}/profile'.format(self.name))
         url = r.json()['https://tent.io/types/info/core/v0.1.0']['entity']
 
@@ -194,8 +192,11 @@ class PostTests(EntityTentdTestCase):
         resp = self.client.post('/{}/posts'.format(self.name), data=dumps(new_post))
 
         self.assertStatus(resp, 200)
-        #TODO check post exists in DB.
-        print resp.json()['id']
+
+        created_post = self.entity.posts.get(id=resp.json()['id'])
+        self.assertIsNotNone(created_post)
+        self.assertEquals(created_post.schema, new_post['schema'])
+        self.assertEquals(created_post.content, new_post['content'])
 
     def test_entity_create_invalid_post(self):
         resp = self.client.post('/{}/posts'.format(self.name), data='<invalid>')
