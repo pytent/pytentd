@@ -1,49 +1,14 @@
 """Entity, follower and following documents"""
 
-__all__ = ['Entity', 'Follower', 'Following']
+__all__ = ['Entity']
 
 from datetime import datetime
 
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
-from tentd.documents import db, EntityMixin
-from tentd.documents.post import Post
-from tentd.documents.profiles import Profile, CoreProfile
+from tentd.documents import *
 from tentd.utils import json_attributes, iterable_to_json, time_to_string
-
-class Follower(EntityMixin, db.Document):
-    """Someone following an Entity"""
-
-    #: The identity of the follower
-    identity = URLField(unique_with='entity')
-
-    #: The time the follower was created
-    created_at = DateTimeField()
-
-    permissions = None
-    licenses = None
-    types = None
-
-    notification_path = StringField()
-
-    def __init__(self, **kwargs):
-        super(Follower, self).__init__(**kwargs)
-        if not self.created_at:
-            self.created_at = datetime.utcnow()
-
-    def to_json(self):
-        return json_attributes(self,
-           ('id', str),
-            'identity',
-           ('created_at', time_to_string),
-            'notification_path',
-            'permissions',
-            'types',
-            'licenses')
-
-class Following(EntityMixin, db.Document):
-    pass
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection

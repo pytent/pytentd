@@ -13,7 +13,12 @@ class EntityMixin(object):
 
 # Ensure all models are loaded and imported into the current namespace
 
+from tentd.documents.followers import Follower, Following
 from tentd.documents.post import Post
 from tentd.documents.profiles import *
 
-from tentd.documents.entity import Entity, Follower, Following
+# Entity must be loaded last, as it relies on querysets from other documents
+from tentd.documents.entity import Entity
+
+# Clean the namespace, as defining __all__ leads to problems
+del MongoEngine, ReferenceField, CASCADE
