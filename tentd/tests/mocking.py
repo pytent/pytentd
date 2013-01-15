@@ -1,6 +1,8 @@
 """Mock classes"""
 
-from mock import NonCallableMock, patch
+from collections import defaultdict
+
+from mock import Mock, patch
 
 class CallableAttribute(object):
     """An attribute that can be called to retrieve the data,
@@ -18,17 +20,16 @@ class CallableAttribute(object):
     def __set__(self, instance, value):
         self.data = value
 
-class MockResponse(NonCallableMock):
+class MockResponse(Mock):
     """A mock response, for use with MockFunction"""
 
     #: Use a default status code
     status_code = 200
 
-    #: The argument the response is for
-    __argument__ = None
-
     #: The json data for the response
-    json = CallableAttribute("No json data has been set")
+    json = CallableAttribute(error_message="No json data has been set")
+
+    data = None
     
     def __str__(self):
         return "<MockResponse for {}>".format(self.__argument__)
@@ -44,12 +45,27 @@ class MockFunction(dict):
             ...
     """
 
-    def __call__(self, argument):
-        """Return the value, setting it's __argument__ attribute"""
+    def __init__(self, **kwargs):
+        self.update(kwargs)
+        self.history = defaultdict(lambda: 0)
+
+    def __call__(self, argument, **kargs):
+        """Return the value"""
         if argument in self:
-            self[argument].__argument__ = argument
+            self.history[argument] += 1
+            if 'data' in kargs:
+                self[argument].data = kargs['data']
             return self[argument]
         raise KeyError("No mock response set for '{}'".format(argument))
+
+    def assert_called(self, argument):
+        assert self.history[argument] > 0
+
+    def assert_called_only_once(self, argument):
+        assert self.history[argument] == 1
+    
+    def assert_not_called(self, argument):
+        assert self.history[argument] == 0
 
     def __repr__(self):
         return "{}({})".format(
