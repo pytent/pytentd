@@ -125,3 +125,9 @@ class EntityTentdTestCase(TentdTestCase):
         )
         
         super(EntityTentdTestCase, self).setUp()
+
+    def assertEntityHeader(self, route):
+        self.assertEquals(
+            self.client.head(route).headers['Link'],
+            '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
+                self.base_url, self.name))
