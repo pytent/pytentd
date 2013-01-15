@@ -12,6 +12,11 @@ from tentd.utils import json_attributes, time_to_string
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
 
+    meta = {
+        'allow_inheritance': False,
+        'indexes': ['identity'],
+    }
+
     #: The identity of the follower
     identity = URLField(unique_with='entity')
 
@@ -40,4 +45,14 @@ class Follower(EntityMixin, db.Document):
             'licenses')
 
 class Following(EntityMixin, db.Document):
-    pass
+
+    meta = {
+        'allow_inheritance': False,
+        'indexes': ['identity'],
+    }
+
+    #: The identity of the following
+    identity = URLField(unique_with='entity')
+
+    #: The time the following was created
+    created_at = DateTimeField(default=datetime.now)

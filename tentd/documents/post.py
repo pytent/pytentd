@@ -16,6 +16,12 @@ class Post(EntityMixin, db.Document):
     This is documented at: https://tent.io/docs/post-types
     """
 
+    meta = {
+        'allow_inheritance': False,
+        'indexes': ['schema'],
+        'ordering': ['-published_at'],
+    }
+
     #: The post type
     schema = URLField(required=True)
 

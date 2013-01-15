@@ -23,7 +23,10 @@ class QuerySetProperty(object):
 class Entity(db.Document):
     """A tent entity"""
 
-    meta = {'allow_inheritance': False}
+    meta = {
+        'allow_inheritance': False,
+        'indexes': ['name'],
+    }
 
     #: The name used as the entities api root
     name = StringField(max_length=100, required=True, unique=True)
