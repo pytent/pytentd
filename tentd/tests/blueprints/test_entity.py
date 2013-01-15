@@ -274,3 +274,11 @@ class PostTests(EntityTentdTestCase):
         """Test that attempting to delete a non-existant post fails."""
         resp = self.client.delete('/{}/posts/invalid'.format(self.name))
         self.assertStatus(resp, 404)
+
+class NotificationTest(EntityTentdTestCase):
+    """Test routes relating to notifications."""
+
+    def test_entity_header_notification(self):
+        """Test the entity header is returned from the notifications route."""
+        self.assertEntityHeader('/{}/notification'.format(self.name))
+
