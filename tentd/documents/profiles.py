@@ -5,8 +5,7 @@ __all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db
-from tentd.documents.entity import EntityMixin
+from tentd.documents import db, EntityMixin
 from tentd.utils import json_attributes
 
 class Profile(EntityMixin, db.Document):

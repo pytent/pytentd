@@ -1,8 +1,7 @@
 """ Test cases for the user profile data """
 
 from tentd import db
-from tentd.documents.entity import Entity
-from tentd.documents.profiles import CoreProfile
+from tentd.documents import Entity, CoreProfile, Post
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class EntityTest(EntityTentdTestCase):
@@ -17,10 +16,27 @@ class EntityTest(EntityTentdTestCase):
             entity = Entity(name="testuser")
             entity.save()
 
-def CoreProfileTest(TentdTestCase):
+class CoreProfileTest(TentdTestCase):
     def test_core_profile(self):
         self.entity = Entity(name="testuser")
         self.entity.save()
-        
+
         with self.assertRaises(Exception):
-            core = self.entity.core
+            print self.entity.core
+
+class DeletionTest(TentdTestCase):
+    """Test cascading deletes"""
+
+    def test_post_delete(self):
+        self.entity = Entity(name="testuser").save()
+        self.post = Post(
+            entity=self.entity,
+            schema="http://example.com/thisisnotrelevant",
+            content={'a': 'b'}).save()
+
+        assert self.post in Post.objects
+        assert self.post in self.entity.posts
+        
+        self.entity.delete(safe=True)
+
+        assert self.post not in Post.objects
