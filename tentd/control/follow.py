@@ -43,11 +43,10 @@ def discover_entity(identity):
     try:
         profile = requests.get(url).json()
         if CoreProfile.__schema__ not in profile:
-            # TODO: 404 is probably the wrong error code
-            raise APIException("Entity has no core profile.", 404)
+            raise APIException("Entity has no core profile.")
     except requests.ConnectionError as ex:
         raise APIException(
-            "Could not fetch entity profile ({})".format(ex), 404)
+            "Could not fetch entity profile ({})".format(ex))
 
     return profile
     
@@ -89,8 +88,9 @@ def notify_following(profile, notification_path):
 
     if not api_root[-1] == '/':
        api_root += '/'
-    
-    return requests.get(api_root + notification_path).status_code
+   
+    resp = requests.get('{}{}'.format(api_root, notification_path))
+    return resp.status_code
 
 def stop_following(entity, id):
     """Stops following a user."""
