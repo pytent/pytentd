@@ -1,6 +1,8 @@
-*.py[cod]
+# Virtualenv
+env/
 
-# C extensions
+# Compiled python
+*.py[cod]
 *.so
 
 # Packages
@@ -29,7 +31,9 @@ nosetests.xml
 # Translations
 *.mo
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+# Editor files
+*~
+*.swp
+
+# config files for tent
+*.cfg
