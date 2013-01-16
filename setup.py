@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name             = 'tentd',
-    version          = '0.0.0',
+    version          = '0.1.0',
     license          = 'Apache Software License 2.0',
     url              = 'https://github.com/ravenscroftj/pytentd',
     description      = 'A http://tent.io/ server and application',
@@ -28,8 +28,8 @@ setup(
 
     entry_points = {
         'console_scripts': [
-            'tentd = tentd.cli:run',
-            'pytentd = tentd.cli:run',
+            'tentd = tentd:run',
+            'pytentd = tentd:run',
         ]
     },
 
@@ -37,14 +37,11 @@ setup(
 
     install_requires = [
         'flask==0.9',
-        'Flask-SQLAlchemy==0.16',
-        'requests==1.0.3',
-        'simplejson==2.6.2'
+        'flask-mongoengine==0.6',
+        'mongoengine==0.7.9',
+        'requests==1.1.0',
+        'simplejson==3.0.7',
     ],
-
-    extras_require = {
-        'daemon': ['daemonize==1.1']
-    },
 
     # Tests
     

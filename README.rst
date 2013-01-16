@@ -9,27 +9,40 @@ Running pytentd
 
 Running pytentd is easy::
 
-    $ tentd start
+    $ tentd
 
 Information on the command line options can be found with::
 
     $ tentd --help
     $ tentd [subcommand] --help
 
+Installation
+------------
+
+The pytentd package can be installed with pip::
+
+    pip install git+git://github.com/ravenscroftj/pytentd.git
+
+The pytentd package can be also installed directly from the git repository::
+
+    git clone git+git://github.com/ravenscroftj/pytentd.git
+    cd pytentd
+    python setup.py install
+
+Pytentd requires a `mongoDB`_ database - packages for this are available for most operating systems. More information on starting and stopping the mongoDB server can be found `here`_, though some distributions (such as Ubuntu) will run mongoDB as a service once the package is installed.
+
+.. _mongoDB: http://www.mongodb.org/
+.. _here: http://www.mongodb.org/display/DOCS/Starting+and+Stopping+Mongo
+
 Configuration
 -------------
 
-pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option.
-This file should be a python file containing capitalised variables.
+pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option. This file should be a python file containing capitalised variables.
 
-These configuration variables can be used for pytentd:
-
-- ``PIDFILE``: The path used for the pidfile in daemon mode.
-
-Documentation is also available on the configuration variables for `Flask`_ and `SQLAlchemy`_.
+Documentation is available on the configuration variables for `Flask`_ and `Flask-MongoEngine`_.
 
 .. _Flask: http://flask.pocoo.org/docs/config/#builtin-configuration-values
-.. _SQLAlchemy: http://packages.python.org/Flask-SQLAlchemy/config.html
+.. _Flask-MongoEngine: https://flask-mongoengine.readthedocs.org/en/latest/
 
 Contributing
 ============
