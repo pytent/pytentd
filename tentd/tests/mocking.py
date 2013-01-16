@@ -1,6 +1,7 @@
 """Mock classes"""
 
 from collections import defaultdict
+from weakref import proxy
 
 from mock import Mock, patch
 
@@ -45,9 +46,25 @@ class MockFunction(dict):
             ...
     """
 
+    __objects = []
+
     def __init__(self, **kwargs):
-        self.update(kwargs)
-        self.history = defaultdict(lambda: 0)
+        super(MockFunction, self).__init__(**kwargs)
+        self.__objects.append(proxy(self))
+
+    @classmethod
+    def reset(cls):
+        """Clear the history of all MockFunction objects"""
+        for obj in cls.__objects:
+            if hasattr(obj, '_history'):
+                delattr(obj, '_history')
+
+    @property
+    def history(self):
+        """Return the objects history, creating it if it does not exist"""
+        if not hasattr(self, '_history'):
+            self._history = defaultdict(lambda: 0)
+        return self._history
 
     def __call__(self, argument, **kargs):
         """Return the value"""

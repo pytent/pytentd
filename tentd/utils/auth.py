@@ -100,6 +100,6 @@ def require_authorization(func):
         
         TODO: actual implementation of this decorator.
         """
-        auth = request.headers.get('Authorization')
+        request.headers.get('Authorization')
         return func(*args, **kwargs)
     return decorated

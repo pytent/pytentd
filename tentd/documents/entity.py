@@ -2,13 +2,11 @@
 
 __all__ = ['Entity']
 
-from datetime import datetime
-
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
 from tentd.documents import *
-from tentd.utils import json_attributes, iterable_to_json, time_to_string
+from tentd.utils import json_attributes, iterable_to_json
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection
@@ -46,6 +44,7 @@ class Entity(db.Document):
             raise Exception("Entity has no core profile.")
 
     def create_core(self, **kwargs):
+        """Creates a coreprofile instance attached to this entity"""
         return CoreProfile(entity=self, **kwargs).save()
 
     def __repr__(self):
