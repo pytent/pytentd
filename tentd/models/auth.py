@@ -9,3 +9,7 @@ class KeyPair(db.Model):
 
     mac_id =  Column(String(32), unique=True)
     mac_key = Column(String(64))
+    mac_algorithm = Column(String(24))
+
+    def __init__(self, **kwargs):
+        super(KeyPair, self).__init__(**kwargs)
