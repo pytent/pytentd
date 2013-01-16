@@ -7,10 +7,9 @@ __all__ = ['TentdTestCase', 'EntityTentdTestCase', 'skip']
 
 from unittest import TestCase, skip
 
-from flask import json, jsonify, Response, _request_ctx_stack
-from werkzeug import cached_property
+from flask import json, Response
 
-from tentd import create_app, db
+from tentd import create_app
 from tentd.documents import *
 
 class TestResponse(Response):

@@ -3,11 +3,8 @@
 
 from __future__ import unicode_literals
 
-from datetime import datetime
-
-from tentd import db
-from tentd.documents import Entity, Profile, CoreProfile, Post
-from tentd.tests import TentdTestCase, EntityTentdTestCase
+from tentd.documents import Post
+from tentd.tests import EntityTentdTestCase
 
 class PostTest(EntityTentdTestCase):
     def before(self):

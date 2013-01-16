@@ -3,10 +3,8 @@
 import re
 
 import requests
-from flask import request
 
-from tentd.utils.exceptions import APIBadRequest
-from tentd.documents import db
+from tentd.utils.exceptions import APIException, APIBadRequest
 from tentd.documents.entity import Follower
 from tentd.documents.profiles import CoreProfile
 
@@ -127,15 +125,15 @@ def update_follower(entity, follower_id, details):
     return follower.save()
     
 def get_follower(follower_id):
-    ''' Gets details for a followed user. '''
+    """Gets details for a followed user."""
     follower = Follower.query.get(follower_id)
 
     if not follower:
-        raise TentError("Follower {} does not exist.".format(follower_id), 404)
+        raise APIException("Follower {} does not exist.".format(follower_id))
 
     return follower
 
 def get_followers():
-    ''' Gets the ids of all users being followed. '''
+    """Gets the ids of all users being followed."""
     pass
 

@@ -1,3 +1,5 @@
+"""Test the authentication functions"""
+
 import base64
 import hmac
 from hashlib import sha256

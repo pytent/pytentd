@@ -1,15 +1,13 @@
 """Tests for the entity blueprint"""
 
-from json import loads, dumps
+from json import dumps
 
 import requests
-from flask import url_for, jsonify
 
-from tentd import db
 from tentd.documents.entity import Entity, Follower, Post
 from tentd.documents.profiles import BasicProfile
 
-from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
+from tentd.tests import EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(EntityTentdTestCase):

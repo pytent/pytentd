@@ -5,7 +5,7 @@ __all__ = ['Post']
 from mongoengine import *
 
 from tentd.documents import db, EntityMixin
-from tentd.utils import time_to_string, maybe, json_attributes
+from tentd.utils import time_to_string, json_attributes
 
 class Post(EntityMixin, db.Document):
     """A post belonging to an entity.

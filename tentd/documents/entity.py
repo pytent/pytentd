@@ -2,13 +2,11 @@
 
 __all__ = ['Entity']
 
-from datetime import datetime
-
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
 from tentd.documents import *
-from tentd.utils import json_attributes, iterable_to_json, time_to_string
+from tentd.utils import json_attributes, iterable_to_json
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection

@@ -2,16 +2,15 @@
 
 import requests
 
-from json import dumps
-from flask import jsonify, json, g, request, url_for
+from flask import jsonify, json, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
 
 from tentd.flask import Blueprint
 from tentd.control import follow
-from tentd.utils.exceptions import APIException, APIBadRequest
+from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents.entity import Entity, Follower, Post
+from tentd.documents.entity import Entity, Post
 from tentd.documents.profiles import CoreProfile
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
