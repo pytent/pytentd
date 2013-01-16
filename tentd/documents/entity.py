@@ -44,6 +44,7 @@ class Entity(db.Document):
             raise Exception("Entity has no core profile.")
 
     def create_core(self, **kwargs):
+        """Creates a coreprofile instance attached to this entity"""
         return CoreProfile(entity=self, **kwargs).save()
 
     def __repr__(self):

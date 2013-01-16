@@ -24,13 +24,13 @@ class AuthTest(TentdTestCase):
             self.macid, self.tstamp, self.nonce, self.mac)
 
     def test_parseauth(self):
-      """Test the parse authstring method """
+        """Test the parse authstring method """
 
-      auth = parse_authstring(self.authstring)
-      assert auth['id'] == self.macid
-      assert int(auth['ts']) == self.tstamp
-      assert auth['nonce'] == self.nonce
-      assert auth['mac'] == self.mac
+        auth = parse_authstring(self.authstring)
+        assert auth['id'] == self.macid
+        assert int(auth['ts']) == self.tstamp
+        assert auth['nonce'] == self.nonce
+        assert auth['mac'] == self.mac
 
     def test_check_request(self):
         key = "secret"

@@ -5,20 +5,19 @@ from json import dumps
 import requests
 
 from tentd.documents.entity import Entity, Follower, Post
-from tentd.documents.profiles import BasicProfile
+from tentd.documents.profiles import CoreProfile, BasicProfile
 
 from tentd.tests import EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(EntityTentdTestCase):
     def test_entity_link(self):
-        """ Test that getting the entity header on the entity page returns correctly."""
+        """Test that the link endpoint uses the correct header."""
         self.assertEntityHeader('/{}'.format(self.name))
     
     def test_entity_link_404(self):
-        """Test that getting the entity header of an invalid user returns 404."""
+        """Test that endpoints using an invalid user return 404."""
         self.assertStatus(self.client.head('/non-existent-user'), 404)
-   
 
 class ProfileBlueprintTest(EntityTentdTestCase):
     CORE = 'https://tent.io/types/info/core/v0.1.0'
@@ -26,90 +25,103 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_profile_404(self):
         """Test the the profile of a non-existent user returns 404."""
-        self.assertStatus(
-            self.client.head('/non-existent-user/profile'), 404)
+        self.assertStatus(self.client.head('/non-existent-user/profile'), 404)
    
     def test_entity_profile_link(self):
-        """ Test that getting the entity header on the entity profile returns correctly."""
+        """Test that the entity header on the entity profile is correct."""
         self.assertEntityHeader('/{}/profile'.format(self.name))
  
     def test_entity_profile_json(self):
-        """Test that /profile returns json"""
+        """Test that /profile returns json with a core profile"""
         r = self.client.get('/{}/profile'.format(self.name))
         
         self.assertEquals(r.mimetype, 'application/json')
-        self.assertIn(self.CORE, r.json())
+        self.assertIn(CoreProfile.__schema__, r.json())
         
     def test_entity_core_profile(self):
         """Test that the core profile is returned correctly"""
         r = self.client.get('/{}/profile'.format(self.name))
-        url = r.json()[self.CORE]['entity']
-
+        identity = r.json()[CoreProfile.__schema__]['entity']
         entity = Entity.objects.get(name=self.name)
-        
-        self.assertEquals(url, entity.core.identity)
+        self.assertEquals(identity, entity.core.identity)
 
     def test_entity_get_single_profile(self):
         """Test that getting a single profile is possible."""
-        resp = self.client.get('/{}/profile/{}'.format(self.name, self.CORE))
+        resp = self.client.get('/{}/profile/{}'.format(
+            self.name, CoreProfile.__schema__))
         self.assertStatus(resp, 200)
-        core_profile = self.entity.profiles.get(self.CORE).to_json()
-        self.assertEquals(resp.json(), core_profile)
+
+        core_profile = self.entity.profiles.get(CoreProfile.__schema__)
+        self.assertEquals(resp.json(), core_profile.to_json())
 
     def test_entity_get_non_existant_profile(self):
         """Test that getting a non-existant profile fails."""
-        resp = self.client.get('/{}/profile/{}'.format(self.name, '<invalid>'))
+        resp = self.client.get('/{}/profile/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
 
     def test_entity_update_profile(self):
         """Tests that a profile can be updated."""
-        update_data = {'servers': ['http://tent.example.com', 'http://example.com/tent']}
-        resp = self.client.put('{}/profile/{}'.format(self.name, self.CORE), 
+        update_data = {
+            'servers': [
+                'http://tent.example.com',
+                'http://example.com/tent',]}
+
+        resp = self.client.put(
+            '{}/profile/{}'.format(self.name, CoreProfile.__schema__),
             data=dumps(update_data))
 
+        servers = self.entity.profiles.get(CoreProfile.__schema__).servers
+
         self.assertStatus(resp, 200)
-        self.assertEquals(self.entity.profiles.get(self.CORE).servers, update_data['servers'])
+        self.assertEquals(servers, update_data['servers'])
 
     def test_entity_update_non_existant_profile(self):
         """Tests that attempting to update a non-existant profile fails."""
-        update_data = {'servers': ['http://tent.example.com', 'http://example.com/tent']}
-        resp = self.client.put('{}/profile/{}'.format(self.name, '<invalid>', 
-            data=dumps(update_data)))
+        update_data = {
+            'servers': [
+                'http://tent.example.com',
+                'http://example.com/tent']}
+        resp = self.client.put(
+            '{}/profile/<invalid>'.format(self.name),
+            data=dumps(update_data))
         self.assertStatus(resp, 404)
 
     def test_entity_invalid_update_profile(self):
-        """Tests that attempting to update a profile with invalid data fails."""
-        resp = self.client.put('{}/profile/{}'.format(self.name, self.CORE))
+        """Tests that updating a profile with invalid data fails."""
+        resp = self.client.put('{}/profile/{}'.format(
+            self.name, CoreProfile.__schema__))
         self.assertJSONError(resp)
 
     def test_entity_delete_profile(self):
         """Tests that a profile can be deleted."""
-        new_profile = BasicProfile()
+        new_profile = BasicProfile(entity=self.entity)
         new_profile.avatar_url = 'http://example.com/avatar.jpg'
         new_profile.name = 'test'
         new_profile.location = 'test'
         new_profile.gender = 'test'
         new_profile.birthdate = '01/01/1980'
         new_profile.bio = 'test'
-
-        new_profile.entity = self.entity
         new_profile.save()
 
-        # Check it was added correctly
-        self.assertIsNotNone(self.entity.profiles.get(schema=self.BASIC), new_profile)
+        # Will raise BasicProfile.DoesNotExist upon failing
+        self.entity.profiles.get(schema=BasicProfile.__schema__)
 
-        resp = self.client.delete('{}/profile/{}'.format(self.name, self.BASIC))
+        resp = self.client.delete(
+            '{}/profile/{}'.format(self.name, BasicProfile.__schema__))
         self.assertStatus(resp, 200)
-        self.assertEquals(self.entity.profiles.filter(schema=self.BASIC).count(), 0)
+
+        profiles = self.entity.profiles.filter(schema=BasicProfile.__schema__)
+        self.assertEquals(profiles.count(), 0)
 
     def test_entity_cannot_delete_core_profile(self):
         """Tests that the core profile cannot be deleted."""
-        resp = self.client.delete('{}/profile/{}'.format(self.name, self.CORE))
+        resp = self.client.delete(
+            '{}/profile/{}'.format(self.name, CoreProfile.__schema__))
         self.assertStatus(resp, 400)
 
     def test_entity_delete_non_existent_profile(self):
         """Tests attempting to delete a non-existent profile fails."""
-        resp = self.client.delete('{}/profile/{}'.format(self.name, '<invalid>'))
+        resp = self.client.delete('{}/profile/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
         
 class FollowerTests(EntityTentdTestCase):
@@ -180,7 +192,7 @@ class FollowerTests(EntityTentdTestCase):
         self.assertIsInstance(requests.get, MockFunction)
 
     def test_entity_link_follower(self):
-        """ Test that getting the entity header on the entity followers returns correctly."""
+        """Test that /{entity}/follower uses the tent header"""
         self.assertEntityHeader('/{}/followers'.format(self.name))
 
     def test_entity_follow(self):
@@ -203,11 +215,10 @@ class FollowerTests(EntityTentdTestCase):
         requests.get(self.notification)
         requests.get.assert_called(self.notification)
        
-    @skip("Call count needs to be reset for this to function correctly.")
     def test_entity_follow_error(self):
         """Test that trying to follow an invalid entity will fail."""
-        response = self.client.post('/{}/followers'.format(self.name), \
-            data='<invalid>')
+        response = self.client.post(
+            '/{}/followers'.format(self.name), data='<invalid>')
         self.assertJSONError(response)
         requests.get.assert_not_called(self.notification)
 
@@ -270,14 +281,6 @@ class PostTests(EntityTentdTestCase):
         """Test the entity header is returned from the posts route."""
         self.assertEntityHeader('/{}/posts'.format(self.name))
 
-    def test_entity_get_empty_posts(self):
-        """Test that getting all posts when there are no posts works correctly."""
-        # Remove the existing post.
-        self.new_post.delete()
-        resp = self.client.get('/{}/posts'.format(self.name))
-        self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), {})
-
     def test_entity_get_posts(self):
         """Test that getting all posts returns correctly."""
         resp = self.client.get('/{}/posts'.format(self.name))
@@ -290,8 +293,8 @@ class PostTests(EntityTentdTestCase):
         """Test that a new post can be added correctly."""
         post_details = {
             'schema': 'https://tent.io/types/post/status/v0.1.0', 
-            'content': {'text': 'test', 'location': None}
-        }
+            'content': {'text': 'test', 'location': None}}
+            
         resp = self.client.post('/{}/posts'.format(self.name),
             data=dumps(post_details))
 
@@ -304,12 +307,14 @@ class PostTests(EntityTentdTestCase):
 
     def test_entity_create_invalid_post(self):
         """Test that attempting to create an invalid post fails."""
-        resp = self.client.post('/{}/posts'.format(self.name), data='<invalid>')
+        resp = self.client.post(
+            '/{}/posts'.format(self.name), data='<invalid>')
         self.assertJSONError(resp)
 
     def test_entity_get_single_post(self):
         """Test getting a single post works correctly."""
-        resp = self.client.get('/{}/posts/{}'.format(self.name, self.new_post.id))
+        resp = self.client.get(
+            '/{}/posts/{}'.format(self.name, self.new_post.id))
 
         self.assertStatus(resp, 200)
         self.assertEquals(resp.json(), self.new_post.to_json())
@@ -318,11 +323,14 @@ class PostTests(EntityTentdTestCase):
         """Test a single post can be updated."""
         resp = self.client.put(
             '/{}/posts/{}'.format(self.name, self.new_post.id),
-            data=dumps({'content':{'text': 'updated', 'location': None}}))
+            data=dumps({
+                'content': {
+                    'text': 'updated',
+                    'location': None}}))
 
-        self.new_post.content = {'text': 'updated', 'location': None}
+        new_post = Post.objects.get(entity=self.entity)
         self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), self.new_post.to_json())
+        self.assertEquals(resp.json(), new_post.to_json())
 
     def test_entity_update_post_invalid(self):
         """Test that attempting to update an invalid post fails."""
@@ -341,13 +349,20 @@ class PostTests(EntityTentdTestCase):
         resp = self.client.delete(
             '/{}/posts/{}'.format(self.name, self.new_post.id))
         self.assertStatus(resp, 200)
-        self.assertEquals(
-            self.entity.posts.filter(id=self.new_post.id).count(), 0)
+        entity_post = self.entity.posts.filter(id=self.new_post.id)
+        self.assertEquals(entity_post.count(), 0)
 
     def test_entity_delete_invalid_post(self):
         """Test that attempting to delete a non-existant post fails."""
-        resp = self.client.delete('/{}/posts/invalid'.format(self.name))
+        resp = self.client.delete('/{}/posts/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
+
+class MorePostTests(EntityTentdTestCase):
+    def test_entity_get_empty_posts(self):
+        """Test that /posts works when there are no posts to return"""
+        resp = self.client.get('/{}/posts'.format(self.name))
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), {})
 
 class NotificationTest(EntityTentdTestCase):
     """Test routes relating to notifications."""
@@ -379,7 +394,6 @@ class NotificationTest(EntityTentdTestCase):
         cls.post = patch('requests.post', new_callable=MockFunction)
         cls.post.start()
         requests.post[cls.notification] = MockResponse()
-
         
     @classmethod
     def afterClass(cls):
@@ -402,14 +416,16 @@ class NotificationTest(EntityTentdTestCase):
         self.assertEntityHeader('/{}/notification'.format(self.name))
 
     def test_notified_of_new_post(self):
-        """Test that a following user notification path has a post made to it."""
+        """Test that a followers notification path has a post made to it."""
         post_details = {
             'schema': 'https://tent.io/types/post/status/v0.1.0', 
-            'content': {'text': 'test', 'location': None}
-        }
-        resp = self.client.post('/{}/posts'.format(self.name),
+            'content': {'text': 'test', 'location': None}}
+        
+        resp = self.client.post(
+            '/{}/posts'.format(self.name),
             data=dumps(post_details))
 
-        # Even though we've checked this, make sure the response was sucessful.
+        # Even though we've checked this,
+        # make sure the response was sucessful.
         self.assertStatus(resp, 200)
         requests.post.assert_called(self.notification)

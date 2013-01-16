@@ -92,7 +92,7 @@ def get_notification_link(follower):
     api_root = profile[CoreProfile.__schema__]['servers'][0]
 
     if not api_root[-1] == '/':
-       api_root += '/'
+        api_root += '/'
 
     return api_root + follower.notification_path
 
