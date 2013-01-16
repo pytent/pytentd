@@ -7,6 +7,7 @@ from flask import url_for, jsonify
 
 from tentd import db
 from tentd.documents.entity import Entity, Follower, Post
+from tentd.documents.profiles import BasicProfile
 
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
@@ -19,7 +20,12 @@ class EntityBlueprintTest(EntityTentdTestCase):
     def test_entity_link_404(self):
         """Test that getting the entity header of an invalid user returns 404."""
         self.assertStatus(self.client.head('/non-existent-user'), 404)
-    
+   
+
+class ProfileBlueprintTest(EntityTentdTestCase):
+    CORE = 'https://tent.io/types/info/core/v0.1.0'
+    BASIC = 'https://tent.io/types/info/basic/v0.1.0'
+
     def test_entity_profile_404(self):
         """Test the the profile of a non-existent user returns 404."""
         self.assertStatus(
@@ -34,16 +40,79 @@ class EntityBlueprintTest(EntityTentdTestCase):
         r = self.client.get('/{}/profile'.format(self.name))
         
         self.assertEquals(r.mimetype, 'application/json')
-        self.assertIn('https://tent.io/types/info/core/v0.1.0', r.json())
+        self.assertIn(self.CORE, r.json())
         
     def test_entity_core_profile(self):
         """Test that the core profile is returned correctly"""
         r = self.client.get('/{}/profile'.format(self.name))
-        url = r.json()['https://tent.io/types/info/core/v0.1.0']['entity']
+        url = r.json()[self.CORE]['entity']
 
         entity = Entity.objects.get(name=self.name)
         
         self.assertEquals(url, entity.core.identity)
+
+    def test_entity_get_single_profile(self):
+        """Test that getting a single profile is possible."""
+        resp = self.client.get('/{}/profile/{}'.format(self.name, self.CORE))
+        self.assertStatus(resp, 200)
+        core_profile = self.entity.profiles.get(self.CORE).to_json()
+        self.assertEquals(resp.json(), core_profile)
+
+    def test_entity_get_non_existant_profile(self):
+        """Test that getting a non-existant profile fails."""
+        resp = self.client.get('/{}/profile/{}'.format(self.name, '<invalid>'))
+        self.assertStatus(resp, 404)
+
+    def test_entity_update_profile(self):
+        """Tests that a profile can be updated."""
+        update_data = {'servers': ['http://tent.example.com', 'http://example.com/tent']}
+        resp = self.client.put('{}/profile/{}'.format(self.name, self.CORE), 
+            data=dumps(update_data))
+
+        self.assertStatus(resp, 200)
+        self.assertEquals(self.entity.profiles.get(self.CORE).servers, update_data['servers'])
+
+    def test_entity_update_non_existant_profile(self):
+        """Tests that attempting to update a non-existant profile fails."""
+        update_data = {'servers': ['http://tent.example.com', 'http://example.com/tent']}
+        resp = self.client.put('{}/profile/{}'.format(self.name, '<invalid>', 
+            data=dumps(update_data)))
+        self.assertStatus(resp, 404)
+
+    def test_entity_invalid_update_profile(self):
+        """Tests that attempting to update a profile with invalid data fails."""
+        resp = self.client.put('{}/profile/{}'.format(self.name, self.CORE))
+        self.assertJSONError(resp)
+
+    def test_entity_delete_profile(self):
+        """Tests that a profile can be deleted."""
+        new_profile = BasicProfile()
+        new_profile.avatar_url = 'http://example.com/avatar.jpg'
+        new_profile.name = 'test'
+        new_profile.location = 'test'
+        new_profile.gender = 'test'
+        new_profile.birthdate = '01/01/1980'
+        new_profile.bio = 'test'
+
+        new_profile.entity = self.entity
+        new_profile.save()
+
+        # Check it was added correctly
+        self.assertIsNotNone(self.entity.profiles.get(schema=self.BASIC), new_profile)
+
+        resp = self.client.delete('{}/profile/{}'.format(self.name, self.BASIC))
+        self.assertStatus(resp, 200)
+        self.assertEquals(self.entity.profiles.filter(schema=self.BASIC).count(), 0)
+
+    def test_entity_cannot_delete_core_profile(self):
+        """Tests that the core profile cannot be deleted."""
+        resp = self.client.delete('{}/profile/{}'.format(self.name, self.CORE))
+        self.assertStatus(resp, 400)
+
+    def test_entity_delete_non_existent_profile(self):
+        """Tests attempting to delete a non-existent profile fails."""
+        resp = self.client.delete('{}/profile/{}'.format(self.name, '<invalid>'))
+        self.assertStatus(resp, 404)
         
 class FollowerTests(EntityTentdTestCase):
     """Tests relating to followers."""
@@ -225,7 +294,7 @@ class PostTests(EntityTentdTestCase):
             'schema': 'https://tent.io/types/post/status/v0.1.0', 
             'content': {'text': 'test', 'location': None}
         }
-        resp = self.client.post('/{}/posts'.format(self.name), \
+        resp = self.client.post('/{}/posts'.format(self.name),
             data=dumps(post_details))
 
         self.assertStatus(resp, 200)

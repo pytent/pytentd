@@ -10,7 +10,9 @@ from mongoengine import ValidationError
 from tentd.flask import Blueprint
 from tentd.control import follow
 from tentd.utils.exceptions import APIException, APIBadRequest
+from tentd.utils.auth import require_authorization
 from tentd.documents.entity import Entity, Follower, Post
+from tentd.documents.profiles import CoreProfile
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
@@ -37,11 +39,47 @@ def fetch_entity(endpoint, values):
 
 @entity.route_class('/profile')
 class ProfileView(EntityView):
-    """The view for profile-based routes."""
+    """The view for full profile-based routes."""
     endpoint = 'profile'
     def get(self, entity):
         """Return the info types belonging to the entity"""
         return jsonify({p.schema: p.to_json() for p in entity.profiles})
+
+@entity.route_class('/profile/<path:schema>')
+class ProfilesView(EntityView):
+    """The view for individual profile-based routes."""
+    endpoint = 'profiles'
+
+    @require_authorization
+    def get(self, entity, schema):
+        """Gets a single type of profile if it exists."""
+        return jsonify(entity.profiles.get_or_404(schema=schema).to_json()), 200
+
+    def put(self, entity, schema):
+        """Update a profile type."""
+        profile = entity.profiles.get_or_404(schema=schema)
+        try:
+            update_data = json.loads(request.data)
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(str(e))
+
+        if 'identity' in update_data:
+            profile.identity = update_data['identity']
+        if 'servers' in update_data:
+            profile.servers = update_data['servers']
+
+        profile.save()
+
+        return jsonify(profile.to_json()), 200
+
+    def delete(self, entity, schema):
+        """Delete a profile type."""
+        if schema == CoreProfile.__schema__:
+            raise APIBadRequest('Cannot delete the core profile.')
+
+        profile = entity.profiles.get_or_404(schema=schema)
+        profile.delete()
+        return '', 200        
 
 @entity.route_class('/followers')
 class FollowersView(EntityView):
@@ -67,11 +105,13 @@ class FollowerView(EntityView):
     """View for follower-based routes."""
 
     endpoint = 'follower'
-    
+   
+    @require_authorization 
     def get(self, entity, follower_id):
         """Returns the json representation of a follower"""
         return jsonify(entity.followers.get_or_404(id=follower_id).to_json())
 
+    @require_authorization
     def put(self, entity, follower_id):
         """Updates a following relationship."""
         try:
@@ -81,6 +121,7 @@ class FollowerView(EntityView):
         updated_follower = follow.update_follower(entity, follower_id, post_data)
         return jsonify(updated_follower.to_json())
 
+    @require_authorization
     def delete(self, entity, follower_id):
         """Deletes a following relationship."""
         try:
@@ -99,12 +140,14 @@ class NotificationView(EntityView):
 class PostView(EntityView):
     endpoint = "posts"
 
+    @require_authorization
     def get(self, entity):
         all_posts=[post.to_json() for post in entity.posts]
         if len(all_posts) == 0:
             return jsonify({}), 200
         return jsonify({'posts':all_posts}), 200
 
+    @require_authorization
     def post(self, entity):
         try:
             data = json.loads(request.data)
@@ -127,8 +170,12 @@ class PostView(EntityView):
 @entity.route_class('/posts/<string:post_id>')
 class PostsView(EntityView):
     endpoint = 'post'
+
+    @require_authorization
     def get(self, entity, post_id):
         return jsonify(entity.posts.get_or_404(id=post_id).to_json()), 200
+
+    @require_authorization
     def put(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         try:
@@ -145,6 +192,8 @@ class PostsView(EntityView):
 
         post.save()
         return jsonify(post.to_json()), 200
+
+    @require_authorization
     def delete(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         post.delete()

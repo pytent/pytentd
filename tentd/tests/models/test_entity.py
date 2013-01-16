@@ -10,8 +10,7 @@ class EntityTest(EntityTentdTestCase):
         assert self.entity == Entity.objects.get(name="testuser")
 
     def test_create_identical_entity(self):
-        """Check that properly inserting a document does not overwrite an
-        existing one"""
+        """Check that properly inserting a document does not overwrite an existing one"""
         with self.assertRaises(db.NotUniqueError):
             entity = Entity(name="testuser")
             entity.save()
