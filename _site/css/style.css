@@ -1,0 +1,69 @@
+body {
+  font-family: sans-serif;
+  padding: 0px;
+  margin: 0px;
+  font-size: 125%;
+}
+
+#container {
+  width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 300%;
+  text-align: center;
+  color: #745fc3;
+  font-weight: normal;
+  margin: 0px;
+}
+
+a {
+  text-decoration: none;
+}
+
+h1 a {
+  color: #745fc3;
+}
+
+a:hover {
+  color: black;
+}
+
+h2 {
+  font-size: 150%;
+  font-weight: normal;
+  margin: 10px 0px 15px 0px;
+}
+
+ul {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+li {
+  margin: 0px;
+  padding: 0px;
+}
+
+strong {
+  color: #745fc3;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+#logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto; 
+}
+
+em {
+  color: #745fc3;
+  font-style: normal;
+}
+
+a:hover em {
+  color: black;
+}
