@@ -6,4 +6,6 @@ title: Home
 Recent News
 -----------
 
-{{ site.posts }}
+{% for entry in site.posts %}
+[{{entry.title}}]({{entry.url}})
+{% endfor %}
