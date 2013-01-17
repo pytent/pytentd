@@ -68,4 +68,4 @@ def run():
         pprint(dict(app.config))
 
     # Run the application
-    app.run(threaded=True)
+    app.run(threaded=config['THREADED'])
