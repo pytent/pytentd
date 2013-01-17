@@ -7,5 +7,5 @@ Recent News
 -----------
 
 {% for entry in site.posts %}
-[{{entry.title}}]({{entry.url}})
+[{{entry.title}}]({{site.url}}{{entry.url}})
 {% endfor %}
