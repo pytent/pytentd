@@ -2,27 +2,24 @@
 
 import requests
 
-from json import dumps
-from flask import jsonify, json, g, request, url_for
+from flask import jsonify, json, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
 
 from tentd.flask import Blueprint
 from tentd.control import follow
-from tentd.utils.exceptions import APIException, APIBadRequest
+from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents.entity import Entity, Follower, Post
+from tentd.documents.entity import Entity, Post
 from tentd.documents.profiles import CoreProfile
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
-@entity.route_class('')
+@entity.route_class('', endpoint='default')
 class EntityView(MethodView):
     """The base view for entities."""
 
-    endpoint = 'deafult'
-
-    def head(self, entity, **kargs):
+    def head(self, entity):
         """Returns the entity link header."""
         link = '<{url}>; rel="https://tent.io/rels/profile"'.format(
             url=url_for('entity.profile', entity=entity.name, _external=True))
@@ -40,7 +37,7 @@ def fetch_entity(endpoint, values):
 @entity.route_class('/profile')
 class ProfileView(EntityView):
     """The view for full profile-based routes."""
-    endpoint = 'profile'
+    
     def get(self, entity):
         """Return the info types belonging to the entity"""
         return jsonify({p.schema: p.to_json() for p in entity.profiles})
@@ -48,7 +45,6 @@ class ProfileView(EntityView):
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(EntityView):
     """The view for individual profile-based routes."""
-    endpoint = 'profiles'
 
     @require_authorization
     def get(self, entity, schema):
@@ -85,8 +81,6 @@ class ProfilesView(EntityView):
 class FollowersView(EntityView):
     """View for followers-based routes."""
 
-    endpoint='followers'
-
     def post(self, entity):
         """Starts following a user, defined by the post data"""
         try:
@@ -103,8 +97,6 @@ class FollowersView(EntityView):
 @entity.route_class('/followers/<string:follower_id>')
 class FollowerView(EntityView):
     """View for follower-based routes."""
-
-    endpoint = 'follower'
    
     @require_authorization 
     def get(self, entity, follower_id):
@@ -118,8 +110,8 @@ class FollowerView(EntityView):
             post_data = json.loads(request.data)
         except json.JSONDecodeError as e:
             raise APIBadRequest(str(e))
-        updated_follower = follow.update_follower(entity, follower_id, post_data)
-        return jsonify(updated_follower.to_json())
+        follower = follow.update_follower(entity, follower_id, post_data)
+        return jsonify(follower.to_json())
 
     @require_authorization
     def delete(self, entity, follower_id):
@@ -137,8 +129,7 @@ class NotificationView(EntityView):
         return '', 200
 
 @entity.route_class('/posts')
-class PostView(EntityView):
-    endpoint = "posts"
+class PostsView(EntityView):
 
     @require_authorization
     def get(self, entity):
@@ -182,13 +173,15 @@ class PostsView(EntityView):
             post_data = json.loads(request.data)
         except json.JSONDecodeError as e:
             raise APIBadRequest(str(e))
-       
+
+        # TODO: Posts have more attributes than this
+        
         if 'content' in post_data:
             post.content = post_data['content']
         if 'schema' in post_data:
             post.schema = post_data['schema'] 
 
-        #TODO Versioning.
+        # TODO: Versioning.
 
         post.save()
         return jsonify(post.to_json()), 200
@@ -197,5 +190,5 @@ class PostsView(EntityView):
     def delete(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         post.delete()
-        #TODO Notify?
+        # TODO: Notify?
         return '', 200

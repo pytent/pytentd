@@ -2,8 +2,6 @@
 
 from mongoengine import NotUniqueError
 
-from tentd import db
-from tentd.documents.entity import Entity
 from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 

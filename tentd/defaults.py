@@ -1,7 +1,5 @@
 """Default arguments for tentd"""
 
-from os import getcwd
-
 # Place the database in the current directory
 MONGODB_SETTINGS = {
     'db': 'tentd',

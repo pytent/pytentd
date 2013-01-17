@@ -1,7 +1,7 @@
 """ Test cases for the user profile data """
 
 from tentd import db
-from tentd.documents import Entity, CoreProfile, Post
+from tentd.documents import Entity, Post
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 
 class EntityTest(EntityTentdTestCase):

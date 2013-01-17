@@ -7,11 +7,11 @@ __all__ = ['TentdTestCase', 'EntityTentdTestCase', 'skip']
 
 from unittest import TestCase, skip
 
-from flask import json, jsonify, Response, _request_ctx_stack
-from werkzeug import cached_property
+from flask import json, Response
 
-from tentd import create_app, db
+from tentd import create_app
 from tentd.documents import *
+from tentd.tests.mocking import MockFunction
 
 class TestResponse(Response):
     def json(self):
@@ -75,6 +75,7 @@ class TentdTestCase(TestCase):
         """Clear the database, and the current request"""
         self.after()
         self.clear_database()
+        MockFunction.reset()
         try:
             self.ctx.pop()
         except:
@@ -127,7 +128,8 @@ class EntityTentdTestCase(TentdTestCase):
         super(EntityTentdTestCase, self).setUp()
 
     def assertEntityHeader(self, route):
-        self.assertEquals(
-            self.client.head(route).headers['Link'],
-            '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
-                self.base_url, self.name))
+        """Assert that the route returns the correct header"""
+        header = '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
+            self.base_url, self.name)
+        
+        self.assertEquals(self.client.head(route).headers['Link'], header)
