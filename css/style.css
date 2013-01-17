@@ -3,7 +3,6 @@ body {
   padding: 0px;
   margin: 0px;
   font-size: 125%;
-  text-align: center;
 }
 
 #container {
@@ -16,6 +15,7 @@ h1 {
   color: #745fc3;
   font-weight: normal;
   margin: 0px;
+  text-align: center;
 }
 
 a {
@@ -30,24 +30,30 @@ a:hover {
   color: black;
 }
 
+#details {
+  font-size: 150%;
+  font-weight: normal;
+  margin: 10px 0px 15px 0px;
+  text-align: center;
+}
+
 h2 {
   font-size: 150%;
   font-weight: normal;
   margin: 10px 0px 15px 0px;
 }
 
-ul {
+#pytent {
   list-style: none;
   padding: 0px;
   margin: auto;
   width: 70%;
   text-indent: 10%;
+  text-align: center;
 }
 
 li {
   text-align: left;
-  margin: 0px;
-  padding: 0px;
 }
 
 strong {
