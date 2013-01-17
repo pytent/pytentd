@@ -3,6 +3,7 @@ body {
   padding: 0px;
   margin: 0px;
   font-size: 125%;
+  text-align: center;
 }
 
 #container {
@@ -12,7 +13,6 @@ body {
 
 h1 {
   font-size: 300%;
-  text-align: center;
   color: #745fc3;
   font-weight: normal;
   margin: 0px;
@@ -38,11 +38,14 @@ h2 {
 
 ul {
   list-style: none;
-  margin: 0px;
   padding: 0px;
+  margin: auto;
+  width: 70%;
+  text-indent: 10%;
 }
 
 li {
+  text-align: left;
   margin: 0px;
   padding: 0px;
 }
