@@ -7,14 +7,19 @@ import requests
 from tentd.documents.entity import Entity, Follower, Post
 from tentd.documents.profiles import CoreProfile, BasicProfile
 
-from tentd.tests import EntityTentdTestCase, skip
+from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
-class EntityBlueprintTest(EntityTentdTestCase):
+class EntityBlueprintTest(TentdTestCase):
+    def test_404(self):
+        self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
+    
+    @skip('Default endpoint no longer exists')
     def test_entity_link(self):
         """Test that the link endpoint uses the correct header."""
         self.assertEntityHeader('/{}'.format(self.name))
-    
+
+    @skip('Default endpoint no longer exists')
     def test_entity_link_404(self):
         """Test that endpoints using an invalid user return 404."""
         self.assertStatus(self.client.head('/non-existent-user'), 404)
@@ -191,9 +196,10 @@ class FollowerTests(EntityTentdTestCase):
         self.assertIsInstance(requests.head, MockFunction)
         self.assertIsInstance(requests.get, MockFunction)
 
+    @skip("This neads to be removed, the endpoint has no head or get")
     def test_entity_link_follower(self):
         """Test that /{entity}/follower uses the tent header"""
-        self.assertEntityHeader('/{}/followers'.format(self.name))
+        self.assertEntityHeader('/localuser/followers')
 
     def test_entity_follow(self):
         """Test that you can start following an entity."""
