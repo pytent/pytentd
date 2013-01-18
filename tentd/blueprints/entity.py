@@ -132,6 +132,7 @@ class NotificationView(EntityView):
 
         Returns no data as it's only a check.."""
         return '', 200
+
     def post(self, entity):
         """Alerts of a notification.
 
@@ -149,9 +150,11 @@ class NotificationView(EntityView):
 
 @entity.route_class('/posts')
 class PostsView(EntityView):
+    """ Routes relatings to posts. """
 
     @require_authorization
     def get(self, entity):
+        """ Gets all posts """
         all_posts=[post.to_json() for post in entity.posts]
         if len(all_posts) == 0:
             return jsonify({}), 200
@@ -159,6 +162,13 @@ class PostsView(EntityView):
 
     @require_authorization
     def post(self, entity):
+        """ Used by apps to create a new post.
+
+        Used by other servers to notify of a mention from a non-followed 
+        entity."""
+
+        #TODO seperate between apps creating a new post and a notification from
+        # a non-followed entity.
         try:
             data = json.loads(request.data)
         except json.JSONDecodeError as e:
