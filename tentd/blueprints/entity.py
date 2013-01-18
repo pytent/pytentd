@@ -5,13 +5,13 @@ import requests
 from flask import jsonify, json, request, url_for
 from flask.views import MethodView
 from mongoengine import ValidationError
+from datetime import datetime
 
 from tentd.flask import Blueprint
 from tentd.control import follow
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents.entity import Entity, Post
-from tentd.documents.profiles import CoreProfile
+from tentd.documents import Entity, Post, CoreProfile, Notification
 
 entity = Blueprint('entity', __name__, url_prefix='/<string:entity>')
 
@@ -124,8 +124,27 @@ class FollowerView(EntityView):
 
 @entity.route_class('/notification')
 class NotificationView(EntityView):
+    def get(self, entity):
+        """Used to check the notification path is good.
+
+        This is specific to pytentd, other tent servers may use a different 
+        route.
+
+        Returns no data as it's only a check.."""
+        return '', 200
     def post(self, entity):
-        """ Alerts of a notification """
+        """Alerts of a notification.
+
+        This will create a new notification object in the database."""
+        post_data = json.loads(request.data)
+
+        notification = Notification()
+        notification.entity = entity
+        notification.post_id = post_data['id']
+        notification.received_at = datetime.utcnow()
+        notification.save()
+
+        # Return no data other than to say the request completed correctly.
         return '', 200
 
 @entity.route_class('/posts')

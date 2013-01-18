@@ -429,3 +429,17 @@ class NotificationTest(EntityTentdTestCase):
         # make sure the response was sucessful.
         self.assertStatus(resp, 200)
         requests.post.assert_called(self.notification)
+
+    def test_notification_created(self):
+        """Test that a notification is raised correctly."""
+        post_details = {
+            'id': '1',
+            'schema': 'https://tent.io/types/post/status/v0.1.0', 
+            'content': {'text': 'test', 'location': None}}
+
+        self.assertEquals(self.entity.notifications.count(), 0)
+        resp = self.client.post('/{}/notification'.format(self.name), 
+            data=dumps(post_details))
+        self.assertStatus(resp, 200)
+        self.assertEquals(self.entity.notifications.count(), 1)
+        #TODO test that the notification raised has the correct details.
