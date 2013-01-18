@@ -16,6 +16,7 @@ class EntityMixin(object):
 from tentd.documents.followers import Follower, Following
 from tentd.documents.post import Post
 from tentd.documents.profiles import *
+from tentd.documents.notification import Notification
 
 # Entity must be loaded last, as it relies on querysets from other documents
 from tentd.documents.entity import Entity

@@ -34,6 +34,7 @@ class Entity(db.Document):
     posts      = QuerySetProperty(Post)
     followers  = QuerySetProperty(Follower)
     followings = QuerySetProperty(Following)
+    notifications = QuerySetProperty(Notification)
     
     @property
     def core(self):
@@ -63,4 +64,5 @@ class Entity(db.Document):
             'name',
             ('profiles', iterable_to_json),
             ('followers', iterable_to_json),
-            ('followings', iterable_to_json))
+            ('followings', iterable_to_json),
+            ('notifications', iterable_to_json))
