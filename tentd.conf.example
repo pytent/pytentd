@@ -1,4 +1,4 @@
-"""Default arguments for tentd"""
+# Default arguments for tentd
 
 # Place the database in the current directory
 MONGODB_SETTINGS = {
@@ -10,3 +10,6 @@ PIDFILE = "/var/run/pytentd.pid"
 
 # Run threaded. This shoud be disabled if deployed through WSGI.
 THREADED = True
+
+# Don't propagate exceptions back to the user.
+PROPAGATE_EXCEPTIONS = False
