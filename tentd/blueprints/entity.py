@@ -27,25 +27,21 @@ class ProfilesView(MethodView):
 
     @require_authorization
     def get(self, entity, schema):
-        """Gets a single type of profile if it exists."""
-        return jsonify(entity.profiles.get_or_404(schema=schema).to_json()), 200
+        """Get a single profile."""
+        return jsonify(entity.profiles.get_or_404(schema=schema).to_json())
 
     def put(self, entity, schema):
-        """Update a profile type."""
+        """Update a profile."""
         profile = entity.profiles.get_or_404(schema=schema)
-        try:
-            update_data = json.loads(request.data)
-        except json.JSONDecodeError as e:
-            raise APIBadRequest(str(e))
 
-        if 'identity' in update_data:
-            profile.identity = update_data['identity']
-        if 'servers' in update_data:
-            profile.servers = update_data['servers']
+        if 'identity' in request.json:
+            profile.identity = request.json['identity']
+        if 'servers' in request.json:
+            profile.servers = request.json['servers']
 
         profile.save()
 
-        return jsonify(profile.to_json()), 200
+        return jsonify(profile.to_json())
 
     def delete(self, entity, schema):
         """Delete a profile type."""

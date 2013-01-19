@@ -2,9 +2,23 @@
 
 from __future__ import absolute_import
 
-from flask import abort, g, url_for, Blueprint as FlaskBlueprint
+from flask import abort, g, url_for, json
+from flask import Blueprint as FlaskBlueprint, Request as FlaskRequest
+from werkzeug.utils import cached_property
 
 from tentd.documents import Entity
+from tentd.utils.exceptions import APIBadRequest
+
+class Request(FlaskRequest):
+    @cached_property
+    def json(self):
+        if not self.data:
+            raise APIBadRequest("No POST data was sent to load json from.")
+        try:
+            return json.loads(self.data)
+        except json.JSONDecodeError as e:
+            raise APIBadRequest(
+                "Could not load json from the POST data ({})".format(e))
 
 class Blueprint(FlaskBlueprint):
     """Extends the base Flask Blueprint"""

@@ -17,31 +17,31 @@ posts = EntityBlueprint('posts', __name__, url_prefix='/posts')
 class PostsView(MethodView):
     """ Routes relatings to posts. """
 
-    @require_authorization
-    def get(self, entity):
-        """ Gets all posts """
-        all_posts=[post.to_json() for post in entity.posts]
-        if len(all_posts) == 0:
-            return jsonify({}), 200
-        return jsonify({'posts':all_posts}), 200
+    decorators = [require_authorization]
 
-    @require_authorization
+    def get(self, entity):
+        """Gets all posts
+
+        TODO: This should return a list
+        """
+        posts = [post.to_json() for post in entity.posts]
+        if len(posts) == 0:
+            return jsonify({}), 200
+        return jsonify({'posts': posts}), 200
+
     def post(self, entity):
         """ Used by apps to create a new post.
 
         Used by other servers to notify of a mention from a non-followed
-        entity."""
+        entity.
 
-        #TODO seperate between apps creating a new post and a notification from
-        # a non-followed entity.
-        try:
-            data = json.loads(request.data)
-        except json.JSONDecodeError as e:
-            raise APIBadRequest(str(e))
+        TODO seperate between apps creating a new post and a notification
+        from a non-followed entity.
+        """
         new_post = Post()
         new_post.entity = entity
-        new_post.schema = data['schema']
-        new_post.content = data['content']
+        new_post.schema = request.json['schema']
+        new_post.content = request.json['content']
 
         new_post.save()
 
@@ -52,37 +52,31 @@ class PostsView(MethodView):
 
         return jsonify(new_post.to_json()), 200
 
-@posts.route_class('/<string:post_id>')
+@posts.route_class('/<string:post_id>', endpoint='post')
 class PostsView(MethodView):
-    endpoint = 'post'
 
-    @require_authorization
+    decorators = [require_authorization]
+    
     def get(self, entity, post_id):
         return jsonify(entity.posts.get_or_404(id=post_id).to_json()), 200
-
-    @require_authorization
+    
     def put(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
-        try:
-            post_data = json.loads(request.data)
-        except json.JSONDecodeError as e:
-            raise APIBadRequest(str(e))
 
         # TODO: Posts have more attributes than this
 
-        if 'content' in post_data:
-            post.content = post_data['content']
-        if 'schema' in post_data:
-            post.schema = post_data['schema']
+        if 'content' in request.json:
+            post.content = request.json['content']
+        if 'schema' in request.json:
+            post.schema = request.json['schema']
 
         # TODO: Versioning.
 
         post.save()
         return jsonify(post.to_json()), 200
-
-    @require_authorization
+    
     def delete(self, entity, post_id):
         post = entity.posts.get_or_404(id=post_id)
         post.delete()
-        # TODO: Notify?
+        # TODO: Create a deleted post notification post(!)
         return '', 200

@@ -12,6 +12,7 @@ from argparse import ArgumentParser
 
 from flask import Config, Flask, jsonify
 
+from tentd.flask import Request
 from tentd.blueprints import entity, followers, posts
 from tentd.documents import db
 
@@ -23,6 +24,7 @@ def create_app(config=dict()):
     """Create an instance of the tentd flask application"""
     app = Flask('tentd')
     app.add_url_rule('/', 'home', description)
+    app.request_class = Request
     
     # Load configuration
     import tentd.defaults as defaults
