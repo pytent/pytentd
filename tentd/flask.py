@@ -71,9 +71,6 @@ class EntityBlueprint(Blueprint):
     def fetch_entity(endpoint, values):
         """Set g.entity using the entity name given in the url"""
         try:
-            g.entity = Entity.objects.get(name=values['entity'])
+            g.entity = Entity.objects.get(name=values.pop('entity'))
         except Entity.DoesNotExist:
             abort(404)
-        
-        # TODO: Deprecate this
-        values['entity'] = g.entity

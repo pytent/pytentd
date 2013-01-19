@@ -4,7 +4,7 @@ from datetime import datetime
 
 import requests
 
-from flask import json, jsonify, request
+from flask import json, jsonify, request, g
 from flask.views import MethodView
 from mongoengine import ValidationError
 
@@ -20,9 +20,9 @@ followers = EntityBlueprint('followers', __name__, url_prefix='/followers')
 class FollowersView(MethodView):
     """View for followers-based routes."""
 
-    def post(self, entity):
+    def post(self):
         """Starts following a user, defined by the post data"""
-        follower = follow.start_following(entity, request.json)
+        follower = follow.start_following(g.entity, request.json)
         return jsonify(follower.to_json())
 
 @followers.route_class('/<string:follower_id>')
@@ -31,19 +31,20 @@ class FollowerView(MethodView):
 
     decorators = [require_authorization]
 
-    def get(self, entity, follower_id):
+    def get(self, follower_id):
         """Returns the json representation of a follower"""
-        return jsonify(entity.followers.get_or_404(id=follower_id).to_json())
-    
-    def put(self, entity, follower_id):
-        """Updates a following relationship."""
-        follower = follow.update_follower(entity, follower_id, request.json)
+        follower = g.entity.followers.get_or_404(id=follower_id)
         return jsonify(follower.to_json())
     
-    def delete(self, entity, follower_id):
+    def put(self, follower_id):
+        """Updates a following relationship."""
+        follower = follow.update_follower(g.entity, follower_id, request.json)
+        return jsonify(follower.to_json())
+    
+    def delete(self, follower_id):
         """Deletes a following relationship."""
         try:
-            follow.stop_following(entity, follower_id)
+            follow.stop_following(g.entity, follower_id)
             return '', 200
         except ValidationError:
             raise APIBadRequest("The given follower id was invalid")
