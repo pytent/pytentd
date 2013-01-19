@@ -39,6 +39,8 @@ Configuration
 
 pytentd can load a configuration file into the Flask application, using the ``--conf [filename]`` command line option. This file should be a python file containing capitalised variables.
 
+- ``THREADED``: Threaded mode is on by default, and is needed so that flask can fetch urls that it provides. It is not needed for single user mode and is only used when running tentd from the command line.
+
 Documentation is available on the configuration variables for `Flask`_ and `Flask-MongoEngine`_.
 
 .. _Flask: http://flask.pocoo.org/docs/config/#builtin-configuration-values

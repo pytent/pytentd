@@ -1,15 +1,17 @@
-# Default arguments for tentd
+"""An example configuration for pytentd"""
 
-# Place the database in the current directory
-MONGODB_SETTINGS = {
-    'db': 'tentd',
-}
+## Use a collection named tentd on the mongodb server
+MONGODB_DB = 'tentd'
 
-# The name of the pidfile used by the daemon mode
-PIDFILE = "/var/run/pytentd.pid"
+## The mongodb server location
+# MONGODB_HOST = 'localhost'
+# MONGODB_PORT = 27017
 
-# Run threaded. This shoud be disabled if deployed through WSGI.
-THREADED = True
+## Usernamed and password for the mongodb server
+# MONGODB_USERNAME = 'example_username'
+# MONGODB_PASSWORD = 'example_password'
 
-# Don't propagate exceptions back to the user.
-PROPAGATE_EXCEPTIONS = False
+## Threaded mode is needed so that flask can fetch urls that it provides.
+## It is not needed for single user mode and is only used when running tentd
+## from the command line.
+# THREADED = False

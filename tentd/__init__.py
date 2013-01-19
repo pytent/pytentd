@@ -12,7 +12,8 @@ from argparse import ArgumentParser
 
 from flask import Config, Flask, jsonify
 
-from tentd.blueprints.entity import entity
+from tentd.flask import Request
+from tentd.blueprints import entity, followers, posts
 from tentd.documents import db
 
 def description():
@@ -23,6 +24,7 @@ def create_app(config=dict()):
     """Create an instance of the tentd flask application"""
     app = Flask('tentd')
     app.add_url_rule('/', 'home', description)
+    app.request_class = Request
     
     # Load configuration
     import tentd.defaults as defaults
@@ -33,7 +35,8 @@ def create_app(config=dict()):
     db.init_app(app)
 
     # Register the blueprints
-    app.register_blueprint(entity)
+    for blueprint in (entity, followers, posts):
+        app.register_blueprint(blueprint)
 
     return app
 
@@ -68,4 +71,4 @@ def run():
         pprint(dict(app.config))
 
     # Run the application
-    app.run(threaded=config['THREADED'])
+    app.run(threaded=app.config.get('THREADED', True))

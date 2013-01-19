@@ -19,7 +19,7 @@ class TestResponse(Response):
             if not hasattr(self, '_json'):
                 self._json = json.loads(self.data)
             return self._json
-        return None
+        raise Exception("Response has no json data")
 
 class TentdTestCase(TestCase):
     """A base test case for pytentd
@@ -127,9 +127,9 @@ class EntityTentdTestCase(TentdTestCase):
         
         super(EntityTentdTestCase, self).setUp()
 
+    LINK_FORMAT = '<{}/profile>; rel="https://tent.io/rels/profile"'
+
     def assertEntityHeader(self, route):
-        """Assert that the route returns the correct header"""
-        header = '<{}{}/profile>; rel="https://tent.io/rels/profile"'.format(
-            self.base_url, self.name)
-        
+        """Assert that the route provides the link header"""
+        header = self.LINK_FORMAT.format(self.base_url + self.name)
         self.assertEquals(self.client.head(route).headers['Link'], header)
