@@ -12,6 +12,7 @@ from tentd.tests.mocking import MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(TentdTestCase):
     def test_404(self):
+        self.assertStatus(self.client.get("/non-existent-user"), 404)
         self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
     
     @skip('Default endpoint no longer exists')
