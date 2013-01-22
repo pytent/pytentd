@@ -20,6 +20,8 @@ def description():
     """Returns information about the server"""
     return jsonify(description=__doc__, version=__version__)
 
+
+
 def create_app(config=dict()):
     """Create an instance of the tentd flask application"""
     app = Flask('tentd')
@@ -36,7 +38,7 @@ def create_app(config=dict()):
 
     # Register the blueprints
     for blueprint in (entity, followers, posts):
-        app.register_blueprint(blueprint)
+        app.register_blueprint(blueprint, url_prefix=blueprint.prefix(app))
 
     return app
 

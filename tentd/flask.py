@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-from flask import abort, g, url_for, json
+from flask import abort, g, url_for, json, current_app
 from flask import Blueprint as FlaskBlueprint, Request as FlaskRequest
 from werkzeug.utils import cached_property
 
@@ -54,7 +54,7 @@ class EntityBlueprint(Blueprint):
     
     def __init__(self, *args, **kwargs):
         super(EntityBlueprint, self).__init__(*args, **kwargs)
-        self.url_prefix = '/<string:entity>' + kwargs.get('url_prefix', '')
+        #self.url_prefix = '/<string:entity>' + kwargs.get('url_prefix', '')
         self.after_request(self.add_profile_link)
         self.url_value_preprocessor(self.fetch_entity)
 
@@ -69,8 +69,30 @@ class EntityBlueprint(Blueprint):
 
     @staticmethod
     def fetch_entity(endpoint, values):
-        """Set g.entity using the entity name given in the url"""
+        """Set g.entity using the entity name given in the url, or the name
+        given in the app config under SINGLE_USER_MODE"""
         try:
-            g.entity = Entity.objects.get(name=values.pop('entity'))
+            single_user = current_app.config.get('SINGLE_USER_MODE', None)
+            if single_user:
+                g.entity = Entity.objects.get(name=single_user)
+            else:
+                g.entity = Entity.objects.get(name=values.pop('entity'))
         except Entity.DoesNotExist:
             abort(404)
+
+    def prefix(self, app):
+        """Get the url prefix for the blueprint, using the app config and the
+        blueprint-specific url prefix
+
+        In single user mode, the entity section of the url is not included
+        (i.e. '/<entity>' at the start of the url)
+        """
+        url_prefix = ''
+        
+        if not app.config.get('SINGLE_USER_MODE', None):
+            url_prefix += '/<string:entity>'
+
+        if self.url_prefix is not None:
+            url_prefix += self.url_prefix
+
+        return url_prefix if url_prefix else None

@@ -38,16 +38,19 @@ class TentdTestCase(TestCase):
     # These functions are listed in the order they are called in
     
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, config=dict()):
         """Place the app in testing mode and initialise the database"""
-        config = {
+        configuration = {
             'DEBUG': True,
             'TESTING': True,
             'SERVER_NAME': 'tentd.example.com',
             'MONGODB_SETTINGS': {'db': cls.dbname},
         }
+
+        if config:
+            configuration.update(config)
         
-        cls.app = create_app(config)
+        cls.app = create_app(configuration)
         cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
 
@@ -133,3 +136,10 @@ class EntityTentdTestCase(TentdTestCase):
         """Assert that the route provides the link header"""
         header = self.LINK_FORMAT.format(self.base_url + self.name)
         self.assertEquals(self.client.head(route).headers['Link'], header)
+
+class SingleUserTestCase(EntityTentdTestCase):    
+    @classmethod
+    def setUpClass(cls):
+        super(SingleUserTestCase, cls).setUpClass(config={
+            'SINGLE_USER_MODE': cls.name,
+        })
