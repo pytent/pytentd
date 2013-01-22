@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from flask import abort, g, url_for, json, current_app
 from flask import Blueprint as FlaskBlueprint, Request as FlaskRequest
 from werkzeug.utils import cached_property
+from werkzeug.exceptions import NotFound
 
 from tentd.documents import Entity
 from tentd.utils.exceptions import APIBadRequest
@@ -48,45 +49,46 @@ class Blueprint(FlaskBlueprint):
         return decorator
 
 class EntityBlueprint(Blueprint):
-    """A blueprint prefixed with /<entity>
-
-    It provides link headers and g.entity"""
+    """A blueprint that provides g.entity, either using SINGLE_USER_MODE or
+    an url prefix of ``/<entity>``"""
     
     def __init__(self, *args, **kwargs):
+        """Register the link header and prepossessor functions"""
         super(EntityBlueprint, self).__init__(*args, **kwargs)
-        #self.url_prefix = '/<string:entity>' + kwargs.get('url_prefix', '')
         self.after_request(self.add_profile_link)
         self.url_value_preprocessor(self.fetch_entity)
 
     @staticmethod
-    def add_profile_link(response):
+    def _single_user_mode():
+        """Return the value of the SINGLE_USER_MODE option"""
+        return current_app.config.get('SINGLE_USER_MODE', None)
+
+    @classmethod
+    def add_profile_link(cls, response):
         """Add the link header to the response if the entity is set"""
         if hasattr(g, 'entity'):
-            link = url_for('entity.profile', entity=g.entity, _external=True)
-            header = '<{}>; rel="https://tent.io/rels/profile"'.format(link)
-            response.headers['Link'] = header
+            options = {'_external': True}
+            if not cls._single_user_mode():
+                options['entity'] = g.entity
+            response.headers['Link'] = '<{link}>; rel="{rel}"'.format(
+                link=url_for('entity.profile', **options),
+                rel='https://tent.io/rels/profile')
         return response
 
-    @staticmethod
-    def fetch_entity(endpoint, values):
+    @classmethod
+    def fetch_entity(cls, endpoint, values):
         """Set g.entity using the entity name given in the url, or the name
-        given in the app config under SINGLE_USER_MODE"""
+        given in the app configuration under SINGLE_USER_MODE"""
         try:
-            single_user = current_app.config.get('SINGLE_USER_MODE', None)
-            if single_user:
-                g.entity = Entity.objects.get(name=single_user)
-            else:
-                g.entity = Entity.objects.get(name=values.pop('entity'))
+            name = cls._single_user_mode() or values.pop('entity')
+            g.entity = Entity.objects.get(name=name)
         except Entity.DoesNotExist:
-            abort(404)
+            raise NotFound("User does not exist")
 
     def prefix(self, app):
-        """Get the url prefix for the blueprint, using the app config and the
-        blueprint-specific url prefix
-
-        In single user mode, the entity section of the url is not included
-        (i.e. '/<entity>' at the start of the url)
-        """
+        """Get the url prefix for the blueprint, using the app configuration
+        and the blueprint-specific url prefix. This is used when registering
+        the blueprint."""
         url_prefix = ''
         
         if not app.config.get('SINGLE_USER_MODE', None):

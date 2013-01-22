@@ -2,7 +2,7 @@
 
 import requests
 
-from flask import jsonify, json, request, url_for, g, abort
+from flask import jsonify, json, request, g, abort
 from flask.views import MethodView
 
 from tentd.flask import Blueprint, EntityBlueprint
