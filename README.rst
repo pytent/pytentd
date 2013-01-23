@@ -14,7 +14,10 @@ Running pytentd is easy::
 Information on the command line options can be found with::
 
     $ tentd --help
-    $ tentd [subcommand] --help
+
+To run pytentd with gunicorn::
+
+    $ gunicorn "tentd:create_app('tentd.conf.example')"
 
 Installation
 ------------
