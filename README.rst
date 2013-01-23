@@ -27,6 +27,8 @@ Pytentd can be run under Apache using the instructions `here`_ and a `wsgi`_ fil
 
 In both the last two examples, the ``create_app`` function can take either the name of a configuration file (for an example see ``./tentd.conf.example``) or a dictionary of configuration values.
 
+The Flask documentation also has instructions for running an application on other servers: `Deploying on Other Servers <http://flask.pocoo.org/docs/deploying/others/>`_.
+
 .. _here: http://flask.pocoo.org/docs/deploying/mod_wsgi/
 .. _wsgi: http://wsgi.readthedocs.org/en/latest/
 
