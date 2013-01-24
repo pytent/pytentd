@@ -11,7 +11,7 @@ class KeyPair(db.Document):
 
     mac_id = StringField(max_length=32,unique=True)  
     mac_key = StringField(max_length=64)
-    mac_algorithm = StringField()
+    mac_algorithm = StringField(max_length=15)
 
     def __init__(self, **kwargs):
         super(KeyPair, self).__init__(**kwargs)

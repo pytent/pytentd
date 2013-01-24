@@ -81,7 +81,7 @@ def check_request(request, key):
     macstr = base64.encodestring(mac.digest())
     return reqmac == macstr
 
-def require_authorization(func):
+def require_authorization(allowed_keys=[]):
     """Annotation that forces the view to do HMAC auth
 
     
@@ -90,12 +90,15 @@ def require_authorization(func):
     WWW-Authenticate header.
     
     """
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        """Wrapped decorator function
-        
-        TODO: actual implementation of this decorator.
-        """
-        request.headers.get('Authorization')
-        return func(*args, **kwargs)
-    return decorated
+    def real_decorator(func):
+        def wrap(*args, **kwargs):
+            """Wrapped decorator function
+            
+            TODO: actual implementation of this decorator.
+            """
+            auth = parse_authstring(request.headers.get('Authorization'))
+            
+            mac_id = auth['mac']
+            
+            return func(*args, **kwargs)
+    return real_decorator
