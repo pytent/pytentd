@@ -91,10 +91,10 @@ def get_notification_link(follower):
     profile = discover_entity(follower.identity)
     api_root = profile[CoreProfile.__schema__]['servers'][0]
 
-    if not api_root[-1] == '/':
-        api_root += '/'
+    if api_root[-1] == '/':
+        api_root = api_root[:-1]
 
-    return api_root + follower.notification_path
+    return api_root + '/' + follower.notification_path
 
 def stop_following(entity, id):
     """Stops following a user."""

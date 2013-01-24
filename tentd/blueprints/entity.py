@@ -4,9 +4,8 @@ from datetime import datetime
 
 import requests
 
-from flask import jsonify, json, request, url_for, g, abort
+from flask import jsonify, json, request, g, abort, make_response
 from flask.views import MethodView
-
 
 from tentd.flask import Blueprint, EntityBlueprint
 from tentd.control import follow
@@ -50,7 +49,7 @@ class ProfilesView(MethodView):
 
         profile = g.entity.profiles.get_or_404(schema=schema)
         profile.delete()
-        return '', 200
+        return make_response(), 200
 
 @entity.route_class('/notification', endpoint='notify')
 class NotificationView(MethodView):
@@ -61,7 +60,7 @@ class NotificationView(MethodView):
         route.
 
         Returns no data as it's only a check.."""
-        return '', 200
+        return make_response(), 200
 
     def post(self):
         """Alerts of a notification.
@@ -75,5 +74,4 @@ class NotificationView(MethodView):
         notification.received_at = datetime.utcnow()
         notification.save()
 
-        # Return no data other than to say the request completed correctly.
-        return '', 200
+        return make_response(), 200

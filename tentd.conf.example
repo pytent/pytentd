@@ -15,3 +15,7 @@ MONGODB_DB = 'tentd'
 ## It is not needed for single user mode and is only used when running tentd
 ## from the command line.
 # THREADED = False
+
+## The name of the entity being used in single user mode
+## This should be set to None or False to explicitly disable single user mode
+# SINGLE_USER_MODE = 'name'
