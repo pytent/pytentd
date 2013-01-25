@@ -47,7 +47,7 @@ class ProfilesView(MethodView):
         """Update a profile."""
         if profile_exists(g.entity, schema):
             profile = g.entity.profiles.get(schema=schema)
-            profile.update(request.json)
+            profile.update_values(request.json)
         else:
             profile_values = request.json
             profile_values['schema'] = schema
