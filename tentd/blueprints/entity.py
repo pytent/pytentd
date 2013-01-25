@@ -14,6 +14,7 @@ from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import CoreProfile, BasicProfile, GenericProfile, \
     Notification
+from tentd.utils.profile import create_profile, profile_exists
 
 entity = EntityBlueprint('entity', __name__)
 
@@ -27,20 +28,11 @@ class ProfileView(MethodView):
         """Create a new profile of the specified type.
         
         Specific to pytentd."""
-        if 'schema' not in request.json:
-            raise APIBadRequest("No profile schema defined.")
-        schema = request.json['schema']
-        if g.entity.first(schema=schema) is not None:
-            raise APIBadRequest(
-                "Profile type '{}' already exists.".format(schema))
-        if schema == CoreProfile.__schema__:
-            profile = CoreProfile(**request.json)
-        elif schema == BasicProfile.__schema__:
-            profile = BasicProfile(**request.json)
-        else:
-            raise APIBadRequest("Unknown profile type '{}'.".format(schema))
+        profile = create_profile(g.entity, request.json)
         profile.save()
         return jsonify(profile.json), 200
+
+        
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
@@ -53,22 +45,13 @@ class ProfilesView(MethodView):
 
     def put(self, schema):
         """Update a profile."""
-        try:
+        if profile_exists(g.entity, schema):
             profile = g.entity.profiles.get(schema=schema)
             profile.update(request.json)
-        except DoesNotExist:
-            if schema == CoreProfile.__schema__:
-                profile = CoreProfile(**request.json)
-            elif schema == BasicProfile.__schema__:
-                profile = BasicProfile(**request.json)
-            else:
-                try:
-                    url_parse(schema)
-                except ValueError:
-                    raise APIBadRequest(
-                        "Invalid profile type '{}'.".format(schema))
-                profile = GenericProfile(**request.json)
-                profile.schema = schema
+        else:
+            profile_values = request.json
+            profile_values['schema'] = schema
+            profile = create_profile(g.entity, profile_values)
 
         profile.entity = g.entity
         profile.save()
