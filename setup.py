@@ -41,6 +41,7 @@ setup(
         'mongoengine==0.7.9',
         'requests==1.1.0',
         'simplejson==3.0.7',
+        'rfc3987==1.3.1'
     ],
 
     # Tests

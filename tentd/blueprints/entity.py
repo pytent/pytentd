@@ -2,18 +2,18 @@
 
 from datetime import datetime
 
-import requests
-
-from flask import jsonify, json, request, g, abort, make_response
+from flask import jsonify, json, request, g, make_response
 from flask.views import MethodView
 
 from mongoengine.queryset import DoesNotExist
 
-from tentd.flask import Blueprint, EntityBlueprint
-from tentd.control import follow
+from rfc3987 import parse as url_parse
+
+from tentd.flask import EntityBlueprint
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents import Entity, Post, CoreProfile, BasicProfile, Notification
+from tentd.documents import CoreProfile, BasicProfile, GenericProfile, \
+    Notification
 
 entity = EntityBlueprint('entity', __name__)
 
@@ -31,7 +31,8 @@ class ProfileView(MethodView):
             raise APIBadRequest("No profile schema defined.")
         schema = request.json['schema']
         if g.entity.first(schema=schema) is not None:
-            raise APIBadRequest("Profile type '{}' already exists.".format(schema))
+            raise APIBadRequest(
+                "Profile type '{}' already exists.".format(schema))
         if schema == CoreProfile.__schema__:
             profile = CoreProfile(**request.json)
         elif schema == BasicProfile.__schema__:
@@ -54,19 +55,22 @@ class ProfilesView(MethodView):
         """Update a profile."""
         try:
             profile = g.entity.profiles.get(schema=schema)
-            if 'identity' in request.json:
-                profile.identity = request.json['identity']
-            if 'servers' in request.json:
-                profile.servers = request.json['servers']
-            #TODO apply all fields in the request json.
+            profile.update(request.json)
         except DoesNotExist:
             if schema == CoreProfile.__schema__:
                 profile = CoreProfile(**request.json)
             elif schema == BasicProfile.__schema__:
                 profile = BasicProfile(**request.json)
             else:
-                raise APIBadRequest("Unknown profile type '{}'.".format(schema))
+                try:
+                    url_parse(schema)
+                except ValueError:
+                    raise APIBadRequest(
+                        "Invalid profile type '{}'.".format(schema))
+                profile = GenericProfile(**request.json)
+                profile.schema = schema
 
+        profile.entity = g.entity
         profile.save()
         return jsonify(profile.to_json())
 
@@ -81,6 +85,7 @@ class ProfilesView(MethodView):
 
 @entity.route_class('/notification', endpoint='notify')
 class NotificationView(MethodView):
+    """Routes relating to notifications."""
     def get(self):
         """Used to check the notification path is good.
 

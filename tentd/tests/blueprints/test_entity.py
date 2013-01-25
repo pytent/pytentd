@@ -71,24 +71,28 @@ class ProfileBlueprintTest(EntityTentdTestCase):
         self.assertStatus(resp, 200)
         self.assertEquals(servers, update_data['servers'])
 
-    @skip("This test has changed in functionality. However one the core and \
-    basic profiles are taken into account at the moment.")
     def test_entity_update_create_new_profile(self):
         """Tests that a new profile is created."""
+        schema = 'https://testprofile.example.com/' 
         update_data = {
-            'servers': [
-                'http://tent.example.com',
-                'http://example.com/tent']} #TODO real data.
+            'data': 'test'}
         resp = self.client.put(
-            '{}/profile/{}'.format(self.name, 'TODO'), #TODO real profile
+            '{}/profile/{}'.format(self.name, schema),
             data=dumps(update_data))
         self.assertStatus(resp, 200)
+        profile = self.entity.profiles.get(schema=schema)
+
+        self.assertEquals(profile.to_json()['data'], update_data['data'])
+        self.assertEquals(profile.schema, schema)
+        
 
     def test_entity_update_unknown_profile(self):
         """Test that updating an unknown profile type fails."""
         resp = self.client.put('{}/profile/<invalid>'.format(self.name), 
             data = dumps({}))
         self.assertStatus(resp, 400)
+        self.assertEquals(resp.json()['error'], 
+            "Invalid profile type '{}'.".format('<invalid>'))
 
     def test_entity_invalid_update_profile(self):
         """Tests that updating a profile with invalid data fails."""

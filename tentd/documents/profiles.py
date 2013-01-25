@@ -39,6 +39,9 @@ class Profile(EntityMixin, db.Document):
     def __repr__(self):
         return "<{}: {}>".format(self.__class__.__name__, self.schema)
 
+    def update(self, values):
+        raise NotImplementedError("This class is abstract.")
+
 class CoreProfile(Profile):
     """This model provides the Core profile info type.
 
@@ -73,6 +76,12 @@ class CoreProfile(Profile):
             'tent_version': tent_version
         }
 
+    def update(self, values):
+        if 'identity' in values:
+            self.identity = values['identity']
+        if 'servers' in values:
+            self.servers = values['servers']
+
 class BasicProfile(Profile):
     """The Basic profile info type.
 
@@ -102,6 +111,10 @@ class BasicProfile(Profile):
             'birthdate',
             'bio'
         )
+
+    def update(self, values):
+        #TODO write this
+        pass
 
 class GenericProfile(db.DynamicDocument, Profile):
     def to_json(self):
