@@ -96,6 +96,8 @@ class PostTests(EntityTentdTestCase):
         resp = self.client.delete('/{}/posts/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
 
+class MorePostsTest(EntityTentdTestCase):
+    """Tests for posts without having existing posts."""
     def test_entity_get_empty_posts(self):
         """Test that /posts works when there are no posts to return"""
         resp = self.client.get('/{}/posts'.format(self.name))
