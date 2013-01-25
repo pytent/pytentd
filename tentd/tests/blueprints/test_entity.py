@@ -87,15 +87,14 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
         self.assertEquals(profile.to_json()['data'], update_data['data'])
         self.assertEquals(profile.schema, schema)
-        
 
     def test_entity_update_unknown_profile(self):
         """Test that updating an unknown profile type fails."""
         resp = self.client.put('{}/profile/<invalid>'.format(self.name), 
             data = dumps({}))
         self.assertStatus(resp, 400)
-        self.assertEquals(resp.json()['error'], 
-            "Invalid profile type '{}'.".format('<invalid>'))
+        self.assertIn(
+            "Invalid profile type '<invalid>'.", resp.json()['error'])
 
     def test_entity_invalid_update_profile(self):
         """Tests that updating a profile with invalid data fails."""
