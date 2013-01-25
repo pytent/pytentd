@@ -12,9 +12,9 @@ from rfc3987 import parse as url_parse
 from tentd.flask import EntityBlueprint
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents import CoreProfile, BasicProfile, GenericProfile, \
-    Notification
-from tentd.utils.profile import create_profile, profile_exists
+from tentd.documents import Notification
+from tentd.documents.profiles import *
+from tentd.utils.profile import create_profile
 
 entity = EntityBlueprint('entity', __name__)
 
@@ -24,15 +24,18 @@ class ProfileView(MethodView):
     def get(self):
         """Return the profiles belonging to the entity"""
         return jsonify({p.schema: p.to_json() for p in g.entity.profiles})
+    
     def post(self):
         """Create a new profile of the specified type.
         
-        Specific to pytentd."""
-        profile = create_profile(g.entity, request.json)
-        profile.save()
-        return jsonify(profile.json), 200
-
+        This is specific to pytentd, and is similar to PUT /profile/<schema>.
+        """
+        if not 'schema' in request.json:
+            raise APIBadRequest("A profile schema is required.")
         
+        profile = Profile(entity=g.entity, **request.json)
+        profile.save()
+        return jsonify(profile.to_json()), 200
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
@@ -45,15 +48,11 @@ class ProfilesView(MethodView):
 
     def put(self, schema):
         """Update a profile."""
-        if profile_exists(g.entity, schema):
+        try:
             profile = g.entity.profiles.get(schema=schema)
             profile.update_values(request.json)
-        else:
-            profile_values = request.json
-            profile_values['schema'] = schema
-            profile = create_profile(g.entity, profile_values)
-
-        profile.entity = g.entity
+        except Profile.DoesNotExist:
+            profile = Profile(entity=g.entity, schema=schema, **request.json)
         profile.save()
         return jsonify(profile.to_json())
 

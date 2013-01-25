@@ -5,7 +5,7 @@ __all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db, EntityMixin
+from tentd.documents import db, BetterURLField, EntityMixin
 from tentd.utils import json_attributes
 
 class Profile(EntityMixin, db.Document):
@@ -23,7 +23,17 @@ class Profile(EntityMixin, db.Document):
     }
 
     #: The info type schema
-    schema = URLField(unique_with='entity', required=True)
+    schema = BetterURLField(unique_with='entity', required=True)
+
+    def __new__(cls, *args, **kwargs):
+        """If ``schema`` is included in the argument list, return a profile
+        object using the correct class."""
+        if 'schema' in kwargs:
+            cls = GenericProfile
+            for profile_type in (CoreProfile, BasicProfile):
+                if profile_type.__schema__ == kwargs['schema']:
+                    cls = profile_type
+        return super(Profile, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, **kwargs):
         if self.__class__ is Profile:
