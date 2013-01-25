@@ -15,16 +15,6 @@ class EntityBlueprintTest(TentdTestCase):
         self.assertStatus(self.client.get("/non-existent-user"), 404)
         self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
     
-    @skip('Default endpoint no longer exists')
-    def test_entity_link(self):
-        """Test that the link endpoint uses the correct header."""
-        self.assertEntityHeader('/{}'.format(self.name))
-
-    @skip('Default endpoint no longer exists')
-    def test_entity_link_404(self):
-        """Test that endpoints using an invalid user return 404."""
-        self.assertStatus(self.client.head('/non-existent-user'), 404)
-
 class ProfileBlueprintTest(EntityTentdTestCase):
     CORE = 'https://tent.io/types/info/core/v0.1.0'
     BASIC = 'https://tent.io/types/info/basic/v0.1.0'
@@ -81,16 +71,24 @@ class ProfileBlueprintTest(EntityTentdTestCase):
         self.assertStatus(resp, 200)
         self.assertEquals(servers, update_data['servers'])
 
-    def test_entity_update_non_existant_profile(self):
-        """Tests that attempting to update a non-existant profile fails."""
+    @skip("This test has changed in functionality. However one the core and \
+    basic profiles are taken into account at the moment.")
+    def test_entity_update_create_new_profile(self):
+        """Tests that a new profile is created."""
         update_data = {
             'servers': [
                 'http://tent.example.com',
-                'http://example.com/tent']}
+                'http://example.com/tent']} #TODO real data.
         resp = self.client.put(
-            '{}/profile/<invalid>'.format(self.name),
+            '{}/profile/{}'.format(self.name, 'TODO'), #TODO real profile
             data=dumps(update_data))
-        self.assertStatus(resp, 404)
+        self.assertStatus(resp, 200)
+
+    def test_entity_update_unknown_profile(self):
+        """Test that updating an unknown profile type fails."""
+        resp = self.client.put('{}/profile/<invalid>'.format(self.name), 
+            data = dumps({}))
+        self.assertStatus(resp, 400)
 
     def test_entity_invalid_update_profile(self):
         """Tests that updating a profile with invalid data fails."""
@@ -196,11 +194,6 @@ class FollowerTests(EntityTentdTestCase):
         """Assert that the mocks are working correctly"""
         self.assertIsInstance(requests.head, MockFunction)
         self.assertIsInstance(requests.get, MockFunction)
-
-    @skip("This neads to be removed, the endpoint has no head or get")
-    def test_entity_link_follower(self):
-        """Test that /{entity}/follower uses the tent header"""
-        self.assertEntityHeader('/localuser/followers')
 
     def test_entity_follow(self):
         """Test that you can start following an entity."""
