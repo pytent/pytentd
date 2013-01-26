@@ -6,7 +6,7 @@ setup(
     name             = 'tentd',
     version          = '0.1.0',
     license          = 'Apache Software License 2.0',
-    url              = 'https://github.com/ravenscroftj/pytentd',
+    url              = 'https://github.com/pytent/pytentd',
     description      = 'A http://tent.io/ server and application',
     long_description = open('README.rst').read(),
 
