@@ -19,7 +19,7 @@ To run pytentd with gunicorn::
 
     $ gunicorn "tentd:create_app()"
 
-Pytentd can be run under Apache using the instructions `here`_ and a `wsgi`_ file with the following contents::
+Pytentd can be run under Apache using these `instructions`_ and a `wsgi`_ file with the following contents::
 
     from tentd import create_app
 
@@ -29,7 +29,7 @@ In both the last two examples, the ``create_app`` function can take either the n
 
 The Flask documentation also has instructions for running an application on other servers: `Deploying on Other Servers <http://flask.pocoo.org/docs/deploying/others/>`_.
 
-.. _here: http://flask.pocoo.org/docs/deploying/mod_wsgi/
+.. _instructions: http://flask.pocoo.org/docs/deploying/mod_wsgi/
 .. _wsgi: http://wsgi.readthedocs.org/en/latest/
 
 Installation
