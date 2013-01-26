@@ -34,6 +34,9 @@ class Follower(EntityMixin, db.Document):
         if not self.created_at:
             self.created_at = datetime.utcnow()
 
+    def __repr__(self):
+        return "<Follower: {}>".format(self.identity)
+
     def to_json(self):
         return json_attributes(self,
            ('id', str),

@@ -2,12 +2,11 @@
 
 import requests
 
-from flask import jsonify, json, request, g, abort, make_response
+from flask import json, request, g, abort, make_response
 from flask.views import MethodView
 
-from tentd.flask import Blueprint, EntityBlueprint
+from tentd.flask import EntityBlueprint, jsonify
 from tentd.control import follow
-from tentd.utils import returns_json
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Entity, Post, CoreProfile, Notification
@@ -20,16 +19,10 @@ class PostsView(MethodView):
 
     decorators = [require_authorization]
 
-    @returns_json
     def get(self):
-        """Gets all posts
+        """Gets all posts"""
+        return jsonify(g.entity.posts)
 
-        TODO: This should return a list
-        """
-        posts = [post.to_json() for post in g.entity.posts]
-        return dict() if (len(posts) == 0) else dict(posts=posts)
-
-    @returns_json
     def post(self):
         """ Used by apps to create a new post.
 
@@ -52,18 +45,16 @@ class PostsView(MethodView):
             requests.post(notification_link, data=jsonify(new_post.to_json()))
             # TODO: Handle failed notifications somehow
 
-        return new_post
+        return jsonify(new_post)
 
 @posts.route_class('/<string:post_id>', endpoint='post')
 class PostsView(MethodView):
 
     decorators = [require_authorization]
 
-    @returns_json
     def get(self, post_id):
-        return g.entity.posts.get_or_404(id=post_id)
+        return jsonify(g.entity.posts.get_or_404(id=post_id))
 
-    @returns_json
     def put(self, post_id):
         post = g.entity.posts.get_or_404(id=post_id)
 
@@ -76,7 +67,7 @@ class PostsView(MethodView):
 
         # TODO: Versioning.
 
-        return post.save()
+        return jsonify(post.save())
     
     def delete(self, post_id):
         # TODO: Create a deleted post notification post(!)

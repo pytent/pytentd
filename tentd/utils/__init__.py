@@ -5,22 +5,6 @@ from time import mktime
 
 from flask import jsonify
 
-def returns_json(func):
-    """Decorates a view function to return a json response from an object"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        response = func(*args, **kwargs)
-
-        if hasattr(response, 'to_json'):
-            response = response.to_json()
-
-        return jsonify(response), 200
-    return wrapper
-
-def iterable_to_json(iterable):
-    """Calls ``.to_json()`` on each element of an iterable"""
-    return [obj.to_json() for obj in iterable]
-
 def json_attributes(obj, *names, **kwargs):
     """Takes an object and a list of attribute names, and returns a dict
     mapping those attribute names to the objects attribute's of the same name.

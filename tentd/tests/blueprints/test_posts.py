@@ -26,7 +26,7 @@ class PostTests(EntityTentdTestCase):
         self.assertStatus(resp, 200)
 
         posts = [post.to_json() for post in self.entity.posts]
-        self.assertEquals(resp.json(), {'posts': posts})
+        self.assertEquals(resp.json(), posts)
 
     def test_entity_new_post(self):
         """Test that a new post can be added correctly."""
@@ -102,4 +102,4 @@ class MorePostsTest(EntityTentdTestCase):
         """Test that /posts works when there are no posts to return"""
         resp = self.client.get('/{}/posts'.format(self.name))
         self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), {})
+        self.assertEquals(resp.json(), [])

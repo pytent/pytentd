@@ -1,16 +1,19 @@
-"""Classes and functions that extend flask"""
+"""Classes and functions that extend or replace parts of Flask"""
 
 from __future__ import absolute_import
 
-from flask import abort, g, url_for, json, current_app
-from flask import Blueprint as FlaskBlueprint, Request as FlaskRequest
+import flask
+
+from flask import abort, g, url_for, json, current_app, request
+from mongoengine.queryset import QuerySet
 from werkzeug.utils import cached_property
 from werkzeug.exceptions import NotFound
 
 from tentd.documents import Entity
 from tentd.utils.exceptions import APIBadRequest
 
-class Request(FlaskRequest):
+class Request(flask.Request):
+    """A Request class providing a JSON property"""
     @cached_property
     def json(self):
         if not self.data:
@@ -21,7 +24,7 @@ class Request(FlaskRequest):
             raise APIBadRequest(
                 "Could not load json from the POST data ({})".format(e))
 
-class Blueprint(FlaskBlueprint):
+class Blueprint(flask.Blueprint):
     """Extends the base Flask Blueprint"""
 
     @staticmethod
@@ -98,3 +101,26 @@ class EntityBlueprint(Blueprint):
             url_prefix += self.url_prefix
 
         return url_prefix if url_prefix else None
+
+class JSONEncoder(json.JSONEncoder):
+    """Extends the default encoder to be aware of (some) iterables and methods
+    that return a json representation of an object"""
+
+    def default(self, obj):
+        if hasattr(obj, 'to_json'):
+            return obj.to_json()
+        
+        if hasattr(obj, '__json__'):
+            return obj.__json__()
+        
+        if isinstance(obj, (list, QuerySet)):
+            return [self.default(o) for o in obj]
+        
+        return super(JSONEncoder, self).default(obj)
+
+def jsonify(obj):
+    """Similar to Flask's jsonify() function, but uses a single argument
+    and doesn't coerce the arguments into a dictionary"""
+    # TODO: Use current_app.json_encoder once Flask 0.10 is availible
+    data = json.dumps(obj, cls=JSONEncoder, indent=2)
+    return current_app.response_class(data, mimetype='application/json')

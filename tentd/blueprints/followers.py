@@ -2,13 +2,12 @@
 
 from datetime import datetime
 
-from flask import json, jsonify, request, g, make_response
+from flask import json, request, g, make_response
 from flask.views import MethodView
 from mongoengine import ValidationError
 
 from tentd.control import follow
-from tentd.flask import EntityBlueprint
-from tentd.utils import returns_json
+from tentd.flask import EntityBlueprint, jsonify
 from tentd.utils.auth import require_authorization
 from tentd.utils.exceptions import APIBadRequest
 from tentd.documents import Notification
@@ -19,10 +18,9 @@ followers = EntityBlueprint('followers', __name__, url_prefix='/followers')
 class FollowersView(MethodView):
     """View for followers-based routes."""
 
-    @returns_json
     def post(self):
         """Starts following a user, defined by the post data"""
-        return follow.start_following(g.entity, request.json)
+        return jsonify(follow.start_following(g.entity, request.json))
 
 @followers.route_class('/<string:follower_id>')
 class FollowerView(MethodView):
@@ -30,15 +28,14 @@ class FollowerView(MethodView):
 
     decorators = [require_authorization]
 
-    @returns_json
     def get(self, follower_id):
         """Returns the json representation of a follower"""
-        return g.entity.followers.get_or_404(id=follower_id)
+        return jsonify(g.entity.followers.get_or_404(id=follower_id))
 
-    @returns_json
     def put(self, follower_id):
         """Updates a following relationship."""
-        return follow.update_follower(g.entity, follower_id, request.json)
+        return jsonify(follow.update_follower(
+            g.entity, follower_id, request.json))
     
     def delete(self, follower_id):
         """Deletes a following relationship."""

@@ -6,7 +6,7 @@ from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
 from tentd.documents import *
-from tentd.utils import json_attributes, iterable_to_json
+from tentd.utils import json_attributes
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection
@@ -62,7 +62,7 @@ class Entity(db.Document):
     def to_json(self):
         return json_attributes(self,
             'name',
-            ('profiles', iterable_to_json),
-            ('followers', iterable_to_json),
-            ('followings', iterable_to_json),
-            ('notifications', iterable_to_json))
+            'profiles',
+            'followers',
+            'followings',
+            'notifications')

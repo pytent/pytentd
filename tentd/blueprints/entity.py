@@ -5,8 +5,7 @@ from datetime import datetime
 from flask import json, request, g, make_response
 from flask.views import MethodView
 
-from tentd.flask import EntityBlueprint
-from tentd.utils import returns_json
+from tentd.flask import EntityBlueprint, jsonify
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Notification
@@ -18,12 +17,10 @@ entity = EntityBlueprint('entity', __name__)
 class ProfileView(MethodView):
     """The view for profile-based routes."""
     
-    @returns_json
     def get(self):
         """Return the profiles belonging to the entity"""
-        return {p.schema: p.to_json() for p in g.entity.profiles}
+        return jsonify({p.schema: p.to_json() for p in g.entity.profiles})
 
-    @returns_json
     def post(self):
         """Create a new profile of the specified type.
         
@@ -35,19 +32,17 @@ class ProfileView(MethodView):
         if not 'schema' in request.json:
             raise APIBadRequest("A profile schema is required.")
         
-        return Profile(entity=g.entity, **request.json).save()
+        return jsonify(Profile(entity=g.entity, **request.json).save())
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
     """The view for individual profile-based routes."""
 
     @require_authorization
-    @returns_json
     def get(self, schema):
         """Get a single profile."""
-        return g.entity.profiles.get_or_404(schema=schema)
+        return jsonify(g.entity.profiles.get_or_404(schema=schema))
 
-    @returns_json
     def put(self, schema):
         """Update a profile."""
         try:
@@ -55,7 +50,7 @@ class ProfilesView(MethodView):
             profile.update_values(request.json)
         except Profile.DoesNotExist:
             profile = Profile(entity=g.entity, schema=schema, **request.json)
-        return profile.save()
+        return jsonify(profile.save())
 
     def delete(self, schema):
         """Delete a profile type."""
@@ -69,6 +64,7 @@ class ProfilesView(MethodView):
 @entity.route_class('/notification', endpoint='notify')
 class NotificationView(MethodView):
     """Routes relating to notifications."""
+    
     def get(self):
         """Used to check the notification path is good.
 
