@@ -2,10 +2,11 @@
 
 from datetime import datetime
 
-from flask import jsonify, json, request, g, make_response
+from flask import json, request, g, make_response
 from flask.views import MethodView
 
 from tentd.flask import EntityBlueprint
+from tentd.utils import returns_json
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Notification
@@ -16,33 +17,37 @@ entity = EntityBlueprint('entity', __name__)
 @entity.route_class('/profile')
 class ProfileView(MethodView):
     """The view for profile-based routes."""
+    
+    @returns_json
     def get(self):
         """Return the profiles belonging to the entity"""
-        return jsonify({p.schema: p.to_json() for p in g.entity.profiles})
-    
+        return {p.schema: p.to_json() for p in g.entity.profiles}
+
+    @returns_json
     def post(self):
         """Create a new profile of the specified type.
         
         This is specific to pytentd, and is similar to PUT /profile/<schema>.
 
         TODO: Document this!
+        TODO: This doesn't appear to be covered by any tests
         """
         if not 'schema' in request.json:
             raise APIBadRequest("A profile schema is required.")
         
-        profile = Profile(entity=g.entity, **request.json)
-        profile.save()
-        return jsonify(profile.to_json()), 200
+        return Profile(entity=g.entity, **request.json).save()
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
     """The view for individual profile-based routes."""
 
     @require_authorization
+    @returns_json
     def get(self, schema):
         """Get a single profile."""
-        return jsonify(g.entity.profiles.get_or_404(schema=schema).to_json())
+        return g.entity.profiles.get_or_404(schema=schema)
 
+    @returns_json
     def put(self, schema):
         """Update a profile."""
         try:
@@ -50,8 +55,7 @@ class ProfilesView(MethodView):
             profile.update_values(request.json)
         except Profile.DoesNotExist:
             profile = Profile(entity=g.entity, schema=schema, **request.json)
-        profile.save()
-        return jsonify(profile.to_json())
+        return profile.save()
 
     def delete(self, schema):
         """Delete a profile type."""
