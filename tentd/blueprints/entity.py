@@ -5,16 +5,11 @@ from datetime import datetime
 from flask import jsonify, json, request, g, make_response
 from flask.views import MethodView
 
-from mongoengine.queryset import DoesNotExist
-
-from rfc3987 import parse as url_parse
-
 from tentd.flask import EntityBlueprint
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Notification
-from tentd.documents.profiles import *
-from tentd.utils.profile import create_profile
+from tentd.documents.profiles import Profile, CoreProfile
 
 entity = EntityBlueprint('entity', __name__)
 
@@ -29,6 +24,8 @@ class ProfileView(MethodView):
         """Create a new profile of the specified type.
         
         This is specific to pytentd, and is similar to PUT /profile/<schema>.
+
+        TODO: Document this!
         """
         if not 'schema' in request.json:
             raise APIBadRequest("A profile schema is required.")
