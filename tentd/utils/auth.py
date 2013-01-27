@@ -18,7 +18,7 @@ from hashlib import sha256, md5
 from functools import wraps
 from random import getrandbits
 
-from flask import request
+from flask import request, Response
 
 def generate_keypair():
     """Generate an id and 256-bit uuid key for HMAC signing"""
@@ -81,6 +81,13 @@ def check_request(request, key):
     macstr = base64.encodestring(mac.digest())
     return reqmac == macstr
 
+def authenticate_response():
+    """Sends a 401 response that enables basic auth"""
+
+    return Response('Invalid MAC Credentials\n', 401,
+        {'WWW-Authenticate': 'MAC'})
+
+
 def require_authorization(func):
     """Annotation that forces the view to do HMAC auth
 
@@ -96,6 +103,10 @@ def require_authorization(func):
             TODO: actual implementation of this decorator.
             """
             auth = parse_authstring(request.headers.get('Authorization'))
+
+            if not auth:
+                return authenticate_response()
+                
             
             
             return func(*args, **kwargs)
