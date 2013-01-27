@@ -2,24 +2,38 @@
 
 from datetime import datetime
 
-import requests
 
-from flask import jsonify, json, request, url_for, g, abort
+from flask import json, request, g, make_response
 from flask.views import MethodView
 
-
-from tentd.flask import Blueprint, EntityBlueprint
-from tentd.control import follow
+from tentd.flask import EntityBlueprint, jsonify
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
-from tentd.documents import Entity, Post, CoreProfile, Notification
+from tentd.documents import Notification
+from tentd.documents.profiles import Profile, CoreProfile
 
 entity = EntityBlueprint('entity', __name__)
 
-@entity.route('/profile')
-def profile():
-    """Return the profiles belonging to the entity"""
-    return jsonify({p.schema: p.to_json() for p in g.entity.profiles})       
+@entity.route_class('/profile')
+class ProfileView(MethodView):
+    """The view for profile-based routes."""
+    
+    def get(self):
+        """Return the profiles belonging to the entity"""
+        return jsonify({p.schema: p.to_json() for p in g.entity.profiles})
+
+    def post(self):
+        """Create a new profile of the specified type.
+        
+        This is specific to pytentd, and is similar to PUT /profile/<schema>.
+
+        TODO: Document this!
+        TODO: This doesn't appear to be covered by any tests
+        """
+        if not 'schema' in request.json:
+            raise APIBadRequest("A profile schema is required.")
+        
+        return jsonify(Profile(entity=g.entity, **request.json).save())
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
@@ -28,20 +42,16 @@ class ProfilesView(MethodView):
     @require_authorization
     def get(self, schema):
         """Get a single profile."""
-        return jsonify(g.entity.profiles.get_or_404(schema=schema).to_json())
+        return jsonify(g.entity.profiles.get_or_404(schema=schema))
 
     def put(self, schema):
         """Update a profile."""
-        profile = g.entity.profiles.get_or_404(schema=schema)
-
-        if 'identity' in request.json:
-            profile.identity = request.json['identity']
-        if 'servers' in request.json:
-            profile.servers = request.json['servers']
-
-        profile.save()
-
-        return jsonify(profile.to_json())
+        try:
+            profile = g.entity.profiles.get(schema=schema)
+            profile.update_values(request.json)
+        except Profile.DoesNotExist:
+            profile = Profile(entity=g.entity, schema=schema, **request.json)
+        return jsonify(profile.save())
 
     def delete(self, schema):
         """Delete a profile type."""
@@ -50,10 +60,12 @@ class ProfilesView(MethodView):
 
         profile = g.entity.profiles.get_or_404(schema=schema)
         profile.delete()
-        return '', 200
+        return make_response(), 200
 
 @entity.route_class('/notification', endpoint='notify')
 class NotificationView(MethodView):
+    """Routes relating to notifications."""
+    
     def get(self):
         """Used to check the notification path is good.
 
@@ -61,8 +73,8 @@ class NotificationView(MethodView):
         route.
 
         Returns no data as it's only a check.."""
-        return '', 200
-
+        return make_response(), 200
+    
     def post(self):
         """Alerts of a notification.
 
@@ -76,4 +88,4 @@ class NotificationView(MethodView):
         notification.save()
 
         # Return no data other than to say the request completed correctly.
-        return '', 200
+        return make_response(), 200

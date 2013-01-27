@@ -4,10 +4,14 @@ from setuptools import setup, find_packages
 
 setup(
     name             = 'tentd',
-    version          = '0.1.0',
+    version          = '0.1.1',
     license          = 'Apache Software License 2.0',
-    url              = 'https://github.com/ravenscroftj/pytentd',
-    description      = 'A http://tent.io/ server and application',
+    url              = 'https://github.com/pytent/pytentd',
+
+    maintainer       = 'James Ravencroft',
+    maintainer_email = 'ravenscroftj@gmail.com',
+
+    description      = 'A tent.io server',
     long_description = open('README.rst').read(),
 
     classifiers      = [
@@ -41,6 +45,7 @@ setup(
         'mongoengine==0.7.9',
         'requests==1.1.0',
         'simplejson==3.0.7',
+        'rfc3987==1.3.1'
     ],
 
     # Tests

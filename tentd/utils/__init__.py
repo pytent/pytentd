@@ -1,10 +1,9 @@
 """Miscellaneous utilities for pytentd"""
 
+from functools import wraps
 from time import mktime
 
-def iterable_to_json(iterable):
-    """Calls ``.to_json()`` on each element of an iterable"""
-    return [obj.to_json() for obj in iterable]
+from flask import jsonify
 
 def json_attributes(obj, *names, **kwargs):
     """Takes an object and a list of attribute names, and returns a dict

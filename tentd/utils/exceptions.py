@@ -14,3 +14,7 @@ class APIException(JSONHTTPException):
 class APIBadRequest(APIException, BadRequest):
     """Represents an HTTP ``400 Bad Request`` error"""
     description = "A request was sent that this server could not understand"
+
+    def get_description(self, environ):
+        description = super(APIBadRequest, self).get_description(environ)
+        return "Bad request: " + description

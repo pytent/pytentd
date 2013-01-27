@@ -10,15 +10,15 @@ __tent_version__ = '0.2'
 from os import getcwd
 from argparse import ArgumentParser
 
-from flask import Config, Flask, jsonify
+from flask import Config, Flask
 
-from tentd.flask import Request
+from tentd.flask import Request, JSONEncoder, jsonify
 from tentd.blueprints import entity, followers, posts
 from tentd.documents import db
 
 def description():
     """Returns information about the server"""
-    return jsonify(description=__doc__, version=__version__)
+    return jsonify({'description': __doc__, 'version': __version__})
 
 def make_config(filename=None):
     config = Config(getcwd())

@@ -5,7 +5,7 @@ __all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db, EntityMixin
+from tentd.documents import db, BetterURLField, EntityMixin
 from tentd.utils import json_attributes
 
 class Profile(EntityMixin, db.Document):
@@ -23,7 +23,17 @@ class Profile(EntityMixin, db.Document):
     }
 
     #: The info type schema
-    schema = URLField(unique_with='entity', required=True)
+    schema = BetterURLField(unique_with='entity', required=True)
+
+    def __new__(cls, *args, **kwargs):
+        """If ``schema`` is included in the argument list, return a profile
+        object using the correct class."""
+        if 'schema' in kwargs:
+            cls = GenericProfile
+            for profile_type in (CoreProfile, BasicProfile):
+                if profile_type.__schema__ == kwargs['schema']:
+                    cls = profile_type
+        return super(Profile, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, **kwargs):
         if self.__class__ is Profile:
@@ -38,6 +48,9 @@ class Profile(EntityMixin, db.Document):
 
     def __repr__(self):
         return "<{}: {}>".format(self.__class__.__name__, self.schema)
+
+    def update_values(self, values):
+        raise NotImplementedError("This class is abstract.")
 
 class CoreProfile(Profile):
     """This model provides the Core profile info type.
@@ -73,6 +86,12 @@ class CoreProfile(Profile):
             'tent_version': tent_version
         }
 
+    def update_values(self, values):
+        if 'identity' in values:
+            self.identity = values['identity']
+        if 'servers' in values:
+            self.servers = values['servers']
+
 class BasicProfile(Profile):
     """The Basic profile info type.
 
@@ -103,7 +122,15 @@ class BasicProfile(Profile):
             'bio'
         )
 
+    def update_values(self, values):
+        #TODO write this
+        pass
+
 class GenericProfile(db.DynamicDocument, Profile):
     def to_json(self):
         # TODO: test this
         return json_attributes(self, *self._dynamic_fields)
+
+    def update_values(self, values):
+        #TODO write this
+        pass
