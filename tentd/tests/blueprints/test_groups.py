@@ -41,6 +41,49 @@ class GroupBlueprintTest(EntityTentdTestCase):
                 data = '<invalid>')
         self.assertJSONError(resp)
 
+    def test_get_specific_group(self):
+        """Tests that getting a specific group works."""
+        resp = self.client.get('/{}/groups/{}'.format(self.name, 
+            self.group.name))
+        self.assertStatus(resp, 200)
+        self.assertEquals(resp.json(), self.group.to_json())
+
+    def test_get_non_existant_group(self):
+        """Tests that getting a non-existant group fails."""
+        resp = self.client.get('{}/groups/<invalid>'.format(self.name))
+        self.assertStatus(resp, 404)
+
+    def test_update_group(self):
+        """Tests that a group can be updated."""
+        group_data = {'name': 'tentd'}
+        r = self.client.put('{}/groups/{}'.format(self.name, self.group.name),
+            data=dumps(group_data))
+        self.assertStatus(r, 200)
+
+    def test_update_group_non_existant(self):
+        """Tests that updating a non-existant group fails."""
+        resp = self.client.put('{}/groups/<invalid>'.format(self.name),
+            data = {})
+        self.assertStatus(resp, 404)
+
+    def test_update_group_invalid(self):
+        """Tests that updating a group with invalid data fails."""
+        r = self.client.put('{}/groups/{}'.format(self.name, self.group.name))
+        self.assertJSONError(r)
+
+    def test_delete_group(self):
+        """Test that a group can be deleted."""
+        resp = self.client.delete('{}/groups/{}'.format(self.name, 
+            self.group.name))
+        self.assertStatus(resp, 200)
+        with self.assertRaises(Group.DoesNotExist):
+            self.entity.groups(name=self.group.name)
+
+    def test_delete_group_non_existant(self):
+        """Test that deleting a non-existant group fails."""
+        resp = self.client.delete('{}/groups/<invalid>'.format(self.name))
+        self.assertStatus(resp, 404)
+
 class MoreGroupBluePrintTest(EntityTentdTestCase):
     """Test for the groups endpoint without before processing."""
     def test_get_empty_groups(self):
