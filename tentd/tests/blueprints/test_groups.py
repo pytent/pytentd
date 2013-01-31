@@ -22,3 +22,12 @@ class GroupBlueprintTest(EntityTentdTestCase):
         self.assertIn(self.group.to_json(), r.json())
         self.assertIn(group_two.to_json(), r.json())
 
+
+
+class MoreGroupBluePrintTest(EntityTentdTestCase):
+    """Test for the groups endpoint without before processing."""
+    def test_get_empty_groups(self):
+       """Test that getting an entity with no groups returns an empty list"""
+       r = self.client.get('/{}/groups'.format(self.name))
+       self.assertStatus(r, 200)
+       self.assertEquals(r.json(), [])
