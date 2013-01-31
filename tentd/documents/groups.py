@@ -8,7 +8,7 @@ from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
 from tentd.documents import db, EntityMixin
-from tentd.utils import json_attributes
+from tentd.utils import json_attributes, time_to_string
 
 class Group(EntityMixin, db.Document):
     """Defines a group of entities belonging to a specific entity."""
@@ -33,4 +33,4 @@ class Group(EntityMixin, db.Document):
         return self.name
 
     def to_json(self):
-        return json_attributes(self, 'name', 'created_at')
+        return json_attributes(self, 'name', ('created_at', time_to_string))

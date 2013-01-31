@@ -10,7 +10,7 @@ groups = EntityBlueprint('groups', __name__, url_prefix='/groups')
 @groups.route_class('')
 class GroupView(MethodView):
     def get(self):
-        return make_response(), 200
+        return jsonify(g.entity.groups), 200
 
     def put(self):
-        return make_response(), 200
+        return '', 200
