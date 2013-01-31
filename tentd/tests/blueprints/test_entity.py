@@ -5,7 +5,7 @@ from json import dumps
 import requests
 
 from tentd.documents.entity import Entity, Follower
-from tentd.documents.profiles import CoreProfile, BasicProfile
+from tentd.documents.profiles import CoreProfile, GenericProfile
 
 from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
 from tentd.tests.mocking import MockFunction, MockResponse, patch
@@ -105,23 +105,25 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_delete_profile(self):
         """Tests that a profile can be deleted."""
-        new_profile = BasicProfile(entity=self.entity)
+        schema = "http://example.com/schema/"
+        new_profile = GenericProfile(entity=self.entity)
         new_profile.avatar_url = 'http://example.com/avatar.jpg'
         new_profile.name = 'test'
         new_profile.location = 'test'
         new_profile.gender = 'test'
         new_profile.birthdate = '01/01/1980'
         new_profile.bio = 'test'
+        new_profile.schema = schema
         new_profile.save()
 
-        # Will raise BasicProfile.DoesNotExist upon failing
-        self.entity.profiles.get(schema=BasicProfile.__schema__)
+        # Will raise DoesNotExist upon failing
+        self.entity.profiles.get(schema=schema)
 
         resp = self.client.delete(
-            '{}/profile/{}'.format(self.name, BasicProfile.__schema__))
+            '{}/profile/{}'.format(self.name, schema))
         self.assertStatus(resp, 200)
 
-        profiles = self.entity.profiles.filter(schema=BasicProfile.__schema__)
+        profiles = self.entity.profiles.filter(schema=schema)
         self.assertEquals(profiles.count(), 0)
 
     def test_entity_cannot_delete_core_profile(self):

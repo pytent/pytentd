@@ -1,6 +1,6 @@
 """Profile info types - https://tent.io/docs/info-types"""
 
-__all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
+__all__ = ['Profile', 'CoreProfile', 'GenericProfile']
 
 from mongoengine import *
 
@@ -30,9 +30,8 @@ class Profile(EntityMixin, db.Document):
         object using the correct class."""
         if 'schema' in kwargs:
             cls = GenericProfile
-            for profile_type in (CoreProfile, BasicProfile):
-                if profile_type.__schema__ == kwargs['schema']:
-                    cls = profile_type
+            if CoreProfile.__schema__ == kwargs['schema']:
+                cls = CoreProfile
         return super(Profile, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, **kwargs):
@@ -91,40 +90,6 @@ class CoreProfile(Profile):
             self.identity = values['identity']
         if 'servers' in values:
             self.servers = values['servers']
-
-class BasicProfile(Profile):
-    """The Basic profile info type.
-
-    The Basic profile helps humanize users. All fields are optional but help
-    provide a context in which to place a user's details.
-
-    See: https://tent.io/docs/info-types#basic
-    """
-
-    __schema__ = 'https://tent.io/types/info/basic/v0.1.0'
-
-    avatar_url = URLField()
-
-    name       = StringField()
-    location   = StringField()
-    gender     = StringField()
-
-    birthdate  = StringField() # TODO: ?
-    bio        = StringField()
-
-    def to_json(self):
-        return json_attributes(self,
-            'avatar_url',
-            'name',
-            'location',
-            'gender',
-            'birthdate',
-            'bio'
-        )
-
-    def update_values(self, values):
-        #TODO write this
-        pass
 
 class GenericProfile(db.DynamicDocument, Profile):
     def to_json(self):
