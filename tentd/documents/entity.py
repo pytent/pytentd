@@ -35,6 +35,7 @@ class Entity(db.Document):
     followers  = QuerySetProperty(Follower)
     followings = QuerySetProperty(Following)
     notifications = QuerySetProperty(Notification)
+    groups = QuerySetProperty(Group)
     
     @property
     def core(self):
