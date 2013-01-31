@@ -22,7 +22,9 @@ class GroupView(MethodView):
         return jsonify(g.entity.groups.get_or_404(name=name).to_json())
 
     def put(self, name):
-        return make_response(), 200
+        group = g.entity.groups.get_or_404(name=name)
+        group.update_values(request.json)
+        return jsonify(group.to_json()), 200
 
     def delete(self, name):
         return make_response(), 200
