@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from flask import Config, Flask
 
 from tentd.flask import Request, JSONEncoder, jsonify
-from tentd.blueprints import entity, followers, posts
+from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db
 
 def description():
@@ -50,7 +50,7 @@ def create_app(config=None):
     db.init_app(app)
 
     # Register the entity blueprints
-    for blueprint in (entity, followers, posts):
+    for blueprint in (entity, followers, posts, groups):
         app.register_blueprint(blueprint, url_prefix=blueprint.prefix(app))
 
     return app
