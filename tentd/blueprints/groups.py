@@ -27,4 +27,5 @@ class GroupView(MethodView):
         return jsonify(group.to_json()), 200
 
     def delete(self, name):
+        g.entity.groups.get_or_404(name=name).delete()
         return make_response(), 200

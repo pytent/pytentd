@@ -77,7 +77,7 @@ class GroupBlueprintTest(EntityTentdTestCase):
             self.group.name))
         self.assertStatus(resp, 200)
         with self.assertRaises(Group.DoesNotExist):
-            self.entity.groups(name=self.group.name)
+            self.entity.groups.get(name=self.group.name)
 
     def test_delete_group_non_existant(self):
         """Test that deleting a non-existant group fails."""
