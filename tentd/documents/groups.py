@@ -15,10 +15,10 @@ class Group(EntityMixin, db.Document):
 
     meta = {
         'allow_inheritance': False,
-        'indexes': ['group_name'],
+        'indexes': ['name'],
     }
 
-    group_name = StringField(max_length=100, required=True)
+    name = StringField(unique_with='entity')
     created_at = DateTimeField(default=datetime.now)
    
     def __init__(self, **kargs):
@@ -27,10 +27,10 @@ class Group(EntityMixin, db.Document):
             self.created_at = datetime.now
 
     def __repr__(self):
-        return "<Group '{}' [{}]>".format(self.group_name, self.id)
+        return "<Group '{}' [{}]>".format(self.name, self.id)
 
     def __str__(self):
-        return self.group_name
+        return self.name
 
     def to_json(self):
-        return json_attributes(self, 'group_name', 'created_at')
+        return json_attributes(self, 'name', 'created_at')

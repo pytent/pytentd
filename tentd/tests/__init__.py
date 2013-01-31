@@ -99,7 +99,7 @@ class TentdTestCase(TestCase):
 
     @classmethod
     def clear_database(cls):
-        for collection in (Entity, Follower, Post, Profile):
+        for collection in (Entity, Follower, Post, Profile, Group):
             collection.drop_collection()
 
     @property
