@@ -1,6 +1,6 @@
 """Tent groups"""
 
-all = []
+__all__ = ['Group']
 
 from datetime import datetime
 
@@ -25,6 +25,12 @@ class Group(EntityMixin, db.Document):
         super(Group, self).__init__(**kargs)
         if not self.created_at:
             self.created_at = datetime.now
- 
+
+    def __repr__(self):
+        return "<Group '{}' [{}]>".format(self.group_name, self.id)
+
+    def __str__(self):
+        return self.group_name
+
     def to_json(self):
         return json_attributes(self, 'group_name', 'created_at')
