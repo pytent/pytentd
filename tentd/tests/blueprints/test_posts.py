@@ -91,6 +91,25 @@ class PostTests(EntityTentdTestCase):
         entity_post = self.entity.posts.filter(id=self.new_post.id)
         self.assertEquals(entity_post.count(), 0)
 
+    def test_entity_delete_post_version(self):
+        """Test that a specific post version can be deleted."""
+        self.new_post.new_version(content={'test': None})
+        self.new_post.save()
+
+        # Delete the post version
+        resp = self.client.delete(
+            '/testuser/posts/{}?version=0'.format(self.new_post.id))
+        self.assertStatus(resp, 200)
+
+        # Check the post version has been deleted
+        post = self.entity.posts.get(id=self.new_post.id)
+        self.assertEquals(len(post.versions), 1)
+
+        # Delete the last version of the post, expecting an error
+        resp = self.client.delete(
+            '/testuser/posts/{}?version=0'.format(self.new_post.id))
+        self.assertJSONError(resp)
+    
     def test_entity_delete_invalid_post(self):
         """Test that attempting to delete a non-existant post fails."""
         resp = self.client.delete('/{}/posts/<invalid>'.format(self.name))

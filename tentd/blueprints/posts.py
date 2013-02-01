@@ -68,5 +68,13 @@ class PostsView(MethodView):
     
     def delete(self, post_id):
         # TODO: Create a deleted post notification post(!)
-        g.entity.posts.get_or_404(id=post_id).delete()
+        post = g.entity.posts.get_or_404(id=post_id)
+        version_number = request.args.get('version', None)
+        if version_number:
+            if len(post.versions) == 1:
+                raise APIBadRequest("Cannot delete a posts last version")
+            del post.versions[int(version_number)]
+            post.save()
+        else:
+            post.delete()
         return make_response(), 200
