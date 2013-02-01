@@ -90,30 +90,47 @@ class PostTests(EntityTentdTestCase):
         self.assertStatus(resp, 200)
         entity_post = self.entity.posts.filter(id=self.new_post.id)
         self.assertEquals(entity_post.count(), 0)
-
-    def test_entity_delete_post_version(self):
-        """Test that a specific post version can be deleted."""
-        self.new_post.new_version(content={'test': None})
-        self.new_post.save()
-
-        # Delete the post version
-        resp = self.client.delete(
-            '/testuser/posts/{}?version=0'.format(self.new_post.id))
-        self.assertStatus(resp, 200)
-
-        # Check the post version has been deleted
-        post = self.entity.posts.get(id=self.new_post.id)
-        self.assertEquals(len(post.versions), 1)
-
-        # Delete the last version of the post, expecting an error
-        resp = self.client.delete(
-            '/testuser/posts/{}?version=0'.format(self.new_post.id))
-        self.assertJSONError(resp)
     
     def test_entity_delete_invalid_post(self):
         """Test that attempting to delete a non-existant post fails."""
         resp = self.client.delete('/{}/posts/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
+
+class VersionsTest(EntityTentdTestCase):
+    def before(self):
+        self.post = Post(
+            entity=self.entity,
+            schema='https://tent.io/types/post/status/v0.1.0')
+
+        self.post.new_version(content={'text': "Hello world"})
+        self.post.new_version(content={'text': "Goodbye world"})
+
+        self.post.save()
+
+    def test_get_post_version(self):
+        """Test GET /posts/<id>/versions"""
+        response = self.client.get(
+            '/testuser/posts/{}/versions'.format(self.post.id))
+        assert response.status_code == 200
+
+        versions = [v.to_json() for v in self.post.versions][::-1]
+        assert response.json() == versions
+
+    def test_delete_post_version(self):
+        """Test DELETE /posts/<id>?version=<num>"""
+
+        # Delete the post version
+        response = self.client.delete(
+            '/testuser/posts/{}?version=0'.format(self.post.id))
+        assert response.status_code == 200
+
+        # Check the post version has been deleted
+        post = self.entity.posts.get(id=self.post.id)
+        assert len(post.versions) == 1
+
+        # Delete the last version of the post, expecting an error
+        self.assertJSONError(self.client.delete(
+            '/testuser/posts/{}?version=0'.format(self.post.id)))
 
 class MorePostsTest(EntityTentdTestCase):
     """Tests for posts without having existing posts."""

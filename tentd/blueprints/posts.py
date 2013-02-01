@@ -78,3 +78,11 @@ class PostsView(MethodView):
         else:
             post.delete()
         return make_response(), 200
+
+@posts.route_class('/<string:post_id>/versions', endpoint='post_versions')
+class VersionsView(MethodView):
+
+    decorators = [require_authorization]
+    
+    def get(self, post_id):
+        return jsonify(g.entity.posts.get_or_404(id=post_id).versions)
