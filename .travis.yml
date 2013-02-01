@@ -10,7 +10,8 @@ notifications:
       - "irc.aberwiki.org#os"
     template:
       - "%{repository}/%{branch} [%{commit}] %{author}: %{message}"
-    on_success: always
+      - "Build #%{build_number}: %{build_url}"
+    on_success: changed
     on_failure: always
     use_notice: true
     skip_join: true
