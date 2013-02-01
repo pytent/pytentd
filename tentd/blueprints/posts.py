@@ -93,4 +93,4 @@ class VersionsView(MethodView):
 @posts.route_class('/<string:post_id>/mentions', endpoint='mentions')
 class MentionsView(MethodView):
     def get(self, post_id):
-        return jsonify(g.entity.post.get_or_404(id=post_id).mentions)
+        return jsonify(g.entity.posts.get_or_404(id=post_id).versions[0].mentions)

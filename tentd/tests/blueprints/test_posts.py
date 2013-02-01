@@ -135,6 +135,13 @@ class VersionsTest(EntityTentdTestCase):
         self.assertJSONError(self.client.delete(
             '/testuser/posts/{}?version=0'.format(self.post.id)))
 
+    def test_get_post_mentions(self):
+        """Test that the mentions of a post can be returned."""
+        resp = self.client.get('/{}/posts/{}/mentions'.format(self.name, 
+            self.post.id))
+        self.assertStatus(resp, 200)
+        assert resp.json() == self.post.versions[0].mentions
+
 class MorePostsTest(EntityTentdTestCase):
     """Tests for posts without having existing posts."""
     def test_create_invalid_post(self):
