@@ -1,8 +1,8 @@
 =======
 pytentd
 =======
-.. image:: https://travis-ci.org/pytent/pytentd.png
-   :target: https://travis-ci.org/pytent/pytentd
+.. image:: https://travis-ci.org/pytent/pytentd.png?branch=develop
+   :target: https://travis-ci.org/pytent/pytentd?branch=develop
 
 A Python `tent.io <http://tent.io/>`_ server.
 
