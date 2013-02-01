@@ -1,13 +1,68 @@
 """Tests for the entity blueprint"""
 
-from json import dumps
-
-from flask import url_for
+from flask import url_for, json, current_app
 
 from tentd.documents.entity import Post
 from tentd.flask import jsonify
-from tentd.tests import EntityTentdTestCase
+from tentd.tests import TentdTestCase, EntityTentdTestCase
 from tentd.utils import time_to_string
+
+class HTTPTestCase(TentdTestCase):
+    """Utility methods for testing the HTTP API.
+
+    Will be completed and merged into the test framework later on"""
+    
+    def url_for(self, endpoint, **kwargs):
+        """Calls url_for, using self.entity if needed"""
+        single_user_mode = current_app.config.get('SINGLE_USER_MODE', None)
+        if not single_user_mode and 'entity' not in kwargs:
+            kwargs['entity'] = self.entity.name
+        return url_for(endpoint, **kwargs)
+
+    @staticmethod
+    def _check_response(response):
+        if 'error' in response.json():
+            raise Exception(response.json()['error'])
+        return response
+
+    def POST(self, endpoint, url=None, **kwargs):
+        """Make a HEAD request to an endpoint
+
+        :Parameters:
+        - endpoint (str): The endpoint to use with url_for
+        - url (dict): Keyword arguments for use with url_for
+        - json: An object that will dumped to json as the request data
+        - kwargs: Passed on to `client.post`
+        """
+        url = self.url_for(endpoint, **url or {})
+
+        if 'json' in kwargs and 'data' not in kwargs:
+            kwargs['data'] = json.dumps(kwargs.pop('json'))
+
+        response = self.client.post(url, **kwargs)
+
+        return HTTPTestCase._check_response(response)
+
+class MentionsTests(HTTPTestCase, EntityTentdTestCase):
+    def test_create_post(self):
+        response = self.POST('posts.posts', json={
+            'type': 'https://tent.io/types/post/status/v0.1.0',
+            'content': {
+                'text': "^SoftlySplinter: Hello World"
+            },
+            'mentions': [
+                {'entity': 'http://softly.example.com'}
+            ],
+        })
+        
+        assert response.status_code == 200
+        assert 'text' in response.json()['content']
+
+        response = self.client.get(
+            url_for('posts.posts', entity=self.entity))
+
+        assert response.status_code == 200
+        assert 'text' in response.json()[0]['content']
 
 class PostTests(EntityTentdTestCase):
     """Tests relating to the post routes."""
@@ -38,7 +93,7 @@ class PostTests(EntityTentdTestCase):
             'content': {'text': 'test', 'location': None}}
             
         resp = self.client.post('/{}/posts'.format(self.name),
-            data=dumps(details))
+            data=json.dumps(details))
 
         self.assertStatus(resp, 200)
 
@@ -65,7 +120,7 @@ class PostTests(EntityTentdTestCase):
         """Test a single post can be updated."""
         resp = self.client.put(
             '/{}/posts/{}'.format(self.name, self.new_post.id),
-            data=dumps({
+            data=json.dumps({
                 'content': {
                     'text': 'updated',
                     'location': None}}))
@@ -147,7 +202,7 @@ class MorePostsTest(EntityTentdTestCase):
     def test_create_invalid_post(self):
         response = self.client.post(
             url_for('posts.posts', entity=self.entity),
-            data=dumps({
+            data=json.dumps({
                 'content': "Hello world",
                 'received_at': time_to_string('now')}))
 

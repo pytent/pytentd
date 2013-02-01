@@ -13,7 +13,7 @@ from tentd.documents import Entity, Post, CoreProfile, Notification
 
 posts = EntityBlueprint('posts', __name__, url_prefix='/posts')
 
-@posts.route_class('')
+@posts.route_class('', endpoint='posts')
 class PostsView(MethodView):
     """ Routes relatings to posts. """
 
@@ -32,6 +32,7 @@ class PostsView(MethodView):
         TODO: Separate between apps creating a new post and a notification
         from a non-followed entity.
         """
+
         if not 'type' in request.json:
             raise APIBadRequest("Posts must define a schema")
         

@@ -9,6 +9,21 @@ from mongoengine import *
 from tentd.documents import db, EntityMixin, BetterURLField
 from tentd.utils import time_to_string, json_attributes
 
+class Mention(db.EmbeddedDocument):
+    meta = {
+        'allow_inheritance': False,
+    }
+    
+    entity = BetterURLField(required=True)
+    
+    post = StringField()
+
+    def to_json(self):
+        json = {'entity': self.entity}
+        if self.post is not None:
+            json['post'] = self.post
+        return json
+
 class Version(db.EmbeddedDocument):
     """A specific version of a Post
 
@@ -33,7 +48,12 @@ class Version(db.EmbeddedDocument):
     content = DictField(required=True)
 
     #: The mentions of this post
-    mentions = ListField(BetterURLField)
+    mentions = ListField(EmbeddedDocumentField(Mention))
+
+    def __init__(self, mentions=list(), **kwargs):
+        # Convert mention dicts to instance of Mention
+        mentions = [Mention(**m) for m in mentions if isinstance(m, dict)]
+        super(Version, self).__init__(mentions=mentions, **kwargs)
 
     def __repr__(self):
         return '<Version {}: {}'.format(self.version, self.content)
@@ -58,7 +78,6 @@ class Post(EntityMixin, db.Document):
     meta = {
         'allow_inheritance': False,
         'indexes': ['schema'],
-        'ordering': ['-received_at'],
     }
 
     #: The post type

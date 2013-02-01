@@ -20,10 +20,13 @@ class PostTest(EntityTentdTestCase):
             'text': "How are you, world?",
             'coordinates': [1, 1],
         })
-        self.post.new_version(content={
-            'text': "Goodbye world",
-            'coordinates': [2, 2],
-        })
+        self.post.new_version(
+            content={
+                'text': "Goodbye world",
+                'coordinates': [2, 2]},
+            mentions=[{
+                'entity': 'http://softly.example.com'
+            }])
         self.post.save()
     
     def test_post_owner(self):
