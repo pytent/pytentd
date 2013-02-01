@@ -34,7 +34,7 @@ class PostTests(EntityTentdTestCase):
     def test_entity_new_post(self):
         """Test that a new post can be added correctly."""
         details = {
-            'schema': 'https://tent.io/types/post/status/v0.1.0', 
+            'type': 'https://tent.io/types/post/status/v0.1.0',
             'content': {'text': 'test', 'location': None}}
             
         resp = self.client.post('/{}/posts'.format(self.name),
@@ -44,7 +44,7 @@ class PostTests(EntityTentdTestCase):
 
         created_post = self.entity.posts.get(id=resp.json()['id'])
         self.assertIsNotNone(created_post)
-        self.assertEquals(created_post.schema, details['schema'])
+        self.assertEquals(created_post.schema, details['type'])
         self.assertEquals(created_post.latest.content, details['content'])
 
     def test_entity_create_invalid_post(self):

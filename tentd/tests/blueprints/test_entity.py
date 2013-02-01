@@ -190,13 +190,11 @@ class NotificationTest(EntityTentdTestCase):
 
     def test_notified_of_new_post(self):
         """Test that a followers notification path has a post made to it."""
-        post_details = {
-            'schema': 'https://tent.io/types/post/status/v0.1.0', 
-            'content': {'text': 'test', 'location': None}}
-        
         resp = self.client.post(
             '/{}/posts'.format(self.name),
-            data=dumps(post_details))
+            data=dumps({
+                'type': 'https://tent.io/types/post/status/v0.1.0',
+                'content': {'text': 'test', 'location': None}}))
 
         # Even though we've checked this,
         # make sure the response was sucessful.

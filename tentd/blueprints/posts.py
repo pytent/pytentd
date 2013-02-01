@@ -32,10 +32,13 @@ class PostsView(MethodView):
         TODO: Separate between apps creating a new post and a notification
         from a non-followed entity.
         """
+        if not 'type' in request.json:
+            raise APIBadRequest("Posts must define a schema")
+        
         if 'received_at' in request.json:
             raise APIBadRequest("You may not set received_at on a post")
-        
-        post = Post(entity=g.entity, schema=request.json.pop('schema'))
+
+        post = Post(entity=g.entity, schema=request.json.pop('type'))
         post.new_version(**request.json)
         post.save()
 
