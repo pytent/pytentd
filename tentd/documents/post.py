@@ -6,7 +6,7 @@ from datetime import datetime
 
 from mongoengine import *
 
-from tentd.documents import db, EntityMixin
+from tentd.documents import db, EntityMixin, BetterURLField
 from tentd.utils import time_to_string, json_attributes
 
 class Version(db.EmbeddedDocument):
@@ -32,6 +32,9 @@ class Version(db.EmbeddedDocument):
     #: The content of the post
     content = DictField(required=True)
 
+    #: The mentions of this post
+    mentions = ListField(BetterURLField)
+
     def __repr__(self):
         return '<Version {}: {}'.format(self.version, self.content)
     
@@ -40,6 +43,7 @@ class Version(db.EmbeddedDocument):
             'content': self.content,
             'published_at': time_to_string(self.published_at),
             'received_at':  time_to_string(self.received_at),
+            'mentions': self.mentions,
         }
 
 class Post(EntityMixin, db.Document):
@@ -58,7 +62,7 @@ class Post(EntityMixin, db.Document):
     }
 
     #: The post type
-    schema = URLField(required=True)
+    schema = BetterURLField(required=True)
 
     #: The versions of the post
     versions = SortedListField(
