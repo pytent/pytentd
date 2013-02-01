@@ -3,6 +3,7 @@
 from json import dumps
 
 from tentd.documents.entity import Post
+from tentd.flask import jsonify
 from tentd.tests import EntityTentdTestCase
 
 class PostTests(EntityTentdTestCase):
@@ -10,11 +11,10 @@ class PostTests(EntityTentdTestCase):
     
     def before(self):
         """Create a post in the DB."""
-        self.new_post = Post()
-        self.new_post.schema = 'https://tent.io/types/post/status/v0.1.0'
-        self.new_post.content = {'text': 'test', 'location': None}
-        self.new_post.entity = self.entity
-        self.new_post.save()
+        self.new_post = Post.new(
+            entity=self.entity,
+            schema='https://tent.io/types/post/status/v0.1.0',
+            content={'text': 'test', 'location': None}).save()
 
     def test_entity_header_posts(self):
         """Test the entity header is returned from the posts route."""
@@ -26,23 +26,23 @@ class PostTests(EntityTentdTestCase):
         self.assertStatus(resp, 200)
 
         posts = [post.to_json() for post in self.entity.posts]
-        self.assertEquals(resp.json(), posts)
+        self.assertEquals(resp.data, jsonify(posts).data)
 
     def test_entity_new_post(self):
         """Test that a new post can be added correctly."""
-        post_details = {
+        details = {
             'schema': 'https://tent.io/types/post/status/v0.1.0', 
             'content': {'text': 'test', 'location': None}}
             
         resp = self.client.post('/{}/posts'.format(self.name),
-            data=dumps(post_details))
+            data=dumps(details))
 
         self.assertStatus(resp, 200)
 
         created_post = self.entity.posts.get(id=resp.json()['id'])
         self.assertIsNotNone(created_post)
-        self.assertEquals(created_post.schema, post_details['schema'])
-        self.assertEquals(created_post.content, post_details['content'])
+        self.assertEquals(created_post.schema, details['schema'])
+        self.assertEquals(created_post.latest.content, details['content'])
 
     def test_entity_create_invalid_post(self):
         """Test that attempting to create an invalid post fails."""
@@ -56,7 +56,7 @@ class PostTests(EntityTentdTestCase):
             '/{}/posts/{}'.format(self.name, self.new_post.id))
 
         self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), self.new_post.to_json())
+        self.assertEquals(resp.data, jsonify(self.new_post).data)
 
     def test_entity_update_single_post(self):
         """Test a single post can be updated."""
@@ -69,7 +69,7 @@ class PostTests(EntityTentdTestCase):
 
         new_post = Post.objects.get(entity=self.entity)
         self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), new_post.to_json())
+        self.assertEquals(resp.data, jsonify(new_post).data)
 
     def test_entity_update_post_invalid(self):
         """Test that attempting to update an invalid post fails."""

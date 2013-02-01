@@ -8,10 +8,22 @@ from tentd.tests import EntityTentdTestCase
 
 class PostTest(EntityTentdTestCase):
     def before(self):
+        """Create a post with several versions"""
         self.post = Post(
             entity=self.entity,
-            schema='https://tent.io/types/post/status/v0.1.0',
-            content={'text': "Hello world"})
+            schema='https://tent.io/types/post/status/v0.1.0')
+        self.post.new_version(content={
+            'text': "Hello world",
+            'coordinates': [0, 0],
+        })
+        self.post.new_version(content={
+            'text': "How are you, world?",
+            'coordinates': [1, 1],
+        })
+        self.post.new_version(content={
+            'text': "Goodbye world",
+            'coordinates': [2, 2],
+        })
         self.post.save()
     
     def test_post_owner(self):
@@ -21,14 +33,20 @@ class PostTest(EntityTentdTestCase):
 
     def test_post_content(self):
         post = Post.objects.get(entity=self.entity)
-        assert post.content['text'] == "Hello world"
+        assert post.latest.content['text'] == "Goodbye world"
+        assert post.latest.content['coordinates'] == [2, 2]
 
     def test_post_json(self):
+        """Test that posts can be exported to json"""
         assert 'content' in self.post.to_json()
+
+    def test_post_versions(self):
+        """Test that the versions are numbered correctly"""
+        assert self.post.to_json()['version'] == 3
 
 class UnicodePostTest(EntityTentdTestCase):
     def before(self):
-        self.essay = Post(
+        self.essay = Post.new(
             entity=self.entity,
             schema='https://tent.io/types/post/status/v0.1.0',
             content={
@@ -44,5 +62,5 @@ class UnicodePostTest(EntityTentdTestCase):
         self.essay.save()
 
     def test_post_content(self):
-        assert "⛺" in self.essay.content['title']
-        assert "⛺" in self.essay.content['body']
+        assert "⛺" in self.essay.latest.content['title']
+        assert "⛺" in self.essay.latest.content['body']

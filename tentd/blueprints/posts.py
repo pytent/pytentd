@@ -32,20 +32,17 @@ class PostsView(MethodView):
         TODO: Separate between apps creating a new post and a notification
         from a non-followed entity.
         """
-        new_post = Post()
-        new_post.entity = g.entity
-        new_post.schema = request.json['schema']
-        new_post.content = request.json['content']
-
-        new_post.save()
+        post = Post(entity=g.entity, schema=request.json.pop('schema'))
+        post.new_version(**request.json)
+        post.save()
 
         # TODO: Do this asynchronously?
         for to_notify in g.entity.followers:
             notification_link = follow.get_notification_link(to_notify)
-            requests.post(notification_link, data=jsonify(new_post.to_json()))
+            requests.post(notification_link, data=jsonify(post.to_json()))
             # TODO: Handle failed notifications somehow
 
-        return jsonify(new_post)
+        return jsonify(post)
 
 @posts.route_class('/<string:post_id>', endpoint='post')
 class PostsView(MethodView):
