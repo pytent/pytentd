@@ -2,9 +2,12 @@
 
 from json import dumps
 
+from flask import url_for
+
 from tentd.documents.entity import Post
 from tentd.flask import jsonify
 from tentd.tests import EntityTentdTestCase
+from tentd.utils import time_to_string
 
 class PostTests(EntityTentdTestCase):
     """Tests relating to the post routes."""
@@ -134,8 +137,20 @@ class VersionsTest(EntityTentdTestCase):
 
 class MorePostsTest(EntityTentdTestCase):
     """Tests for posts without having existing posts."""
-    def test_entity_get_empty_posts(self):
+    def test_create_invalid_post(self):
+        response = self.client.post(
+            url_for('posts.posts', entity=self.entity),
+            data=dumps({
+                'content': "Hello world",
+                'received_at': time_to_string('now')}))
+
+        self.assertStatus(response, 400)
+        self.assertJSONError(response)
+    
+    def test_get_empty_posts(self):
         """Test that /posts works when there are no posts to return"""
-        resp = self.client.get('/{}/posts'.format(self.name))
-        self.assertStatus(resp, 200)
-        self.assertEquals(resp.json(), [])
+        response = self.client.get(
+            url_for('posts.posts', entity=self.entity))
+        
+        self.assertStatus(response, 200)
+        self.assertEquals(response.json(), [])
