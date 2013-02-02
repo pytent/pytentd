@@ -5,6 +5,8 @@ from datetime import datetime
 from flask import json, request, g, make_response
 from flask.views import MethodView
 
+from mongoengine import ValidationError
+
 from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
@@ -87,3 +89,8 @@ class NotificationView(MethodView):
         notification.save()
 
         return make_response(), 200
+
+@entity.errorhandler(ValidationError)
+def _handle_validation_error(error):
+    """Handle validation errors."""
+    return jsonify({'error': error.to_dict()}), 400
