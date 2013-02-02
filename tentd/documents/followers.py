@@ -6,8 +6,9 @@ from datetime import datetime
 
 from mongoengine import *
 
-from tentd.documents import db, EntityMixin, URIField
+from tentd.documents import db, EntityMixin
 from tentd.utils import json_attributes, time_to_string
+from tentd.lib.mongoengine import URIField
 
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""

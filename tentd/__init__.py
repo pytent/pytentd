@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 
 from flask import Config, Flask
 
-from tentd.flask import Request, JSONEncoder, jsonify
+from tentd.lib.flask import Request, JSONEncoder, jsonify
 from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db
 

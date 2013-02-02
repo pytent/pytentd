@@ -3,7 +3,7 @@
 from flask import json, request, g, abort, make_response
 from flask.views import MethodView
 
-from tentd.flask import EntityBlueprint, jsonify
+from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.documents import Group
 
 groups = EntityBlueprint('groups', __name__, url_prefix='/groups')

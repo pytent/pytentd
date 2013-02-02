@@ -6,8 +6,9 @@ from datetime import datetime
 
 from mongoengine import *
 
-from tentd.documents import db, EntityMixin, URIField
+from tentd.documents import db, EntityMixin
 from tentd.utils import time_to_string, json_attributes
+from tentd.lib.mongoengine import URIField
 
 class Mention(db.EmbeddedDocument):
     meta = {

@@ -5,8 +5,9 @@ __all__ = ['Profile', 'CoreProfile', 'GenericProfile']
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db, URIField, EntityMixin
+from tentd.documents import db, EntityMixin
 from tentd.utils import json_attributes
+from tentd.lib.mongoengine import URIField
 
 class Profile(EntityMixin, db.Document):
     """A profile information type belonging to an entity

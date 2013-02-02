@@ -3,7 +3,7 @@
 from flask import url_for, json, current_app
 
 from tentd.documents.entity import Post
-from tentd.flask import jsonify
+from tentd.lib.flask import jsonify
 from tentd.tests import TentdTestCase, EntityTentdTestCase
 from tentd.utils import time_to_string
 
