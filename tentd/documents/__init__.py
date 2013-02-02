@@ -1,33 +1,21 @@
 """The database models"""
 
 from flask.ext.mongoengine import MongoEngine
-from mongoengine import CASCADE, ReferenceField, StringField, ValidationError
+from mongoengine import CASCADE, ReferenceField, ValidationError, URLField
 from requests import get
-from rfc3987 import parse
+import rfc3987
 
-class BetterURLField(StringField):
+class BetterURLField(URLField):
     """An inproved version of mongoengine.URLField"""
 
     # TODO: Replace all URLFields with this
     # TODO: Use verify_exists where needed
 
-    def __init__(self, verify_exists=False, **kwargs):
-        super(BetterURLField, self).__init__(**kwargs)
-        self.verify_exists = verify_exists
+    _URI_REGEX = rfc3987.get_compiled_pattern('^%(URI)s$')
 
-    def validate(self, value):
-        """Check that the URL is valid, and optionally accessible."""
-        try:
-            parse(value)
-        except ValueError:
-            print value
-            self.error("Value is not a valid URL")
-
-        if self.verify_exists:
-            try:
-                get(value)
-            except:
-                self.error("The URL appears to be inaccessible")
+    def __init__(self, verify_exists=False, url_regex=_URI_REGEX, **kwargs):
+        super(BetterURLField, self).__init__(verify_exists=verify_exists, 
+            url_regex=url_regex, **kwargs)
 
 class EntityMixin(object):
     """A document mixin which attaches each document to an entity"""
