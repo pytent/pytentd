@@ -5,7 +5,7 @@ __all__ = ['Profile', 'CoreProfile', 'GenericProfile']
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db, BetterURLField, EntityMixin
+from tentd.documents import db, URIField, EntityMixin
 from tentd.utils import json_attributes
 
 class Profile(EntityMixin, db.Document):
@@ -23,7 +23,7 @@ class Profile(EntityMixin, db.Document):
     }
 
     #: The info type schema
-    schema = BetterURLField(unique_with='entity', required=True)
+    schema = URIField(unique_with='entity', required=True)
 
     def __new__(cls, *args, **kwargs):
         """If ``schema`` is included in the argument list, return a profile
@@ -73,9 +73,9 @@ class CoreProfile(Profile):
     #: The canonical entity identity
     # The generated url for the entity can be found at
     # url_for('base.link', entity=self.entity, _external=True)
-    identity = URLField(required=True)
+    identity = URIField(required=True)
 
-    servers = ListField(URLField())
+    servers = ListField(URIField())
 
     def to_json(self):
         return {

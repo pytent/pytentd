@@ -5,7 +5,7 @@ from mongoengine import CASCADE, ReferenceField, ValidationError, URLField
 from requests import get
 import rfc3987
 
-class BetterURLField(URLField):
+class URIField(URLField):
     """An inproved version of mongoengine.URLField"""
 
     # TODO: Replace all URLFields with this
@@ -14,7 +14,7 @@ class BetterURLField(URLField):
     _URI_REGEX = rfc3987.get_compiled_pattern('^%(URI)s$')
 
     def __init__(self, verify_exists=False, url_regex=_URI_REGEX, **kwargs):
-        super(BetterURLField, self).__init__(verify_exists=verify_exists, 
+        super(URIField, self).__init__(verify_exists=verify_exists, 
             url_regex=url_regex, **kwargs)
 
 class EntityMixin(object):
