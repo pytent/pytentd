@@ -54,54 +54,12 @@ class Blueprint(flask.Blueprint):
 
 class EntityBlueprint(Blueprint):
     """A blueprint that provides g.entity, either using SINGLE_USER_MODE or
-    an url prefix of ``/<entity>``"""
-    
-    def __init__(self, *args, **kwargs):
-        """Register the link header and prepossessor functions"""
-        super(EntityBlueprint, self).__init__(*args, **kwargs)
-        self.after_request(self.add_profile_link)
-        self.url_value_preprocessor(self.fetch_entity)
+    an url prefix of ``/<entity>``
 
-    @staticmethod
-    def _single_user_mode():
-        """Return the value of the SINGLE_USER_MODE option"""
-        return current_app.config.get('SINGLE_USER_MODE', None)
+    This class is deprecated
+    """
+    pass
 
-    @classmethod
-    def add_profile_link(cls, response):
-        """Add the link header to the response if the entity is set"""
-        if hasattr(g, 'entity'):
-            options = {'_external': True}
-            if not cls._single_user_mode():
-                options['entity'] = g.entity
-            response.headers['Link'] = '<{link}>; rel="{rel}"'.format(
-                link=url_for('entity.profile', **options),
-                rel='https://tent.io/rels/profile')
-        return response
-
-    @classmethod
-    def fetch_entity(cls, endpoint, values):
-        """Set g.entity using the entity name given in the url, or the name
-        given in the app configuration under SINGLE_USER_MODE"""
-        try:
-            name = cls._single_user_mode() or values.pop('entity')
-            g.entity = Entity.objects.get(name=name)
-        except Entity.DoesNotExist:
-            raise NotFound("User does not exist")
-
-    def prefix(self, app):
-        """Get the url prefix for the blueprint, using the app configuration
-        and the blueprint-specific url prefix. This is used when registering
-        the blueprint."""
-        url_prefix = ''
-        
-        if not app.config.get('SINGLE_USER_MODE', None):
-            url_prefix += '/<string:entity>'
-
-        if self.url_prefix is not None:
-            url_prefix += self.url_prefix
-
-        return url_prefix if url_prefix else None
 
 class JSONEncoder(json.JSONEncoder):
     """Extends the default encoder to be aware of (some) iterables and methods

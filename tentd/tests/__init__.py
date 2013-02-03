@@ -195,8 +195,11 @@ class EntityTentdTestCase(TentdTestCase):
 
     def assertEntityHeader(self, route):
         """Assert that the route provides the link header"""
-        header = self.LINK_FORMAT.format(self.base_url + self.name)
-        self.assertEquals(self.client.head(route).headers['Link'], header)
+        response = self.client.head(route)
+        self.assertIn('Link', response.headers)
+        self.assertEquals(
+            response.headers['Link'],
+            self.LINK_FORMAT.format(self.base_url + self.name))
 
 class SingleUserTestCase(EntityTentdTestCase):    
     @classmethod

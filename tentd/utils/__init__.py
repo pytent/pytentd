@@ -1,10 +1,22 @@
 """Miscellaneous utilities for pytentd"""
 
+from os import getcwd
 from datetime import datetime
 from functools import wraps
 from time import mktime
 
-from flask import jsonify
+from flask import Config
+
+def make_config(config):
+    """Create a Config object from a filename or dictionary"""
+    configuration = Config(getcwd())
+    if isinstance(config, basestring):
+        configuration.from_pyfile(config)
+    elif isinstance(config, dict):
+        configuration.update(config)
+    elif config is not None:
+        raise TypeError("`config` argument must be a dict or string.")
+    return configuration
 
 def json_attributes(obj, *names, **kwargs):
     """Takes an object and a list of attribute names, and returns a dict
