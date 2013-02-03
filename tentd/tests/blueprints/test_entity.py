@@ -7,7 +7,7 @@ import requests
 from tentd.documents.entity import Entity, Follower
 from tentd.documents.profiles import CoreProfile, GenericProfile
 
-from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
+from tentd.tests import TentdTestCase, EntityTentdTestCase, skip, AuthorizedClientWrapper
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(TentdTestCase):
@@ -16,6 +16,7 @@ class EntityBlueprintTest(TentdTestCase):
         """Tests that non-existent users 404."""
         self.assertStatus(self.client.get("/non-existent-user"), 404)
         self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
+
     
 class ProfileBlueprintTest(EntityTentdTestCase):
     """Tests relating to profiles."""
@@ -188,7 +189,7 @@ class NotificationTest(EntityTentdTestCase):
 
     def test_notified_of_new_post(self):
         """Test that a followers notification path has a post made to it."""
-        resp = self.client.post(
+        resp = self.secure_client.post(
             '/{}/posts'.format(self.name),
             data=dumps({
                 'type': 'https://tent.io/types/post/status/v0.1.0',

@@ -24,6 +24,7 @@ class ProfileView(MethodView):
         """Return the profiles belonging to the entity"""
         return jsonify({p.schema: p.to_json() for p in g.entity.profiles})
 
+    @require_authorization
     def post(self):
         """Create a new profile of the specified type.
         

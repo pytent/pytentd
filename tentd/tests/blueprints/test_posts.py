@@ -39,7 +39,7 @@ class HTTPTestCase(TentdTestCase):
         if 'json' in kwargs and 'data' not in kwargs:
             kwargs['data'] = json.dumps(kwargs.pop('json'))
 
-        response = self.client.post(url, **kwargs)
+        response = self.secure_client.post(url, **kwargs)
 
         return HTTPTestCase._check_response(response)
 
@@ -167,8 +167,9 @@ class VersionsTest(EntityTentdTestCase):
 
     def test_get_post_version(self):
         """Test GET /posts/<id>/versions"""
-        response = self.client.get(
+        response = self.secure_client.get(
             '/testuser/posts/{}/versions'.format(self.post.id))
+
         assert response.status_code == 200
 
         versions = [v.to_json() for v in self.post.versions][::-1]
@@ -178,7 +179,7 @@ class VersionsTest(EntityTentdTestCase):
         """Test DELETE /posts/<id>?version=<num>"""
 
         # Delete the post version
-        response = self.client.delete(
+        response = self.secure_client.delete(
             '/testuser/posts/{}?version=0'.format(self.post.id))
         assert response.status_code == 200
 
@@ -187,7 +188,7 @@ class VersionsTest(EntityTentdTestCase):
         assert len(post.versions) == 1
 
         # Delete the last version of the post, expecting an error
-        self.assertJSONError(self.client.delete(
+        self.assertJSONError(self.secure_client.delete(
             '/testuser/posts/{}?version=0'.format(self.post.id)))
 
     def test_get_post_mentions(self):

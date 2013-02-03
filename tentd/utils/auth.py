@@ -105,9 +105,7 @@ def require_authorization(func):
             auth = parse_authstring(request.headers.get('Authorization'))
 
             if not auth:
-                return authenticate_response()
-                
-            
+                return authenticate_response() 
             
             return func(*args, **kwargs)
     return wrapped
