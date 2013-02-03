@@ -28,8 +28,9 @@ def create_app(config=None):
     app.request_class = Request
 
     # Load the default configuration values
-    import tentd.defaults as defaults
-    app.config.from_object(defaults)
+    app.config.update({
+        'MONGODB_DB': 'tentd',
+    })
     
     # Load the user configuration values
     app.config.update(make_config(config))
