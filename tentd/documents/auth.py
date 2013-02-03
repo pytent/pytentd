@@ -1,17 +1,12 @@
-"""
-Data model for tent auth
-"""
+"""Document classes for authenticaton"""
 
-from mongoengine import *
+from mongoengine import StringField
 
 from tentd.documents import db
 
 class KeyPair(db.Document):
-    """KeyPair objects are used to store mac id/key pairs for signing requests"""
+    """Stores a mac id/key pair for signing requests"""
 
-    mac_id = StringField(max_length=32,unique=True)  
+    mac_id = StringField(max_length=32, unique=True)  
     mac_key = StringField(max_length=64)
     mac_algorithm = StringField(max_length=15)
-
-    def __init__(self, **kwargs):
-        super(KeyPair, self).__init__(**kwargs)

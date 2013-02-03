@@ -34,21 +34,16 @@ class Follower(EntityMixin, db.Document):
 
     notification_path = StringField()
 
-    #add link to keypair 
-    keypair = ReferenceField('KeyPair', required=True)
+    keypair = ReferenceField('KeyPair', required=True, dbref=False)
 
     def __init__(self, **kwargs):
         super(Follower, self).__init__(**kwargs)
 
-        if not self.keypair:
-            keyid,key = generate_keypair()
-            kp = KeyPair(mac_id=keyid, mac_key=key,
-                            mac_algorithm="hmac-sha-256")
-            kp.save()
-            self.keypair = kp
-
-        if not self.created_at:
-            self.created_at = datetime.utcnow()
+        if self.keypair is None:
+            keyid, key = generate_keypair()
+            self.keypair = KeyPair(
+                mac_id=keyid, mac_key=key, mac_algorithm="hmac-sha-256")
+            self.keypair.save()
 
     def __repr__(self):
         return "<Follower: {}>".format(self.identity)
@@ -64,6 +59,7 @@ class Follower(EntityMixin, db.Document):
             'licenses')
 
 class Following(EntityMixin, db.Document):
+    """An entity that a local entity is following"""
 
     meta = {
         'allow_inheritance': False,
