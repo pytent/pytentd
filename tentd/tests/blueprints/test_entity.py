@@ -7,7 +7,7 @@ import requests
 from tentd.documents.entity import Entity, Follower
 from tentd.documents.profiles import CoreProfile, GenericProfile
 
-from tentd.tests import TentdTestCase, EntityTentdTestCase, skip
+from tentd.tests import TentdTestCase, EntityTentdTestCase, skip, AuthorizedClientWrapper
 from tentd.tests.mocking import MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(TentdTestCase):
@@ -16,6 +16,7 @@ class EntityBlueprintTest(TentdTestCase):
         """Tests that non-existent users 404."""
         self.assertStatus(self.client.get("/non-existent-user"), 404)
         self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
+
     
 class ProfileBlueprintTest(EntityTentdTestCase):
     """Tests relating to profiles."""
@@ -46,7 +47,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_get_single_profile(self):
         """Test that getting a single profile is possible."""
-        resp = self.client.get('/{}/profile/{}'.format(
+        resp = self.secure_client.get('/{}/profile/{}'.format(
             self.name, CoreProfile.__schema__))
         self.assertStatus(resp, 200)
 
@@ -55,7 +56,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_get_non_existant_profile(self):
         """Test that getting a non-existant profile fails."""
-        resp = self.client.get('/{}/profile/<invalid>'.format(self.name))
+        resp = self.secure_client.get('/{}/profile/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
 
     def test_entity_update_profile(self):
@@ -65,7 +66,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
                 'http://tent.example.com',
                 'http://example.com/tent',]}
 
-        resp = self.client.put(
+        resp = self.secure_client.put(
             '{}/profile/{}'.format(self.name, CoreProfile.__schema__),
             data=dumps(update_data))
 
@@ -188,7 +189,7 @@ class NotificationTest(EntityTentdTestCase):
 
     def test_notified_of_new_post(self):
         """Test that a followers notification path has a post made to it."""
-        resp = self.client.post(
+        resp = self.secure_client.post(
             '/{}/posts'.format(self.name),
             data=dumps({
                 'type': 'https://tent.io/types/post/status/v0.1.0',
