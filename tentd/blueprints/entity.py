@@ -6,7 +6,9 @@ from datetime import datetime
 from flask import json, request, g, make_response
 from flask.views import MethodView
 
-from tentd.flask import EntityBlueprint, jsonify
+from mongoengine import ValidationError
+
+from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Notification

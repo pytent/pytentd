@@ -9,7 +9,10 @@ from mongoengine import *
 from tentd.documents import db, EntityMixin
 from tentd.documents.auth import KeyPair
 from tentd.utils import json_attributes, time_to_string
+
 from tentd.utils.auth import generate_keypair
+from tentd.lib.mongoengine import URIField
+
 
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
@@ -20,7 +23,7 @@ class Follower(EntityMixin, db.Document):
     }
 
     #: The identity of the follower
-    identity = URLField(unique_with='entity')
+    identity = URIField(unique_with='entity')
 
     #: The time the follower was created
     created_at = DateTimeField(default=datetime.now)
@@ -68,7 +71,7 @@ class Following(EntityMixin, db.Document):
     }
 
     #: The identity of the following
-    identity = URLField(unique_with='entity')
+    identity = URIField(unique_with='entity')
 
     #: The time the following was created
     created_at = DateTimeField(default=datetime.now)

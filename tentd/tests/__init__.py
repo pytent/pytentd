@@ -99,7 +99,7 @@ class TentdTestCase(TestCase):
 
     @classmethod
     def clear_database(cls):
-        for collection in (Entity, Follower, Post, Profile):
+        for collection in (Entity, Follower, Post, Profile, Group):
             collection.drop_collection()
 
     @property
@@ -115,6 +115,10 @@ class TentdTestCase(TestCase):
 
     def assertJSONError(self, response):
         self.assertIn('error', response.json())
+
+    @staticmethod
+    def json_error_response(response):
+        return 'error' in response.json()
 
 class EntityTentdTestCase(TentdTestCase):
     """A test case that sets up an entity and it's core profile"""

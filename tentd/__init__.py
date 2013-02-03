@@ -12,8 +12,10 @@ from argparse import ArgumentParser
 
 from flask import Config, Flask
 
-from tentd.flask import Request, JSONEncoder, jsonify
-from tentd.blueprints import entity, followers, posts
+from mongoengine import ValidationError
+
+from tentd.lib.flask import Request, JSONEncoder, jsonify
+from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db
 
 def description():
@@ -50,8 +52,13 @@ def create_app(config=None):
     db.init_app(app)
 
     # Register the entity blueprints
-    for blueprint in (entity, followers, posts):
+    for blueprint in (entity, followers, posts, groups):
         app.register_blueprint(blueprint, url_prefix=blueprint.prefix(app))
+
+    @app.errorhandler(ValidationError)
+    def _validation_error(error):
+        """Handle validation errors from the DB."""
+        return jsonify({'error': error.to_dict()}), 400
 
     return app
 

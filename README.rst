@@ -2,6 +2,9 @@
 pytentd
 =======
 
+.. image:: https://travis-ci.org/pytent/pytentd.png?branch=develop
+   :target: https://travis-ci.org/pytent/pytentd?branch=develop
+
 A Python `tent.io <http://tent.io/>`_ server.
 
 Running pytentd
@@ -19,7 +22,7 @@ To run pytentd with gunicorn::
 
     $ gunicorn "tentd:create_app()"
 
-Pytentd can be run under Apache using `these instructions <http://flask.pocoo.org/docs/deploying/mod_wsgi/>`_ and a `wsgi`_ file with the following contents::
+Pytentd can be run under Apache using `these instructions`_ and a `wsgi`_ file with the following contents::
 
     from tentd import create_app
 
@@ -29,6 +32,7 @@ In both the last two examples, the ``create_app`` function can take either the n
 
 The Flask documentation also has instructions for running an application on other servers: `Deploying on Other Servers <http://flask.pocoo.org/docs/deploying/others/>`_.
 
+.. _these instructions: http://flask.pocoo.org/docs/deploying/mod_wsgi/
 .. _wsgi: http://wsgi.readthedocs.org/en/latest/
 
 Installation
@@ -44,9 +48,10 @@ The pytentd package can be also installed directly from the git repository::
     cd pytentd
     python setup.py install
 
-Pytentd requires a `mongoDB`_ database - packages for this are available for most operating systems. More information on starting and stopping the mongoDB server can be found `in the mongoDB documentation <http://www.mongodb.org/display/DOCS/Starting+and+Stopping+Mongo>`_, though some distributions (such as Ubuntu) will run mongoDB as a service once the package is installed.
+Pytentd requires a `mongoDB`_ database - packages for this are available for most operating systems. More information on starting and stopping the mongoDB server can be found `here`_, though some distributions (such as Ubuntu) will run mongoDB as a service once the package is installed.
 
 .. _mongoDB: http://www.mongodb.org/
+.. _here: http://www.mongodb.org/display/DOCS/Starting+and+Stopping+Mongo
 
 Configuration
 -------------

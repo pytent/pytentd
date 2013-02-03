@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import flask
 
 from flask import abort, g, url_for, json, current_app, request
+from bson import ObjectId
 from mongoengine.queryset import QuerySet
 from werkzeug.utils import cached_property
 from werkzeug.exceptions import NotFound
@@ -115,6 +116,9 @@ class JSONEncoder(json.JSONEncoder):
         
         if isinstance(obj, (list, QuerySet)):
             return [self.default(o) for o in obj]
+
+        if isinstance(obj, ObjectId):
+            return str(obj)
         
         return super(JSONEncoder, self).default(obj)
 

@@ -1,5 +1,6 @@
 """Miscellaneous utilities for pytentd"""
 
+from datetime import datetime
 from functools import wraps
 from time import mktime
 
@@ -45,6 +46,8 @@ def json_attributes(obj, *names, **kwargs):
     json.update(kwargs)
     return json
 
-def time_to_string(time_field):
+def time_to_string(time):
     """Converts a datetime instance to a string"""
-    return mktime(time_field.timetuple())
+    if time is None: return time
+    if time == "now": time = datetime.now()
+    return mktime(time.timetuple())

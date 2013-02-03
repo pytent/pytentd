@@ -1,12 +1,13 @@
 """Profile info types - https://tent.io/docs/info-types"""
 
-__all__ = ['Profile', 'CoreProfile', 'BasicProfile', 'GenericProfile']
+__all__ = ['Profile', 'CoreProfile', 'GenericProfile']
 
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
-from tentd.documents import db, BetterURLField, EntityMixin
+from tentd.documents import db, EntityMixin
 from tentd.utils import json_attributes
+from tentd.lib.mongoengine import URIField
 
 class Profile(EntityMixin, db.Document):
     """A profile information type belonging to an entity
@@ -23,16 +24,15 @@ class Profile(EntityMixin, db.Document):
     }
 
     #: The info type schema
-    schema = BetterURLField(unique_with='entity', required=True)
+    schema = URIField(unique_with='entity', required=True)
 
     def __new__(cls, *args, **kwargs):
         """If ``schema`` is included in the argument list, return a profile
         object using the correct class."""
         if 'schema' in kwargs:
             cls = GenericProfile
-            for profile_type in (CoreProfile, BasicProfile):
-                if profile_type.__schema__ == kwargs['schema']:
-                    cls = profile_type
+            if CoreProfile.__schema__ == kwargs['schema']:
+                cls = CoreProfile
         return super(Profile, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, **kwargs):
@@ -74,9 +74,9 @@ class CoreProfile(Profile):
     #: The canonical entity identity
     # The generated url for the entity can be found at
     # url_for('base.link', entity=self.entity, _external=True)
-    identity = URLField(required=True)
+    identity = URIField(required=True)
 
-    servers = ListField(URLField())
+    servers = ListField(URIField())
 
     def to_json(self):
         return {
@@ -91,40 +91,6 @@ class CoreProfile(Profile):
             self.identity = values['identity']
         if 'servers' in values:
             self.servers = values['servers']
-
-class BasicProfile(Profile):
-    """The Basic profile info type.
-
-    The Basic profile helps humanize users. All fields are optional but help
-    provide a context in which to place a user's details.
-
-    See: https://tent.io/docs/info-types#basic
-    """
-
-    __schema__ = 'https://tent.io/types/info/basic/v0.1.0'
-
-    avatar_url = URLField()
-
-    name       = StringField()
-    location   = StringField()
-    gender     = StringField()
-
-    birthdate  = StringField() # TODO: ?
-    bio        = StringField()
-
-    def to_json(self):
-        return json_attributes(self,
-            'avatar_url',
-            'name',
-            'location',
-            'gender',
-            'birthdate',
-            'bio'
-        )
-
-    def update_values(self, values):
-        #TODO write this
-        pass
 
 class GenericProfile(db.DynamicDocument, Profile):
     def to_json(self):
