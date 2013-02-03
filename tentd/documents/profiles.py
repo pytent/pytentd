@@ -25,6 +25,7 @@ class Profile(EntityMixin, db.Document):
 
     #: The info type schema
     schema = URIField(unique_with='entity', required=True)
+    permissions = DictField()
 
     def __new__(cls, *args, **kwargs):
         """If ``schema`` is included in the argument list, return a profile
@@ -77,6 +78,10 @@ class CoreProfile(Profile):
     identity = URIField(required=True)
 
     servers = ListField(URIField())
+
+    def __init__(self, *args, **kwargs):
+        super(CoreProfile, self).__init__(*args, **kwargs)
+        self.permissions['public'] = True
 
     def to_json(self):
         return {
