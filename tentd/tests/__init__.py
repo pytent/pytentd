@@ -9,6 +9,8 @@ from unittest import TestCase, skip
 
 from flask import json, Response
 
+from werkzeug.datastructures import Headers
+
 from tentd import create_app
 from tentd.documents import *
 from tentd.tests.mocking import MockFunction
@@ -20,6 +22,58 @@ class TestResponse(Response):
                 self._json = json.loads(self.data)
             return self._json
         raise Exception("Response has no json data")
+
+class AuthorizedClientWrapper:
+    """Provide an authorized wrapper around the Werkzeug test client
+    
+    Given an existing tent test client and a KeyPair object, this
+    object emulates HMAC requests and provides transparent access to
+    the real test client's GET, POST, PUT, HEAD and DELETE methods
+    """
+
+
+    macid  = "s:f5949a1d"
+    tstamp = 1355181298
+    nonce  = "b07235"
+    mac    = "swgy4RpdIBaFpA1hmAbZrph24VVg9FwmJgMm9GkgiLE="
+    keypair = None
+
+    def __init__(self, tentclient):
+        self._client = tentclient
+
+    @property
+    def auth_header(self):
+        return 'MAC id="{0}",ts="{1}",nonce="{2}",mac="{3}"'.format(
+            self.macid, self.tstamp, self.nonce, self.mac)
+
+    def get(self, *args, **kwargs):
+        return self._exec(self._client.get, *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self._exec(self._client.post, *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        return self._exec(self._client.put, *args, **kwargs)
+
+    def head(self, *args, **kwargs):
+        return self._exec(self._client.head, *args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        return self._exec(self._client.delete, *args, **kwargs)
+
+    def _exec(self, method, *args, **kwargs):
+    
+        h = Headers()
+
+        if(kwargs.has_key('headers')):
+            h.extend(kwargs['headers'])
+        
+        h.set('Authorization',self.auth_header)
+
+        kwargs['headers'] = h
+    
+        return method(*args,**kwargs)
+
 
 class TentdTestCase(TestCase):
     """A base test case for pytentd
@@ -53,6 +107,9 @@ class TentdTestCase(TestCase):
         cls.app = create_app(configuration)
         cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
+
+        #set up authorized client
+        cls.secure_client = AuthorizedClientWrapper(cls.client)
 
         cls.clear_database()
         

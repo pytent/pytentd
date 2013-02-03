@@ -18,7 +18,9 @@ from hashlib import sha256, md5
 from functools import wraps
 from random import getrandbits
 
-from flask import request
+from tentd.documents.auth import KeyPair
+
+from flask import request, Response
 
 def generate_keypair():
     """Generate an id and 256-bit uuid key for HMAC signing"""
@@ -75,31 +77,43 @@ def check_request(request, key):
     reqmac = auth['mac']
     norm = normalize_request(request)   
 
-    # print norm
-
     mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
-
-    # print "macstr " + macstr
-    # print "reqmac " + reqmac
-
     return reqmac == macstr
+
+def authenticate_response():
+    """Sends a 401 response that enables basic auth"""
+
+    return Response('Invalid MAC Credentials\n', 401,
+        {'WWW-Authenticate': 'MAC'})
+
 
 def require_authorization(func):
     """Annotation that forces the view to do HMAC auth
+
     
     Apply this decorator to your view to ensure that the browser is
     authenticated. If they are not, they'll get a HTTP 401 and a
     WWW-Authenticate header.
     
     """
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        """Wrapped decorator function
-        
-        TODO: actual implementation of this decorator.
-        """
-        request.headers.get('Authorization')
-        return func(*args, **kwargs)
-    return decorated
+    def wrapped(*args, **kwargs):
+            """Wrapped decorator function
+            
+            TODO: actual implementation of this decorator.
+            """
+
+            auth = parse_authstring(request.headers.get('Authorization'))
+
+            if not auth:
+                return authenticate_response() 
+
+            #try and find a keypair for the given mac id
+            keypairs = KeyPair.objects.filter(mac_id=auth['id'])
+            
+            #if( len(keypairs) < 0):
+                
+
+            return func(*args, **kwargs)
+    return wrapped

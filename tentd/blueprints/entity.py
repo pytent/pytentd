@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+
 from flask import json, request, g, make_response
 from flask.views import MethodView
 
@@ -24,6 +25,7 @@ class ProfileView(MethodView):
         return jsonify({p.schema: p.to_json() for p in g.entity.profiles \
             if 'public' in p.permissions and p.permissions['public']})
 
+    @require_authorization
     def post(self):
         """Create a new profile of the specified type.
         
@@ -76,7 +78,7 @@ class NotificationView(MethodView):
 
         Returns no data as it's only a check.."""
         return make_response(), 200
-
+    
     def post(self):
         """Alerts of a notification.
 
@@ -89,4 +91,5 @@ class NotificationView(MethodView):
         notification.received_at = datetime.utcnow()
         notification.save()
 
+        # Return no data other than to say the request completed correctly.
         return make_response(), 200

@@ -7,8 +7,12 @@ from datetime import datetime
 from mongoengine import *
 
 from tentd.documents import db, EntityMixin
+from tentd.documents.auth import KeyPair
 from tentd.utils import json_attributes, time_to_string
+
+from tentd.utils.auth import generate_keypair
 from tentd.lib.mongoengine import URIField
+
 
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
@@ -30,8 +34,19 @@ class Follower(EntityMixin, db.Document):
 
     notification_path = StringField()
 
+    #add link to keypair 
+    keypair = ReferenceField('KeyPair', required=True)
+
     def __init__(self, **kwargs):
         super(Follower, self).__init__(**kwargs)
+
+        if not self.keypair:
+            keyid,key = generate_keypair()
+            kp = KeyPair(mac_id=keyid, mac_key=key,
+                            mac_algorithm="hmac-sha-256")
+            kp.save()
+            self.keypair = kp
+
         if not self.created_at:
             self.created_at = datetime.utcnow()
 
