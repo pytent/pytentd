@@ -18,6 +18,8 @@ from hashlib import sha256, md5
 from functools import wraps
 from random import getrandbits
 
+from tentd.documents.auth import KeyPair
+
 from flask import request, Response
 
 def generate_keypair():
@@ -106,6 +108,12 @@ def require_authorization(func):
 
             if not auth:
                 return authenticate_response() 
+
+            #try and find a keypair for the given mac id
+            keypairs = KeyPair.objects.filter(mac_id=auth['id'])
             
+            #if( len(keypairs) < 0):
+                
+
             return func(*args, **kwargs)
     return wrapped

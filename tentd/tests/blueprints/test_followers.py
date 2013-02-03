@@ -112,13 +112,13 @@ class FollowerTests(EntityTentdTestCase):
             notification_path="notification").save()
 
         # Delete it.
-        response = self.client.delete(
+        response = self.secure_client.delete(
             '/{}/followers/{}'.format(self.name, follower.id))
         self.assertEquals(200, response.status_code)
 
     def test_entity_follow_delete_non_existant(self):
         """Test that trying to stop following a non-existent user fails."""
-        response = self.client.delete('/{}/followers/0'.format(self.name))
+        response = self.secure_client.delete('/{}/followers/0'.format(self.name))
         self.assertEquals(400, response.status_code)
 
     def test_entity_follow_update(self):
@@ -130,7 +130,7 @@ class FollowerTests(EntityTentdTestCase):
             identity='http://follower.example.com',
             notification_path='notification').save()
 
-        response = self.client.put(
+        response = self.secure_client.put(
             '/{}/followers/{}'.format(self.name, follower.id),
             data=dumps({'entity': self.new_identity}))
         

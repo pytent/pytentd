@@ -47,7 +47,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_get_single_profile(self):
         """Test that getting a single profile is possible."""
-        resp = self.client.get('/{}/profile/{}'.format(
+        resp = self.secure_client.get('/{}/profile/{}'.format(
             self.name, CoreProfile.__schema__))
         self.assertStatus(resp, 200)
 
@@ -56,7 +56,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
     def test_entity_get_non_existant_profile(self):
         """Test that getting a non-existant profile fails."""
-        resp = self.client.get('/{}/profile/<invalid>'.format(self.name))
+        resp = self.secure_client.get('/{}/profile/<invalid>'.format(self.name))
         self.assertStatus(resp, 404)
 
     def test_entity_update_profile(self):
@@ -66,7 +66,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
                 'http://tent.example.com',
                 'http://example.com/tent',]}
 
-        resp = self.client.put(
+        resp = self.secure_client.put(
             '{}/profile/{}'.format(self.name, CoreProfile.__schema__),
             data=dumps(update_data))
 

@@ -55,6 +55,9 @@ class AuthorizedClientWrapper:
     def put(self, *args, **kwargs):
         return self._exec(self._client.put, *args, **kwargs)
 
+    def head(self, *args, **kwargs):
+        return self._exec(self._client.head, *args, **kwargs)
+
     def delete(self, *args, **kwargs):
         return self._exec(self._client.delete, *args, **kwargs)
 
