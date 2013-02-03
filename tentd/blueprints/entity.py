@@ -89,8 +89,3 @@ class NotificationView(MethodView):
         notification.save()
 
         return make_response(), 200
-
-@entity.errorhandler(ValidationError)
-def _handle_validation_error(error):
-    """Handle validation errors."""
-    return jsonify({'error': error.to_dict()}), 400
