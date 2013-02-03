@@ -75,7 +75,6 @@ def check_request(request, key):
     reqmac = auth['mac']
     norm = normalize_request(request)   
 
-
     mac = hmac.new(key, norm, sha256)
 
     macstr = base64.encodestring(mac.digest())
@@ -102,6 +101,7 @@ def require_authorization(func):
             
             TODO: actual implementation of this decorator.
             """
+
             auth = parse_authstring(request.headers.get('Authorization'))
 
             if not auth:
