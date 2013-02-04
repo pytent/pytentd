@@ -26,6 +26,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+.noseids
 nosetests.xml
 
 # Translations
@@ -34,7 +35,3 @@ nosetests.xml
 # Editor files
 *~
 *.swp
-
-# config files for tent
-*.cfg
-*.conf
