@@ -2,9 +2,9 @@
 
 from tentd.documents import db, Follower
 from tentd.documents.auth import generate_id, generate_key, KeyPair
-from tentd.tests import EntityTentdTestCase
+from tentd.tests import TestCase, EntityTentdTestCase
 
-class KeyPairTest(EntityTentdTestCase):
+class KeyPairTest(TestCase):
     def test_generate(self):
         assert generate_id()
         assert generate_key()
@@ -12,29 +12,27 @@ class KeyPairTest(EntityTentdTestCase):
     def test_keypair_defaults(self):
         keypair = KeyPair()
 
-        assert keypair.mac_id
-        assert keypair.mac_key
-        assert keypair.mac_algorithm
-
-        print type(keypair.mac_id)
-        
         assert isinstance(keypair.mac_id, basestring)
         assert isinstance(keypair.mac_key, basestring)
         assert isinstance(keypair.mac_algorithm, basestring)
 
+class FollowerKeyPairTest(EntityTentdTestCase):
+    def before(self):
+        self.follower = Follower(
+            entity=self.entity,
+            identity='http://example.com')
+
+        self.follower.save()
+
+    def test_follower_keypair_property(self):
+        """Test that the property works and a KeyPair has been generated"""
+        assert self.follower.keypair
+
     def test_cascading_delete(self):
-        keypair = KeyPair().save()
-        
-        follower = Follower(
-            entity=self.entity, keypair=keypair,
-            identity='http://example.com').save()
+        """Test that the KeyPair is deleted with the follower"""
+        assert KeyPair.objects.get(owner=self.follower)
 
-        assert follower.keypair is keypair
-
-        print KeyPair.objects.get(mac_id=keypair.mac_id)
-
-        keypair.delete()
-        follower.delete()
+        self.follower.delete()
 
         with self.assertRaises(KeyPair.DoesNotExist):
-            print KeyPair.objects.get(mac_id=keypair.mac_id)
+            KeyPair.objects.get(owner=self.follower)

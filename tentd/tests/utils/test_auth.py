@@ -48,6 +48,3 @@ class AuthTest(TentdTestCase):
         with self.client as c:
             c.get(path="/?apple=2", headers=headers)
             assert check_request(request, key) == True
-
-    def test_hmac(self):
-        generate_keypair()

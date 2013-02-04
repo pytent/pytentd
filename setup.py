@@ -43,6 +43,7 @@ setup(
         'flask==0.9',
         'flask-mongoengine==0.6',
         'mongoengine==0.7.9',
+        'blinker==1.1',
         'requests==1.1.0',
         'simplejson==3.0.7',
         'rfc3987==1.3.1'

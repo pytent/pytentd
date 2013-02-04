@@ -31,7 +31,6 @@ class AuthorizedClientWrapper:
     the real test client's GET, POST, PUT, HEAD and DELETE methods
     """
 
-
     macid  = "s:f5949a1d"
     tstamp = 1355181298
     nonce  = "b07235"

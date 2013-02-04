@@ -18,6 +18,8 @@ def generate_key():
 class KeyPair(db.Document):
     """Stores a mac id/key pair for signing requests"""
 
+    owner = GenericReferenceField(required=True, unique=True)
+
     mac_id = StringField(
         max_length=32, unique=True, required=True, default=generate_id)
 
@@ -30,3 +32,11 @@ class KeyPair(db.Document):
     def __str__(self):
         return '<KeyPair: {}:{}>'.format(
             self.mac_id, self.mac_algorithm)
+
+    @staticmethod
+    def owner_post_save(sender, document, **kwargs):
+        """Signal function create a KeyPair for owners when saved"""
+        try:
+            KeyPair.objects.get(owner=document)
+        except KeyPair.DoesNotExist:
+            KeyPair(owner=document).save()

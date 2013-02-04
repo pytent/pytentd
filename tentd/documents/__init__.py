@@ -28,8 +28,7 @@ from tentd.documents.entity import Entity
 for collection in (Follower, Following, Post, Profile):
     Entity.register_delete_rule(collection, 'entity', CASCADE)
 
-#Follower.register_delete_rule(KeyPair, 'keypair', CASCADE)
-KeyPair.register_delete_rule(Follower, 'keypair', DENY)
+Follower.register_delete_rule(KeyPair, 'owner', CASCADE)
 
 # Clean the namespace, as defining __all__ leads to problems
 del MongoEngine, ReferenceField, CASCADE

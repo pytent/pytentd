@@ -5,6 +5,7 @@ __all__ = ['Follower', 'Following']
 from datetime import datetime
 
 from mongoengine import *
+from mongoengine.signals import post_save
 
 from tentd.documents import db, EntityMixin, KeyPair
 from tentd.utils import json_attributes, time_to_string
@@ -25,20 +26,15 @@ class Follower(EntityMixin, db.Document):
     #: The time the follower was created
     created_at = DateTimeField(default=datetime.now)
 
-    #:
     notification_path = StringField()
     
     permissions = None
     licenses = None
     types = None
 
-    keypair = ReferenceField(KeyPair, required=True, dbref=False)
-    
-    def __init__(self, **kwargs):
-        super(Follower, self).__init__(**kwargs)
-
-        if not self.keypair:
-            self.keypair = KeyPair().save()
+    @property
+    def keypair(self):
+        return KeyPair.objects.get(owner=self)
 
     def __repr__(self):
         return "<Follower: {}>".format(self.identity)
@@ -52,6 +48,8 @@ class Follower(EntityMixin, db.Document):
             'permissions',
             'types',
             'licenses')
+
+post_save.connect(KeyPair.owner_post_save, sender=Follower)
 
 class Following(EntityMixin, db.Document):
     """An entity that a local entity is following"""

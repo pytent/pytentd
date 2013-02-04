@@ -6,11 +6,7 @@ specification and as required by the tent protocol.
 
 """
 
-__all__ = [
-    'generate_keypair',
-    'check_request',
-    'parse_authstring',
-    'normalize_request']
+__all__ = ['check_request', 'parse_authstring', 'normalize_request']
 
 import base64
 import hmac
@@ -18,15 +14,9 @@ from hashlib import sha256, md5
 from functools import wraps
 from random import getrandbits
 
-from tentd.documents.auth import KeyPair
-
 from flask import request, Response
 
-def generate_keypair():
-    """Generate an id and 256-bit uuid key for HMAC signing"""
-    key   = sha256(str(getrandbits(512))).hexdigest()
-    keyid =    md5(str(getrandbits(256))).hexdigest()
-    return keyid, key
+from tentd.documents.auth import KeyPair
 
 def parse_authstring(authstring):
     """Parse an auth string into a dict 
