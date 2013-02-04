@@ -2,18 +2,14 @@
 
 from __future__ import absolute_import
 
-import flask
-
-from flask import abort, g, url_for, json, current_app, request
+from flask import json, current_app, Request, Blueprint
 from bson import ObjectId
 from mongoengine.queryset import QuerySet
 from werkzeug.utils import cached_property
-from werkzeug.exceptions import NotFound
 
-from tentd.documents import Entity
 from tentd.utils.exceptions import APIBadRequest
 
-class Request(flask.Request):
+class Request(Request):
     """A Request class providing a JSON property"""
     @cached_property
     def json(self):
@@ -25,7 +21,7 @@ class Request(flask.Request):
             raise APIBadRequest(
                 "Could not load json from the POST data ({})".format(e))
 
-class Blueprint(flask.Blueprint):
+class Blueprint(Blueprint):
     """Extends the base Flask Blueprint"""
 
     @staticmethod
