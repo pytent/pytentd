@@ -33,14 +33,15 @@ class PostsView(MethodView):
         from a non-followed entity.
         """
 
-        if not 'type' in request.json:
+        if not 'type' in request.json():
             raise APIBadRequest("Posts must define a schema")
         
-        if 'received_at' in request.json:
+        if 'received_at' in request.json():
             raise APIBadRequest("You may not set received_at on a post")
 
-        post = Post(entity=g.entity, schema=request.json.pop('type'))
-        post.new_version(**request.json)
+        post = Post(entity=g.entity, schema=request.json().pop('type'))
+
+        post.new_version(**request.json())
         post.save()
 
         # TODO: Do this asynchronously?
@@ -64,10 +65,10 @@ class PostsView(MethodView):
 
         # TODO: Posts have more attributes than this
 
-        if 'content' in request.json:
-            post.content = request.json['content']
-        if 'schema' in request.json:
-            post.schema = request.json['schema']
+        if 'content' in request.json():
+            post.content = request.json()['content']
+        if 'schema' in request.json():
+            post.schema = request.json()['schema']
 
         # TODO: Versioning.
 

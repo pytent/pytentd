@@ -53,7 +53,7 @@ class MentionsTests(HTTPTestCase, EntityTentdTestCase):
             'mentions': [
                 {'entity': 'http://softly.example.com'}
             ],
-        })
+        }, content_type='application/json')
         
         assert response.status_code == 200
         assert 'text' in response.json()['content']
@@ -93,7 +93,7 @@ class PostTests(EntityTentdTestCase):
             'content': {'text': 'test', 'location': None}}
             
         resp = self.secure_client.post('/{}/posts'.format(self.name),
-            data=json.dumps(details))
+            data=json.dumps(details), content_type='application/json')
 
         self.assertStatus(resp, 200)
 
@@ -105,7 +105,8 @@ class PostTests(EntityTentdTestCase):
     def test_entity_create_invalid_post(self):
         """Test that attempting to create an invalid post fails."""
         resp = self.secure_client.post(
-            '/{}/posts'.format(self.name), data='<invalid>')
+            '/{}/posts'.format(self.name), data='<invalid>',
+            content_type='application/json')
         self.assertJSONError(resp)
 
     def test_entity_get_single_post(self):
@@ -123,7 +124,8 @@ class PostTests(EntityTentdTestCase):
             data=json.dumps({
                 'content': {
                     'text': 'updated',
-                    'location': None}}))
+                    'location': None}}),
+            content_type='application/json')
 
         new_post = Post.objects.get(entity=self.entity)
         self.assertStatus(resp, 200)
@@ -205,7 +207,8 @@ class MorePostsTest(EntityTentdTestCase):
             url_for('posts.posts', entity=self.entity),
             data=json.dumps({
                 'content': "Hello world",
-                'received_at': time_to_string('now')}))
+                'received_at': time_to_string('now')}),
+            content_type='application/json')
 
         self.assertStatus(response, 400)
         self.assertJSONError(response)

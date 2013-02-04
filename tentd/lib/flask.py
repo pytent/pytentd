@@ -18,11 +18,10 @@ def cached_method(func):
     @wraps(func)
     def cache_return_value(self, *args, **kwargs):
         """Store the function's result in self._cache and return it"""
-        if not hasattr(self, '_cache'):
-            self._cache = dict()
-        if not func in self._cache:
-            self._cache[func] = func(self, *args, **kwargs)
-        return self._cache[func]
+        name = '_cached_' + func.__name__
+        if not hasattr(self, name):
+            setattr(self, name, func(self, *args, **kwargs))
+        return getattr(self, name)
     return cache_return_value
 
 class JSONMixin(object):

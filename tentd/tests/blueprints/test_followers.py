@@ -85,7 +85,7 @@ class FollowerTests(EntityTentdTestCase):
                 'licences': [],
                 'types': 'all',
                 'notification_path': 'notification'
-            }))
+            }), content_type='application/json')
 
         # Ensure the request was made sucessfully.
         self.assertStatus(response, 200)
@@ -132,7 +132,8 @@ class FollowerTests(EntityTentdTestCase):
 
         response = self.secure_client.put(
             '/{}/followers/{}'.format(self.name, follower.id),
-            data=dumps({'entity': self.new_identity}))
+            data=dumps({'entity': self.new_identity}),
+            content_type='application/json')
         
         # Ensure the request was made sucessfully.
         self.assertIsNotNone(response)

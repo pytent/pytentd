@@ -68,7 +68,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
 
         resp = self.secure_client.put(
             '{}/profile/{}'.format(self.name, CoreProfile.__schema__),
-            data=dumps(update_data))
+            data=dumps(update_data), content_type='application/json')
 
         servers = self.entity.profiles.get(CoreProfile.__schema__).servers
 
@@ -82,7 +82,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
             'data': 'test'}
         resp = self.client.put(
             '{}/profile/{}'.format(self.name, schema),
-            data=dumps(update_data))
+            data=dumps(update_data), content_type='application/json')
         self.assertStatus(resp, 200)
         profile = self.entity.profiles.get(schema=schema)
 
@@ -92,7 +92,7 @@ class ProfileBlueprintTest(EntityTentdTestCase):
     def test_entity_update_unknown_profile(self):
         """Test that updating an unknown profile type fails."""
         resp = self.client.put('{}/profile/<invalid>'.format(self.name), 
-            data = dumps({}))
+            data=dumps({}), content_type='application/json')
         self.assertStatus(resp, 400)
         self.assertJSONError(resp)
 
@@ -193,10 +193,9 @@ class NotificationTest(EntityTentdTestCase):
             '/{}/posts'.format(self.name),
             data=dumps({
                 'type': 'https://tent.io/types/post/status/v0.1.0',
-                'content': {'text': 'test', 'location': None}}))
-
-        # Even though we've checked this,
-        # make sure the response was sucessful.
+                'content': {'text': 'test', 'location': None}}),
+            content_type='application/json')
+        
         self.assertStatus(resp, 200)
         requests.post.assert_called(self.notification)
 
@@ -209,7 +208,7 @@ class NotificationTest(EntityTentdTestCase):
 
         self.assertEquals(self.entity.notifications.count(), 0)
         resp = self.client.post('/{}/notification'.format(self.name), 
-            data=dumps(post_details))
+            data=dumps(post_details), content_type='application/json')
         self.assertStatus(resp, 200)
         self.assertEquals(self.entity.notifications.count(), 1)
         #TODO test that the notification raised has the correct details.

@@ -14,7 +14,7 @@ class GroupsView(MethodView):
         return jsonify(g.entity.groups), 200
 
     def post(self):
-        return jsonify(Group(entity=g.entity, **request.json).save())
+        return jsonify(Group(entity=g.entity, **request.json()).save())
 
 @groups.route_class('/<string:name>')
 class GroupView(MethodView):
@@ -23,7 +23,7 @@ class GroupView(MethodView):
 
     def put(self, name):
         group = g.entity.groups.get_or_404(name=name)
-        group.update_values(request.json)
+        group.update_values(request.json())
         return jsonify(group.to_json()), 200
 
     def delete(self, name):

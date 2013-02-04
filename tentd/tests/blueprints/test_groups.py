@@ -28,7 +28,7 @@ class GroupBlueprintTest(EntityTentdTestCase):
         """Test that a group can be created."""
         group_data = {'name': 'tentd'}
         r = self.client.post('/{}/groups'.format(self.name), 
-            data=dumps(group_data))
+            data=dumps(group_data), content_type='application/json')
         self.assertStatus(r, 200)
         
         created_group = self.entity.groups.get(name=group_data['name'])
@@ -57,7 +57,7 @@ class GroupBlueprintTest(EntityTentdTestCase):
         """Tests that a group can be updated."""
         group_data = {'name': 'tentd'}
         r = self.client.put('{}/groups/{}'.format(self.name, self.group.name),
-            data=dumps(group_data))
+            data=dumps(group_data), content_type='application/json')
         self.assertStatus(r, 200)
 
     def test_update_group_non_existant(self):

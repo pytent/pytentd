@@ -19,18 +19,6 @@ class TestFlaskAdditions(TestCase):
         return_value = self.random()
         assert return_value == self.random()
 
-    def test_request_json(self):
-        data = '{"key": "value"}'
-        request = Request({'headers': {'mimetype': 'application/json'}})
-        request.data = data
-        assert request.json == json.loads(data)
-
-    def test_request_invalid_json(self):
-        request = Request({'headers': {'mimetype': 'application/json'}})
-        request.data = 'this is not json'
-        with self.assertRaises(APIBadRequest):
-            request.json
-
     def test_Blueprint_get_endpoint_name(self):
         class TestView(object): pass
         assert Blueprint._get_endpoint_name(TestView) == 'test'

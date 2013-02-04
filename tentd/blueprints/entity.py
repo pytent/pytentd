@@ -22,6 +22,7 @@ class ProfileView(MethodView):
     
     def get(self):
         """Return the profiles belonging to the entity"""
+        # TODO: Use a proper query here
         return jsonify({p.schema: p.to_json() for p in g.entity.profiles \
             if 'public' in p.permissions and p.permissions['public']})
 
@@ -34,10 +35,10 @@ class ProfileView(MethodView):
         TODO: Document this!
         TODO: This doesn't appear to be covered by any tests
         """
-        if not 'schema' in request.json:
+        if not 'schema' in request.json():
             raise APIBadRequest("A profile schema is required.")
         
-        return jsonify(Profile(entity=g.entity, **request.json).save())
+        return jsonify(Profile(entity=g.entity, **request.json()).save())
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
@@ -52,9 +53,10 @@ class ProfilesView(MethodView):
         """Update a profile."""
         try:
             profile = g.entity.profiles.get(schema=schema)
-            profile.update_values(request.json)
+            profile.update_values(request.json())
         except Profile.DoesNotExist:
-            profile = Profile(entity=g.entity, schema=schema, **request.json)
+            profile = Profile(
+                entity=g.entity, schema=schema, **request.json())
         return jsonify(profile.save())
 
     def delete(self, schema):
@@ -83,7 +85,7 @@ class NotificationView(MethodView):
         """Alerts of a notification.
 
         This will create a new notification object in the database."""
-        post_data = json.loads(request.data)
+        post_data = request.json()
 
         notification = Notification()
         notification.entity = g.entity
