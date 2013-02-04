@@ -5,13 +5,23 @@ from mongoengine import ValidationError
 from werkzeug.exceptions import ImATeapot
 
 from tentd import __doc__ as description, __version__ as version
-from tentd.lib.flask import Request, JSONEncoder, jsonify
+from tentd.lib.flask import Request, Response, JSONEncoder, jsonify
 from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db, Entity
 from tentd.utils import make_config
 
 class TentdFlask(Flask):
     """An extension of the Flask class with some custom methods"""
+
+    #: The class used for incoming requests
+    request_class = Request
+
+    #: The class used for outgoing responses
+    response_class = Response
+
+    #: Not useful until Flask 0.10
+    json_encoder = JSONEncoder
+    
     def __init__(self, *args, **kwargs):
         """Initialise the application normally and then register several
         necessary functions"""
@@ -64,7 +74,6 @@ class TentdFlask(Flask):
 def create_app(config=None):
     """Create an instance of the tentd flask application"""    
     app = TentdFlask('tentd')
-    app.request_class = Request
 
     # Load the default configuration values
     app.config.update({

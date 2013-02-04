@@ -7,21 +7,14 @@ __all__ = ['TentdTestCase', 'EntityTentdTestCase', 'skip']
 
 from unittest import TestCase, skip
 
-from flask import json, Response
-
+from flask import json
 from werkzeug.datastructures import Headers
+
+from tentd.lib.flask import cached_method
 
 from tentd import create_app
 from tentd.documents import *
 from tentd.tests.mocking import MockFunction
-
-class TestResponse(Response):
-    def json(self):
-        if self.mimetype == 'application/json':
-            if not hasattr(self, '_json'):
-                self._json = json.loads(self.data)
-            return self._json
-        raise Exception("Response has no json data")
 
 class AuthorizedClientWrapper:
     """Provide an authorized wrapper around the Werkzeug test client
@@ -104,7 +97,6 @@ class TentdTestCase(TestCase):
             configuration.update(config)
         
         cls.app = create_app(configuration)
-        cls.app.response_class = TestResponse
         cls.client = cls.app.test_client()
 
         #set up authorized client
