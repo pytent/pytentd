@@ -6,7 +6,7 @@ from datetime import datetime
 
 from mongoengine import *
 
-from tentd.documents import db, EntityMixin
+from tentd.documents import db, EntityMixin, KeyPair
 from tentd.utils import json_attributes, time_to_string
 
 from tentd.lib.mongoengine import URIField
@@ -31,9 +31,14 @@ class Follower(EntityMixin, db.Document):
     permissions = None
     licenses = None
     types = None
+
+    keypair = ReferenceField(KeyPair, required=True, dbref=False)
     
     def __init__(self, **kwargs):
         super(Follower, self).__init__(**kwargs)
+
+        if not self.keypair:
+            self.keypair = KeyPair().save()
 
     def __repr__(self):
         return "<Follower: {}>".format(self.identity)
