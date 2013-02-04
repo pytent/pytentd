@@ -15,6 +15,7 @@ from functools import wraps
 from random import getrandbits
 
 from flask import request, Response
+from werkzeug.exceptions import Unauthorized
 
 from tentd.documents.auth import KeyPair
 
@@ -78,8 +79,14 @@ def authenticate_response():
     return Response('Invalid MAC Credentials\n', 401,
         {'WWW-Authenticate': 'MAC'})
 
+class InvalidAuthentication(Unauthorized):
+    def get_description(self, environ):
+        return "Invalid MAC credentials"
 
-def require_authorization(func):
+    def get_headers(self, environ):
+        return [('Content-Type', 'text/html'), ('WWW-Authenticate', 'MAC')]
+
+def require_authorization(route):
     """Annotation that forces the view to do HMAC auth
 
     
@@ -88,7 +95,8 @@ def require_authorization(func):
     WWW-Authenticate header.
     
     """
-    def wrapped(*args, **kwargs):
+    @wraps(route)
+    def require_authorization_for_route(*args, **kwargs):
             """Wrapped decorator function
             
             TODO: actual implementation of this decorator.
@@ -97,13 +105,13 @@ def require_authorization(func):
             auth = parse_authstring(request.headers.get('Authorization'))
 
             if not auth:
-                return authenticate_response() 
+                raise InvalidAuthentication
 
             #try and find a keypair for the given mac id
-            keypairs = KeyPair.objects.filter(mac_id=auth['id'])
+            try:
+                keypair = KeyPair.objects.filter(mac_id=auth['id'])
+            except KeyPair.DoesNotExist:
+                raise InvalidAuthentication
             
-            #if( len(keypairs) < 0):
-                
-
-            return func(*args, **kwargs)
-    return wrapped
+            return route(*args, **kwargs)
+    return require_authorization_for_route
