@@ -206,3 +206,7 @@ class SingleUserTestCase(EntityTentdTestCase):
         super(SingleUserTestCase, cls).setUpClass(config={
             'SINGLE_USER_MODE': cls.name,
         })
+
+if __name__ == '__main__':
+    from unittest import TestLoader
+    TestLoader().discover('.')
