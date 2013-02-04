@@ -6,7 +6,7 @@ from random import random
 from bson import ObjectId
 from flask import json
 from mongoengine.queryset import QuerySet
-from tentd.lib.flask import cached_method, Request, Blueprint, JSONEncodergs
+from tentd.lib.flask import cached_method, Request, Blueprint, JSONEncoder
 
 from tentd.utils.exceptions import APIBadRequest
 

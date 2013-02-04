@@ -14,11 +14,13 @@ from tentd.utils.exceptions import APIBadRequest
 def cached_method(func):
     """Caches the return value of a function"""
     @wraps(func)
-    def cache_return_value(*args, **kwargs):
-        """Store the function's result in func._cache and return it"""
-        if not hasattr(func, '_cache'):
-            func._cache = func(*args, **kwargs)
-        return func._cache
+    def cache_return_value(self, *args, **kwargs):
+        """Store the function's result in self._cache and return it"""
+        if not hasattr(self, '_cache'):
+            self._cache = dict()
+        if not func in self._cache:
+            self._cache[func] = func(self, *args, **kwargs)
+        return self._cache[func]
     return cache_return_value
 
 class Request(Request):
