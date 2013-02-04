@@ -12,6 +12,19 @@ from tentd.utils import make_config
 
 class TentdFlask(Flask):
     """An extension of the Flask class with some custom methods"""
+    def __init__(self, *args, **kwargs):
+        """Initialise the application normally and then register several
+        necessary functions"""
+        super(TentdFlask, self).__init__(*args, **kwargs)
+
+        # Url handlers, mostly used to implement single user mode
+        self.url_value_preprocessor(self._assign_global_entity)
+        self.after_request(self._add_link_to_response)
+        self.url_defaults(self._url_defaults_entity)
+
+        # Error handlers
+        self.errorhandler(ValidationError)(self._validation_error)
+    
     @property
     def single_user_mode(self):
         """Returns the value of SINGLE_USER_MODE, defaulting to False"""
@@ -22,6 +35,31 @@ class TentdFlask(Flask):
         url_prefix = '' if self.single_user_mode else '/<string:entity>'
         url_prefix += blueprint.url_prefix or ''
         self.register_blueprint(blueprint, url_prefix=url_prefix, **kwargs)
+
+    def _assign_global_entity(self, endpoint, values):
+        """Assigns g.entity using app.single_user_mode or the url value"""
+        if endpoint and 'entity' in values or self.single_user_mode:
+            name = values.pop('entity', None) or self.single_user_mode
+            g.entity = Entity.objects.get_or_404(name=name)
+
+    def _add_link_to_response(self, response):
+        """Add the link header to the response if the entity is set"""
+        if hasattr(g, 'entity'):
+            link = '<{}>; rel="https://tent.io/rels/profile"'.format(
+                url_for('entity.profile', _external=True))
+            response.headers['Link'] = link
+        return response
+    
+    def _url_defaults_entity(self, endpoint, values):
+        """Adds the entity to calls to url_for if it has been set"""
+        if self.url_map.is_endpoint_expecting(endpoint, 'entity'):
+            if 'entity' not in values and hasattr(g, 'entity'):
+                values['entity'] = g.entity
+
+    def _validation_error(self, error):
+        """Handle validation errors from the DB."""
+        return jsonify({'error': "Could not validate data ({}: {})".format(
+            error.__class__.__name__, error.message)}), 400
 
 def create_app(config=None):
     """Create an instance of the tentd flask application"""    
@@ -45,34 +83,6 @@ def create_app(config=None):
     def coffee():
         raise ImATeapot
 
-    @app.errorhandler(ValidationError)
-    def validation_error(error):
-        """Handle validation errors from the DB."""
-        return jsonify({'error': error.to_dict()}), 400
-
-    @app.url_defaults
-    def url_default_entity(endpoint, values):
-        """Adds the entity to calls to url_for if it has been set"""
-        if app.url_map.is_endpoint_expecting(endpoint, 'entity'):
-            if 'entity' not in values and hasattr(g, 'entity'):
-                values['entity'] = g.entity
-
-    @app.url_value_preprocessor
-    def assign_global_entity(endpoint, values):
-        """Assigns g.entity using app.single_user_mode or the url value"""
-        if endpoint and 'entity' in values or app.single_user_mode:
-            name = values.pop('entity', None) or app.single_user_mode
-            g.entity = Entity.objects.get_or_404(name=name)
-
-    @app.after_request
-    def profile_link_header(response):
-        """Add the link header to the response if the entity is set"""
-        if hasattr(g, 'entity'):
-            link = '<{}>; rel="https://tent.io/rels/profile"'.format(
-                url_for('entity.profile', _external=True))
-            response.headers['Link'] = link
-        return response
-    
     # Initialise the db for this app
     db.init_app(app)
 
