@@ -8,6 +8,7 @@ from tentd.utils.exceptions import APIException, APIBadRequest
 from tentd.documents.auth import KeyPair
 from tentd.documents.entity import Follower
 from tentd.documents.profiles import CoreProfile
+from tentd.utils.auth import generate_keypair
 
 def discover_entity(identity):
     """Find an entity from the given identity
@@ -68,6 +69,7 @@ def start_following(entity, details):
         types=details['types'],
         notification_path=details['notification_path'])
 
+    keyid, key = generate_keypair()
     keypair = KeyPair(
         owner=follower, mac_id=keyid, mac_key=key,
         mac_algorithm="hmac-sha-256")
