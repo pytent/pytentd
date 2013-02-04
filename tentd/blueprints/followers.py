@@ -20,7 +20,8 @@ class FollowersView(MethodView):
 
     def post(self):
         """Starts following a user, defined by the post data"""
-        return jsonify(follow.start_following(g.entity, request.json))
+        follower, keypair = follow.start_following(g.entity, request.json)
+        return jsonify(follower)
 
 @followers.route_class('/<string:follower_id>')
 class FollowerView(MethodView):

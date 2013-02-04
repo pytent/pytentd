@@ -7,12 +7,9 @@ from datetime import datetime
 from mongoengine import *
 
 from tentd.documents import db, EntityMixin
-from tentd.documents.auth import KeyPair
 from tentd.utils import json_attributes, time_to_string
 
-from tentd.utils.auth import generate_keypair
 from tentd.lib.mongoengine import URIField
-
 
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
@@ -28,22 +25,15 @@ class Follower(EntityMixin, db.Document):
     #: The time the follower was created
     created_at = DateTimeField(default=datetime.now)
 
+    #:
+    notification_path = StringField()
+    
     permissions = None
     licenses = None
     types = None
-
-    notification_path = StringField()
-
-    keypair = ReferenceField('KeyPair', required=True, dbref=False)
-
+    
     def __init__(self, **kwargs):
         super(Follower, self).__init__(**kwargs)
-
-        if self.keypair is None:
-            keyid, key = generate_keypair()
-            self.keypair = KeyPair(
-                mac_id=keyid, mac_key=key, mac_algorithm="hmac-sha-256")
-            self.keypair.save()
 
     def __repr__(self):
         return "<Follower: {}>".format(self.identity)

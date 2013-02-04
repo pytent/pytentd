@@ -19,7 +19,8 @@ from tentd.documents.profiles import *
 from tentd.documents.notification import Notification
 from tentd.documents.groups import Group
 
-# Entity must be loaded last, as it relies on querysets from other documents
+# Some document types import others, and should be loaded last
+from tentd.documents.auth import KeyPair
 from tentd.documents.entity import Entity
 
 # Create the deletion rules
