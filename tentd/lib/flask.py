@@ -2,24 +2,42 @@
 
 from __future__ import absolute_import
 
-from flask import json, current_app, Request, Blueprint
+from functools import wraps
+
 from bson import ObjectId
+from flask import json, current_app, Request, Blueprint
 from mongoengine.queryset import QuerySet
 from werkzeug.utils import cached_property
 
 from tentd.utils.exceptions import APIBadRequest
 
+def cached_method(func):
+    """Caches the return value of a function"""
+    @wraps(func)
+    def cache_return_value(*args, **kwargs):
+        """Store the function's result in func._cache and return it"""
+        if not hasattr(func, '_cache'):
+            func._cache = func(*args, **kwargs)
+        return func._cache
+    return cache_return_value
+
 class Request(Request):
     """A Request class providing a JSON property"""
+    
     @cached_property
     def json(self):
-        if not self.data:
-            raise APIBadRequest("No POST data was sent to load json from.")
+        request_charset = self.mimetype_params.get('charset')
         try:
+            if request_charset is not None:
+                return json.loads(self.data, encoding=request_charset)
             return json.loads(self.data)
-        except json.JSONDecodeError as e:
-            raise APIBadRequest(
-                "Could not load json from the POST data ({})".format(e))
+        except ValueError, e:
+            return self.on_json_loading_failed(e)
+
+    def on_json_loading_failed(self, e):
+        raise APIBadRequest(
+            "The request data was blank or could not be parsed as JSON"
+            "({})".format(e))
 
 class Blueprint(Blueprint):
     """Extends the base Flask Blueprint"""
