@@ -20,7 +20,8 @@ parser.add_argument('-d', "--debug", action="store_true",
     help="run flask in debug mode")
 
 def run():
-    """Parse command line arguments and run the application"""    
+    """Parse command line arguments and run the application"""
+    
     args = parser.parse_args()
     
     config = make_config(args.conf)

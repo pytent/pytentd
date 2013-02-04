@@ -2,6 +2,7 @@
 
 from flask import Flask, current_app, g, url_for
 from mongoengine import ValidationError
+from werkzeug.exceptions import ImATeapot
 
 from tentd import __doc__ as description, __version__ as version
 from tentd.lib.flask import Request, JSONEncoder, jsonify
@@ -40,6 +41,10 @@ def create_app(config=None):
         """Returns information about the server"""
         return jsonify({'description': description, 'version': version})
 
+    @app.route('/coffee')
+    def coffee():
+        raise ImATeapot
+
     @app.errorhandler(ValidationError)
     def validation_error(error):
         """Handle validation errors from the DB."""
@@ -55,8 +60,8 @@ def create_app(config=None):
     @app.url_value_preprocessor
     def assign_global_entity(endpoint, values):
         """Assigns g.entity using app.single_user_mode or the url value"""
-        if endpoint:
-            name = app.single_user_mode or values.pop('entity', None)
+        if endpoint and 'entity' in values or app.single_user_mode:
+            name = values.pop('entity', None) or app.single_user_mode
             g.entity = Entity.objects.get_or_404(name=name)
 
     @app.after_request
