@@ -3,18 +3,25 @@
 Also provides some imports from the testing libraries used.
 """
 
-__all__ = ['TentdTestCase', 'EntityTentdTestCase', 'skip']
+__all__ = [
+    'TestCase',
+    'FlaskTestCase',
+    'TentdTestCase',
+    'EntityTentdTestCase']
 
 from unittest import TestCase, skip
+from collections import defaultdict
+from weakref import proxy
 
 from flask import json
+from mock import Mock, patch
 from werkzeug.datastructures import Headers
 
 from tentd.lib.flask import cached_method
+from tentd.lib.test import FlaskTestCase
 
 from tentd import create_app
 from tentd.documents import *
-from tentd.tests.mocking import MockFunction
 
 class AuthorizedClientWrapper:
     """Provide an authorized wrapper around the Werkzeug test client
@@ -54,150 +61,188 @@ class AuthorizedClientWrapper:
         return self._exec(self._client.delete, *args, **kwargs)
 
     def _exec(self, method, *args, **kwargs):
-    
-        h = Headers()
+        headers = Headers()
+        headers.extend(kwargs.pop('headers', {}))
+        headers.set('Authorization', self.auth_header)
+        return method(*args, headers=headers, **kwargs)
 
-        if(kwargs.has_key('headers')):
-            h.extend(kwargs['headers'])
-        
-        h.set('Authorization',self.auth_header)
+class CallableAttribute(object):
+    """An attribute that can be called to retrieve the data,
+    throwing an exception if it has not been set"""
+    def __init__(self, error_message, exception_class=Exception):
+        self.exception_class = exception_class
+        self.error_message = error_message
 
-        kwargs['headers'] = h
-    
-        return method(*args,**kwargs)
+    def __call__(self):
+        try:
+            return self.data
+        except AttributeError:
+            raise self.exception_class(self.error_message)
 
+    def __set__(self, instance, value):
+        self.data = value
 
-class TentdTestCase(TestCase):
+class MockResponse(Mock):
+    """A mock response, for use with MockFunction"""
+
+    #: Use a default status code
+    status_code = 200
+
+    #: The json data for the response
+    json = CallableAttribute(error_message="No json data has been set")
+
+    data = None
+
+    def __str__(self):
+        return "<MockResponse for {}>".format(self.__argument__)
+
+class MockFunction(dict):
+    """A callable argument->value dictionary for patching over a function
+
+    New argument->value pairs can be assigned in the same way as a dict,
+    and values can be returned by calling it as a function.
+
+        with mock.patch('requests.head', new_callable=MockFunction) as head:
+            head['http://example.com'] = MockResponse(data="Hello world.")
+            ...
+    """
+
+    __objects = []
+
+    def __init__(self, **kwargs):
+        super(MockFunction, self).__init__(**kwargs)
+        self.__objects.append(proxy(self))
+
+    @classmethod
+    def reset(cls):
+        """Clear the history of all MockFunction objects"""
+        for obj in cls.__objects:
+            if hasattr(obj, '_history'):
+                delattr(obj, '_history')
+
+    @property
+    def history(self):
+        """Return the objects history, creating it if it does not exist"""
+        if not hasattr(self, '_history'):
+            self._history = defaultdict(lambda: 0)
+        return self._history
+
+    def __call__(self, argument, **kargs):
+        """Return the value"""
+        if argument in self:
+            self.history[argument] += 1
+            if 'data' in kargs:
+                self[argument].data = kargs['data']
+            return self[argument]
+        raise KeyError("No mock response set for '{}'".format(argument))
+
+    def assert_called(self, argument):
+        assert self.history[argument] > 0
+
+    def assert_called_only_once(self, argument):
+        assert self.history[argument] == 1
+
+    def assert_not_called(self, argument):
+        assert self.history[argument] == 0
+
+    def __repr__(self):
+        return "{}({})".format(
+            self.__class__.__name__,
+            super(MockFunction, self).__repr__())
+
+class TentdTestCase(FlaskTestCase):
     """A base test case for pytentd
 
     It handles setting up the app and request contexts
-    
-    As it uses the ``setUp`` and ``tearDown`` methods heavily, it makes 
-    equivalent functions available under the names ``before`` and ``after``, so
-    that end users can avoid repeated calls to ``super()``. The class versions
-    of these methods are ``beforeClass`` and ``afterClass``.
+
+    As it uses the ``setUp`` and ``tearDown`` methods heavily, it makes
+    equivalent functions available under the names ``before`` and ``after``,
+    so that end users can avoid repeated calls to ``super()``. The class
+    versions of these methods are ``beforeClass`` and ``afterClass``.
     """
 
-    dbname = 'tentd-testing'
+    #: The default configuration for a testing app
+    _default_configuration = {
+        'DEBUG': True,
+        'TESTING': True,
+        'SERVER_NAME': 'tentd.example.com',
+        'MONGODB_SETTINGS': {
+            'db': 'tentd-testing',
+        },
+    }
+
+    @classmethod
+    def create_app(cls, config):
+        return create_app(config)
 
     # Setup and teardown functions
     # These functions are listed in the order they are called in
-    
+
     @classmethod
-    def setUpClass(cls, config=dict()):
+    def setUpClass(cls):
         """Place the app in testing mode and initialise the database"""
-        configuration = {
-            'DEBUG': True,
-            'TESTING': True,
-            'SERVER_NAME': 'tentd.example.com',
-            'MONGODB_SETTINGS': {'db': cls.dbname},
-        }
+        super(TentdTestCase, cls).setUpClass(beforeClass=False)
 
-        if config:
-            configuration.update(config)
-        
-        cls.app = create_app(configuration)
-        cls.client = cls.app.test_client()
+        cls.app.client = cls.app.test_client()
+        cls.app.secure_client = AuthorizedClientWrapper(cls.app.client)
 
-        #set up authorized client
-        cls.secure_client = AuthorizedClientWrapper(cls.client)
+        # Deprecated
+        cls.client = cls.app.client
+        cls.secure_client = cls.app.secure_client
 
-        cls.clear_database()
-        
         cls.beforeClass()
 
-    @classmethod
-    def beforeClass(cls):
-        pass
-        
-    def setUp(self):
-        """ Create the database, and set up a request context """
-        self.ctx = self.app.test_request_context()
-        self.ctx.push()
-        self.before()
-        
-    def before(self):
-        pass
-    
-    def after(self):
-        pass
-    
-    def tearDown(self):
-        """Clear the database, and the current request"""
-        self.after()
-        self.clear_database()
-        MockFunction.reset()
-        try:
-            self.ctx.pop()
-        except:
-            pass
-    
-    @classmethod
-    def afterClass(cls):
-        pass
+    def setUp(self, before=True):
+        super(TentdTestCase, self).setUp(before=False)
 
-    @classmethod
-    def tearDownClass (cls):
-        cls.afterClass()
+        self.addCleanup(TentdTestCase.clear_database)
+        self.addCleanup(MockFunction.reset)
 
-        del cls.app
-        del cls.client
+        if before:
+            self.before()
 
     # Other functions
 
-    @classmethod
-    def clear_database(cls):
-        for collection in (KeyPair, Entity, Follower, Post, Profile, Group):
+    @staticmethod
+    def clear_database():
+        for collection in (Entity, Follower, Post, Profile, Group):
             collection.drop_collection()
 
-    @property
-    def base_url(self):
-        return 'http://' + self.app.config['SERVER_NAME'] + '/'
-
-    def assertStatus(self, response, status):
-        """Asserts that the response has returned a certain status code"""
-        try:
-            self.assertIn(response.status_code, status)
-        except TypeError:
-            self.assertEquals(response.status_code, status)
-
-    def assertJSONError(self, response):
-        self.assertIn('error', response.json())
-
-    @staticmethod
-    def json_error_response(response):
-        return 'error' in response.json()
-
 class EntityTentdTestCase(TentdTestCase):
-    """A test case that sets up an entity and it's core profile"""
-    name = "testuser"
-    
+    """A test case that sets up an entity"""
+    name = 'testuser'
+
     def setUp(self):
-        self.entity = Entity(name=self.name)
-        self.entity.save()
+        super(EntityTentdTestCase, self).setUp(before=False)
+        # TODO: Entity.add()
+        self.entity = Entity(name=self.name).save()
         self.entity.create_core(
             identity= "http://example.com",
-            servers=["http://tent.example.com"]
-        )
-        
-        super(EntityTentdTestCase, self).setUp()
+            servers=["http://tent.example.com"])
 
-    LINK_FORMAT = '<{}/profile>; rel="https://tent.io/rels/profile"'
+        self.before()
+
+    def url_for(self, endpoint, **kwargs):
+        """Calls url_for, using self.entity if needed"""
+        single_user_mode = current_app.config.get('SINGLE_USER_MODE', None)
+        if not single_user_mode and 'entity' not in kwargs:
+            kwargs['entity'] = self.entity.name
+        return super(EntityMixin, self).url_for(endpoint, **kwargs)
+
+    __LINK_FORMAT = '<{}/profile>; rel="https://tent.io/rels/profile"'
 
     def assertEntityHeader(self, route):
-        """Assert that the route provides the link header"""
+        """Test that a route has the entity link header"""
         response = self.client.head(route)
-        self.assertIn('Link', response.headers)
-        self.assertEquals(
-            response.headers['Link'],
-            self.LINK_FORMAT.format(self.base_url + self.name))
+        header = self.__LINK_FORMAT.format(self.base_url + self.name)
+        assert response.headers['Link'] == header
 
-class SingleUserTestCase(EntityTentdTestCase):    
-    @classmethod
-    def setUpClass(cls):
-        super(SingleUserTestCase, cls).setUpClass(config={
-            'SINGLE_USER_MODE': cls.name,
-        })
+class SingleUserTestCase(EntityTentdTestCase):
+    name = 'singleuser'
+
+    configuration = {
+        'SINGLE_USER_MODE': name,
+    }
 
 if __name__ == '__main__':
     from unittest import TestLoader

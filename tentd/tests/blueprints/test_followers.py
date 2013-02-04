@@ -6,8 +6,7 @@ import requests
 
 from tentd.documents.entity import Follower
 
-from tentd.tests import EntityTentdTestCase
-from tentd.tests.mocking import MockFunction, MockResponse, patch
+from tentd.tests import EntityTentdTestCase, MockFunction, MockResponse, patch
 
 class FollowerTests(EntityTentdTestCase):
     """Tests relating to followers."""

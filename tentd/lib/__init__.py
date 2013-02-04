@@ -1,1 +1,1 @@
-"""Extensions to external dependencies"""
+"""Extensions and components based on external dependencies"""

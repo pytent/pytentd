@@ -7,8 +7,7 @@ import requests
 from tentd.documents.entity import Entity, Follower
 from tentd.documents.profiles import CoreProfile, GenericProfile
 
-from tentd.tests import TentdTestCase, EntityTentdTestCase, skip, AuthorizedClientWrapper
-from tentd.tests.mocking import MockFunction, MockResponse, patch
+from tentd.tests import TentdTestCase, EntityTentdTestCase, skip, AuthorizedClientWrapper, MockFunction, MockResponse, patch
 
 class EntityBlueprintTest(TentdTestCase):
     """Base tests for the entity blueprint."""
