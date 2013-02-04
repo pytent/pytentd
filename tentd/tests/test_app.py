@@ -1,4 +1,4 @@
-"""Test single user mode"""
+"""Test the pytentd app"""
 
 from flask import url_for
 
