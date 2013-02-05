@@ -28,6 +28,7 @@ pip-log.txt
 .tox
 .noseids
 nosetests.xml
+.cache
 
 # Translations
 *.mo
