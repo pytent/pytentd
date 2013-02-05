@@ -2,6 +2,8 @@
 
 __all__ = ['Entity']
 
+from warnings import warn
+
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
 
@@ -45,8 +47,21 @@ class Entity(db.Document):
         except DoesNotExist:
             raise Exception("Entity has no core profile.")
 
+    @classmethod
+    def new(cls, **k):
+        """Constucts a Post and an initial version from the same args"""
+        # Pop those arguments that are a Version field from the kwargs
+        profile = {a: k.pop(a) for a in k.keys() if a in CoreProfile._fields}
+        # Create a new Post with the remaining arguments
+        entity = cls(**k).save()
+        # And a new Version from the arguments we popped
+        CoreProfile(entity=entity, **profile).save()
+        return entity
+    
     def create_core(self, **kwargs):
         """Creates a coreprofile instance attached to this entity"""
+        warn("create_core() has been replaced by Entity.new()",
+            PendingDeprecationWarning)
         return CoreProfile(entity=self, **kwargs).save()
 
     def __repr__(self):
