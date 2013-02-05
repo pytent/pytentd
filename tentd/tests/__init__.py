@@ -16,18 +16,28 @@ class HTTP(object):
         called on ``current_app.client``"""
         self.function_name = function_name
 
-    def __call__(self, endpoint, data=None, **kwargs):
+    def __call__(self, endpoint, data=None, secure=False,
+        content_type='text/html', **kwargs):
         """Call current_app.client.<function> and return the response
 
         If the data argument is a dict or list, it will be dumped to JSON"""
+        url = url_for(endpoint, **kwargs)
+        
         if isinstance(data, (dict, list)):
             data = json.dumps(data, cls=JSONEncoder)
+            content_type = 'application/json'
 
         if not hasattr(current_app, 'client'):
-            raise NotImplementedError("App requires a test client")
+            raise NotImplementedError(
+                "The application requires a test client")
 
+        if secure:
+            raise NotImplementedError(
+                "Secure requests are not yet implemented")
+
+        # Fetch and call the function from the client
         http_function = getattr(current_app.client, self.function_name)
-        return http_function(url_for(endpoint, **kwargs), data=data)
+        return http_function(url, data=data, content_type=content_type)
 
 GET, PUT, POST, HEAD = HTTP('get'), HTTP('put'), HTTP('post'), HTTP('head')
 
