@@ -25,7 +25,7 @@ from tentd.documents.entity import Entity
 
 #: A tuple of all documents that provide a mongodb collection
 collections = (
-    KeyPair, Follower, Following, Post, Profile, Notification, Group)
+    KeyPair, Follower, Following, Post, Profile, Notification, Group, Entity)
 
 # Create the deletion rules
 # CASCADE is used so that documents owned by an entity are deleted with it
