@@ -4,6 +4,7 @@ env/
 # Compiled python
 *.py[cod]
 *.so
+__pycache__
 
 # Packages
 *.egg
