@@ -1,7 +1,6 @@
 """py.test conftest file"""
 
 import logging
-from termcolor import colored
 
 from flask import _request_ctx_stack
 from py.test import fixture
