@@ -2,30 +2,16 @@
 
 import logging
 
-from flask import _request_ctx_stack
 from py.test import fixture
-from werkzeug import ImmutableDict
 
 from tentd import create_app
-from tentd.documents import collections, Entity
+from tentd.documents import collections
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('testing')
 
 #: Constant values for single and multi user modes
 MULTIPLE, SINGLE = 'multiple user mode', 'single user mode'
-
-#: The configuration used to create instances of the tentd app
-DEFAULT_APP_CONFIGURATION = ImmutableDict({
-    'DEBUG': True,
-    'TESTING': True,
-    'TRAP_HTTP_EXCEPTIONS': True,
-    'PRESERVE_CONTEXT_ON_EXCEPTION': False,
-    'SERVER_NAME': 'tentd.example.com',
-    'MONGODB_SETTINGS': {
-        'db': 'tentd-testing',
-    },
-})
 
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
@@ -57,11 +43,22 @@ def app(request):
     """Create an instance of the Tentd app prepared for testing
 
     The scope for this fixture is defined in pytest_generate_tests"""
-    configuration = DEFAULT_APP_CONFIGURATION.copy()
-    if request.param == SINGLE:
-        configuration['SINGLE_USER_MODE'] = "single_user_name"
 
-    app = create_app(configuration)
+    mode = "single_user_name" if request.param is SINGLE else False
+
+    app = create_app({
+        'DEBUG': True,
+        'TESTING': True,
+        'TRAP_HTTP_EXCEPTIONS': True,
+        'PRESERVE_CONTEXT_ON_EXCEPTION': False,
+        'SERVER_NAME': 'tentd.example.com',
+        'MONGODB_SETTINGS': {
+            'db': 'tentd-testing',
+        },
+        'SINGLE_USER_MODE': mode,
+    })
+
+    # Create a test client, used with the tentd.tests.HTTP functions
     app.client = app.test_client()
 
     # Setup a request and application context
