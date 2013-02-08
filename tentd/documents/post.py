@@ -10,13 +10,14 @@ from tentd.documents import db, EntityMixin
 from tentd.utils import time_to_string, json_attributes
 from tentd.lib.mongoengine import URIField
 
+
 class Mention(db.EmbeddedDocument):
     meta = {
         'allow_inheritance': False,
     }
-    
+
     entity = URIField(required=True)
-    
+
     post = StringField()
 
     def to_json(self):
@@ -24,6 +25,7 @@ class Mention(db.EmbeddedDocument):
         if self.post is not None:
             json['post'] = self.post
         return json
+
 
 class Version(db.EmbeddedDocument):
     """A specific version of a Post
@@ -58,7 +60,7 @@ class Version(db.EmbeddedDocument):
 
     def __repr__(self):
         return '<Version {}: {}'.format(self.version, self.content)
-    
+
     def to_json(self):
         return {
             'content': self.content,
@@ -67,9 +69,10 @@ class Version(db.EmbeddedDocument):
             'mentions': self.mentions,
         }
 
+
 class Post(EntityMixin, db.Document):
     """A post belonging to an entity.
-    
+
     Posts are at the core of Tent. Posts are sent to followers immediately
     after being created.
 
@@ -112,7 +115,7 @@ class Post(EntityMixin, db.Document):
     @property
     def latest(self):
         return self.versions[0]
-    
+
     def to_json(self):
         """Returns the post as a python dictonary"""
         json = {

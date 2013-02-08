@@ -32,10 +32,10 @@ class Entity(db.Document):
     name = StringField(max_length=100, required=True, unique=True)
 
     # Querysets belonging to the Entity
-    profiles      = QuerySetProperty(Profile)
-    posts         = QuerySetProperty(Post)
-    followers     = QuerySetProperty(Follower)
-    followings    = QuerySetProperty(Following)
+    profiles = QuerySetProperty(Profile)
+    posts = QuerySetProperty(Post)
+    followers = QuerySetProperty(Follower)
+    followings = QuerySetProperty(Following)
     notifications = QuerySetProperty(Notification)
     groups        = QuerySetProperty(Group)
 
@@ -64,8 +64,8 @@ class Entity(db.Document):
 
     def to_json(self):
         return json_attributes(self,
-        'name',
-        'profiles',
-        'followers',
-        'followings',
-        'notifications')
+                               'name',
+                               'profiles',
+                               'followers',
+                               'followings',
+                               'notifications')

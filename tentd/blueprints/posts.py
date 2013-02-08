@@ -33,15 +33,12 @@ class PostsView(MethodView):
         TODO: Separate between apps creating a new post and a notification
         from a non-followed entity.
         """
-
         if not 'type' in request.json():
             raise APIBadRequest("Posts must define a schema")
-        
         if 'received_at' in request.json():
             raise APIBadRequest("You may not set received_at on a post")
 
         post = Post(entity=g.entity, schema=request.json().pop('type'))
-
         post.new_version(**request.json())
         post.save()
 
@@ -52,6 +49,7 @@ class PostsView(MethodView):
             # TODO: Handle failed notifications somehow
 
         return jsonify(post)
+
 
 @posts.route_class('/<string:post_id>', endpoint='post')
 class PostsView(MethodView):
@@ -65,14 +63,12 @@ class PostsView(MethodView):
         post = g.entity.posts.get_or_404(id=post_id)
 
         # TODO: Posts have more attributes than this
-
         if 'content' in request.json():
             post.content = request.json()['content']
         if 'schema' in request.json():
             post.schema = request.json()['schema']
 
         # TODO: Versioning.
-
         return jsonify(post.save())
 
     def delete(self, post_id):
@@ -92,6 +88,7 @@ class PostsView(MethodView):
 @posts.route_class('/<string:post_id>/versions', endpoint='versions')
 class VersionsView(MethodView):
     decorators = [require_authorization]
+
     def get(self, post_id):
         return jsonify(g.entity.posts.get_or_404(id=post_id).versions)
 

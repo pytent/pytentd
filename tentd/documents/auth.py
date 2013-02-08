@@ -12,8 +12,10 @@ from tentd.documents import db
 def generate_id():
     return md5(str(getrandbits(256))).hexdigest()
 
+
 def generate_key():
     return sha256(str(getrandbits(512))).hexdigest()
+
 
 class KeyPair(db.Document):
     """Stores a mac id/key pair for signing requests"""
