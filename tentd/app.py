@@ -10,6 +10,7 @@ from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db, Entity
 from tentd.utils import make_config
 
+
 class TentdFlask(Flask):
     """An extension of the Flask class with some custom methods"""
 
@@ -70,6 +71,7 @@ class TentdFlask(Flask):
         """Handle validation errors from the DB."""
         return jsonify({'error': "Could not validate data ({}: {})".format(
             error.__class__.__name__, error.message)}), 400
+
 
 def create_app(config=None):
     """Create an instance of the tentd flask application"""

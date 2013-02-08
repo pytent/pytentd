@@ -6,7 +6,7 @@ from flask import json, request, g, make_response
 from flask.views import MethodView
 from mongoengine import ValidationError
 
-from tentd.control import follow
+from tentd.utils import follow
 from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.utils.auth import require_authorization
 from tentd.utils.exceptions import APIBadRequest

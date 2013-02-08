@@ -8,6 +8,7 @@ from mongoengine.queryset import DoesNotExist
 from tentd.documents import *
 from tentd.utils import json_attributes
 
+
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection
 
@@ -17,6 +18,7 @@ class QuerySetProperty(object):
 
     def __get__(self, instance, owner):
         return self.cls.objects(entity=instance)
+
 
 class Entity(db.Document):
     """A tent entity"""
@@ -36,7 +38,7 @@ class Entity(db.Document):
     followings    = QuerySetProperty(Following)
     notifications = QuerySetProperty(Notification)
     groups        = QuerySetProperty(Group)
-    
+
     @property
     def core(self):
         """Fetch the core profile for the entity"""
@@ -62,8 +64,8 @@ class Entity(db.Document):
 
     def to_json(self):
         return json_attributes(self,
-            'name',
-            'profiles',
-            'followers',
-            'followings',
-            'notifications')
+        'name',
+        'profiles',
+        'followers',
+        'followings',
+        'notifications')
