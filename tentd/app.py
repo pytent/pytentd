@@ -21,7 +21,7 @@ class TentdFlask(Flask):
 
     #: Not useful until Flask 0.10
     json_encoder = JSONEncoder
-    
+
     def __init__(self, *args, **kwargs):
         """Initialise the application normally and then register several
         necessary functions"""
@@ -34,12 +34,12 @@ class TentdFlask(Flask):
 
         # Error handlers
         self.errorhandler(ValidationError)(self._validation_error)
-    
+
     @property
     def single_user_mode(self):
         """Returns the value of SINGLE_USER_MODE, defaulting to False"""
         return self.config.get('SINGLE_USER_MODE', False)
-    
+
     def register_entity_blueprint(self, blueprint, **kwargs):
         """Register a blueprint with the /<entity> prefix if needed"""
         url_prefix = '' if self.single_user_mode else '/<string:entity>'
@@ -59,7 +59,7 @@ class TentdFlask(Flask):
                 url_for('entity.profile', _external=True))
             response.headers['Link'] = link
         return response
-    
+
     def _url_defaults_entity(self, endpoint, values):
         """Adds the entity to calls to url_for if it has been set"""
         if self.url_map.is_endpoint_expecting(endpoint, 'entity'):
@@ -72,14 +72,14 @@ class TentdFlask(Flask):
             error.__class__.__name__, error.message)}), 400
 
 def create_app(config=None):
-    """Create an instance of the tentd flask application"""    
+    """Create an instance of the tentd flask application"""
     app = TentdFlask('tentd')
 
     # Load the default configuration values
     app.config.update({
         'MONGODB_DB': 'tentd',
     })
-    
+
     # Load the user configuration values
     app.config.update(make_config(config))
 
@@ -100,5 +100,5 @@ def create_app(config=None):
     app.register_entity_blueprint(followers)
     app.register_entity_blueprint(posts)
     app.register_entity_blueprint(groups)
-    
+
     return app

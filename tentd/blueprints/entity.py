@@ -16,20 +16,21 @@ from tentd.documents.profiles import Profile, CoreProfile
 
 entity = EntityBlueprint('entity', __name__)
 
+
 @entity.route_class('/profile')
 class ProfileView(MethodView):
     """The view for profile-based routes."""
-    
+
     def get(self):
         """Return the profiles belonging to the entity"""
         # TODO: Use a proper query here
-        return jsonify({p.schema: p.to_json() for p in g.entity.profiles \
+        return jsonify({p.schema: p.to_json() for p in g.entity.profiles
             if 'public' in p.permissions and p.permissions['public']})
 
     @require_authorization
     def post(self):
         """Create a new profile of the specified type.
-        
+
         This is specific to pytentd, and is similar to PUT /profile/<schema>.
 
         TODO: Document this!
@@ -37,8 +38,8 @@ class ProfileView(MethodView):
         """
         if not 'schema' in request.json():
             raise APIBadRequest("A profile schema is required.")
-        
         return jsonify(Profile(entity=g.entity, **request.json()).save())
+
 
 @entity.route_class('/profile/<path:schema>')
 class ProfilesView(MethodView):
@@ -68,10 +69,11 @@ class ProfilesView(MethodView):
         profile.delete()
         return make_response(), 200
 
+
 @entity.route_class('/notification', endpoint='notify')
 class NotificationView(MethodView):
     """Routes relating to notifications."""
-    
+
     def get(self):
         """Used to check the notification path is good.
 
@@ -80,7 +82,7 @@ class NotificationView(MethodView):
 
         Returns no data as it's only a check.."""
         return make_response(), 200
-    
+
     def post(self):
         """Alerts of a notification.
 

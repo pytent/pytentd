@@ -13,6 +13,7 @@ from tentd.documents import Entity, Post, CoreProfile, Notification
 
 posts = EntityBlueprint('posts', __name__, url_prefix='/posts')
 
+
 @posts.route_class('', endpoint='posts')
 class PostsView(MethodView):
     """ Routes relatings to posts. """
@@ -73,7 +74,7 @@ class PostsView(MethodView):
         # TODO: Versioning.
 
         return jsonify(post.save())
-    
+
     def delete(self, post_id):
         # TODO: Create a deleted post notification post(!)
         post = g.entity.posts.get_or_404(id=post_id)
@@ -87,15 +88,16 @@ class PostsView(MethodView):
             post.delete()
         return make_response(), 200
 
+
 @posts.route_class('/<string:post_id>/versions', endpoint='versions')
 class VersionsView(MethodView):
-
     decorators = [require_authorization]
-    
     def get(self, post_id):
         return jsonify(g.entity.posts.get_or_404(id=post_id).versions)
+
 
 @posts.route_class('/<string:post_id>/mentions', endpoint='mentions')
 class MentionsView(MethodView):
     def get(self, post_id):
-        return jsonify(g.entity.posts.get_or_404(id=post_id).versions[0].mentions)
+        return jsonify(
+            g.entity.posts.get_or_404(id=post_id).versions[0].mentions)

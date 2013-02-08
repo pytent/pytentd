@@ -25,12 +25,12 @@ setup(
     ],
 
     # Package
-    
-    packages = find_packages(),
-    include_package_data = True,
-    zip_safe = False,
 
-    entry_points = {
+    packages=find_packages(),
+    include_package_data=True,
+    zip_safe=False,
+
+    entry_points={
         'console_scripts': [
             'tentd = tentd:run',
             'pytentd = tentd:run',
@@ -39,7 +39,7 @@ setup(
 
     # Requirements
 
-    install_requires = [
+    install_requires=[
         'flask==0.9',
         'flask-mongoengine==0.6',
         'mongoengine==0.7.9',
@@ -50,9 +50,9 @@ setup(
     ],
 
     # Tests
-    
-    test_suite = "tentd.tests",
-    tests_require = [
+
+    test_suite="tentd.tests",
+    tests_require=[
         'mock==1.0.1',
     ],
 )
