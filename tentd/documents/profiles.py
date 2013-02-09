@@ -2,6 +2,7 @@
 
 __all__ = ['Profile', 'CoreProfile', 'GenericProfile']
 
+from flask import current_app, url_for
 from mongoengine import *
 
 from tentd import __tent_version__ as tent_version
@@ -65,7 +66,6 @@ class CoreProfile(Profile):
     meta = {
         'indexes': [{
             'fields': ['identity'],
-            'unique': True,
             'sparse': True,
         }],
     }
@@ -73,15 +73,17 @@ class CoreProfile(Profile):
     __schema__ = 'https://tent.io/types/info/core/v0.1.0'
 
     #: The canonical entity identity
-    # The generated url for the entity can be found at
-    # url_for('base.link', entity=self.entity, _external=True)
-    identity = URIField(required=True)
+    identity = URIField(unique_with='entity', required=True)
 
     servers = ListField(URIField())
 
     def __init__(self, *args, **kwargs):
+        """Sets public permissions and a default identity"""
         super(CoreProfile, self).__init__(*args, **kwargs)
         self.permissions['public'] = True
+        if not self.identity and self.entity is not None:
+            self.identity = url_for(
+                'entity.profiles', entity=self.entity, _external=True)
 
     def to_json(self):
         return {
