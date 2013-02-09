@@ -3,6 +3,7 @@
 from flask.ext.mongoengine import MongoEngine
 from mongoengine import CASCADE, ReferenceField, DENY
 
+
 class EntityMixin(object):
     """A document mixin which attaches each document to an entity"""
 

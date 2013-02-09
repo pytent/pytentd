@@ -8,6 +8,7 @@ from tentd.documents import Group
 
 groups = EntityBlueprint('groups', __name__, url_prefix='/groups')
 
+
 @groups.route_class('')
 class GroupsView(MethodView):
     def get(self):
@@ -15,6 +16,7 @@ class GroupsView(MethodView):
 
     def post(self):
         return jsonify(Group(entity=g.entity, **request.json()).save())
+
 
 @groups.route_class('/<string:name>')
 class GroupView(MethodView):

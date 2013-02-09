@@ -12,6 +12,7 @@ from tentd.utils import json_attributes, time_to_string
 
 from tentd.lib.mongoengine import URIField
 
+
 class Follower(EntityMixin, db.Document):
     """Someone following an Entity"""
 
@@ -27,7 +28,7 @@ class Follower(EntityMixin, db.Document):
     created_at = DateTimeField(default=datetime.now)
 
     notification_path = StringField()
-    
+
     permissions = None
     licenses = None
     types = None
@@ -41,15 +42,17 @@ class Follower(EntityMixin, db.Document):
 
     def to_json(self):
         return json_attributes(self,
-           ('id', str),
-            'identity',
-           ('created_at', time_to_string),
-            'notification_path',
-            'permissions',
-            'types',
-            'licenses')
+                               ('id', str),
+                               'identity',
+                               ('created_at', time_to_string),
+                               'notification_path',
+                               'permissions',
+                               'types',
+                               'licenses')
+
 
 post_save.connect(KeyPair.owner_post_save, sender=Follower)
+
 
 class Following(EntityMixin, db.Document):
     """An entity that a local entity is following"""
