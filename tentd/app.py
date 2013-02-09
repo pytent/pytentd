@@ -1,6 +1,7 @@
 """The create_app function"""
 
 from flask import Flask, current_app, g, url_for
+from flask.app import ConfigAttribute, setupmethod
 from mongoengine import ValidationError
 from werkzeug.exceptions import ImATeapot, NotFound
 
@@ -38,12 +39,10 @@ class TentdFlask(Flask):
 
         # Error handlers
         self.errorhandler(ValidationError)(self.validation_error)
-    
-    @property
-    def single_user_mode(self):
-        """Returns the value of SINGLE_USER_MODE, defaulting to False"""
-        return self.config.get('SINGLE_USER_MODE', None)
-    
+
+    single_user_mode = ConfigAttribute('SINGLE_USER_MODE')
+
+    @setupmethod
     def register_entity_blueprint(self, blueprint, **kwargs):
         """Register a blueprint with the /<entity> prefix if needed"""
         url_prefix = '' if self.single_user_mode else '/<string:entity>'
@@ -102,6 +101,7 @@ def create_app(config=None):
     # Load the default configuration values
     app.config.update({
         'MONGODB_DB': 'tentd',
+        'SINGLE_USER_MODE': False,
     })
     
     # Load the user configuration values
