@@ -55,13 +55,16 @@ class JSONMixin(object):
         Used for compatibility with Request"""
         raise error
 
+
 class Request(JSONMixin, Request):
     def on_json_loading_failed(self, e):
         raise APIBadRequest(
             "The request data could not be parsed as JSON ({})".format(e))
 
+
 class Response(JSONMixin, Response):
     pass
+
 
 class Blueprint(Blueprint):
     """Extends the base Flask Blueprint"""

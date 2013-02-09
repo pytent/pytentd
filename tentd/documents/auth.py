@@ -9,6 +9,7 @@ from mongoengine import StringField, GenericReferenceField
 
 from tentd.documents import db
 
+
 def generate_id():
     return md5(str(getrandbits(256))).hexdigest()
 

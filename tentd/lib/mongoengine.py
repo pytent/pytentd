@@ -7,6 +7,7 @@ from mongoengine import URLField
 
 __all__ = ['URIField']
 
+
 class URIField(URLField):
     """An inproved version of mongoengine.URLField"""
 

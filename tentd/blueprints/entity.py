@@ -24,9 +24,10 @@ class ProfileView(MethodView):
     def get(self):
         """Return the profiles belonging to the entity"""
         # TODO: Use a proper query here
-        return jsonify({p.schema: p.to_json() 
-               for p in g.entity.profiles
-               if 'public' in p.permissions and p.permissions['public']})
+        return jsonify({p.schema: p.to_json()
+                       for p in g.entity.profiles
+                       if 'public' in p.permissions 
+                       and p.permissions['public']})
 
     @require_authorization
     def post(self):
