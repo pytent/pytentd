@@ -16,8 +16,8 @@ from tentd.documents.profiles import Profile, CoreProfile
 
 entity = EntityBlueprint('entity', __name__)
 
-@entity.route_class('/profile')
-class ProfileView(MethodView):
+@entity.route_class('/profile', endpoint='profiles')
+class ProfilesView(MethodView):
     """The view for profile-based routes."""
     
     def get(self):
@@ -40,8 +40,8 @@ class ProfileView(MethodView):
         
         return jsonify(Profile(entity=g.entity, **request.json()).save())
 
-@entity.route_class('/profile/<path:schema>')
-class ProfilesView(MethodView):
+@entity.route_class('/profile/<path:schema>', endpoint='profile')
+class ProfileView(MethodView):
     """The view for individual profile-based routes."""
 
     @require_authorization

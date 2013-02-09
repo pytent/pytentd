@@ -2,6 +2,7 @@
 
 import logging
 
+from flask import g
 from py.test import fixture
 
 from tentd import create_app
@@ -72,7 +73,14 @@ def app(request):
 
 @fixture(scope="function")
 def entity(request, app):
-    return Entity.new(
+    g.entity = Entity.new(
         name=app.single_user_mode or 'testuser',
         identity= "http://example.com",
         servers=["http://tent.example.com"]).save()
+
+    @request.addfinalizer
+    def delete_entity():
+        if hasattr(g, 'entity'):
+            del g.entity
+    
+    return g.entity

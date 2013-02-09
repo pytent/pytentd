@@ -5,42 +5,19 @@ from py.test import mark, raises
 from werkzeug.exceptions import ImATeapot, NotFound
 
 from tentd.documents import CoreProfile
-from tentd.tests import GET
-
-class global_entity(object):
-    """Set g.entity manually, for cases where these is no current request"""
-    def __init__(self, entity):
-        self.entity = entity
-        
-    def __enter__(self):
-        g.entity = self.entity
-
-    def __exit__(self, type, value, traceback):
-        del g.entity
-
-def get_profile_url(app, entity):
-    """Get an entity profile url without using url_for"""
-    if app.single_user_mode:
-        return '/profile'
-    return '/{}/profile'.format(entity.name)
+from tentd.tests import GET, profile_url_for, response_has_link_header
 
 def test_url_value_preprocessor(app, entity):
     """Assert urls are created correctly in single user mode"""
-    with global_entity(entity):
-        assert url_for('entity.profile') == get_profile_url(app, entity)
+    assert url_for('entity.profiles') == profile_url_for(entity)
 
 def test_url_defaults(app, entity):
     """Assert that the url defaults are working"""
-    with global_entity(entity):
-        assert CoreProfile.__schema__ in GET('entity.profile').json()
+    assert GET('entity.profiles')
 
 def test_link_header(app, entity):
-    with global_entity(entity):
-        expected_header = \
-            '<http://tentd.example.com{}>; '\
-            'rel="https://tent.io/rels/profile"'.format(
-                get_profile_url(app, entity))
-        assert expected_header in GET('entity.profile').headers['Link']
+    """Assert that the link header is added"""
+    assert response_has_link_header(GET('entity.profiles'))
 
 def test_coffee(app):
     """Test that /coffee raises an exception"""

@@ -87,7 +87,7 @@ class CoreProfile(Profile):
         return {
             'entity': self.identity,
             'licences': [],
-            'servers': [],
+            'servers': self.servers,
             'tent_version': tent_version
         }
 

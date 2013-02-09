@@ -54,7 +54,8 @@ class TentdFlask(Flask):
         try:
             g.entity = Entity.objects.get(name=name)
         except Entity.DoesNotExist:
-            raise NotFound("The entity reqested does not exist")
+            raise NotFound(
+                "Entity '{}' reqested does not exist".format(name))
         
     def _url_value_preprocessor(self, endpoint, values):
         """Work out the entity that is currently in use"""
@@ -72,7 +73,7 @@ class TentdFlask(Flask):
         """Add the link header to the response if the entity is set"""
         if hasattr(g, 'entity'):
             link = '<{}>; rel="https://tent.io/rels/profile"'.format(
-                url_for('entity.profile', _external=True))
+                url_for('entity.profiles', _external=True))
             response.headers['Link'] = link
         return response
     

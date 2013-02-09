@@ -53,6 +53,10 @@ class ProfileBlueprintTest(EntityTentdTestCase):
         core_profile = self.entity.profiles.get(CoreProfile.__schema__)
         self.assertEquals(resp.json(), core_profile.to_json())
 
+    # ----------------------------------------------------------------------
+    # Sam got this far
+    # ----------------------------------------------------------------------
+
     def test_entity_get_non_existant_profile(self):
         """Test that getting a non-existant profile fails."""
         resp = self.secure_client.get('/{}/profile/<invalid>'.format(self.name))
