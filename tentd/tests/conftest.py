@@ -5,7 +5,7 @@ import logging
 from py.test import fixture
 
 from tentd import create_app
-from tentd.documents import collections
+from tentd.documents import collections, Entity
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('testing')
