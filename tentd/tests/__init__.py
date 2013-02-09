@@ -8,56 +8,58 @@ from werkzeug.datastructures import ImmutableDict, Headers
 
 from tentd.lib.flask import JSONEncoder
 
-class HTTP(object):
-    """HTTP convenience functions that take an endpoint name,
-    and optionally data or JSON to send"""
-
+def authorization_header():
+    """Generates an Authorization header for secure requests"""
     macid  = "s:f5949a1d"
     tstamp = 1355181298
     nonce  = "b07235"
     mac    = "swgy4RpdIBaFpA1hmAbZrph24VVg9FwmJgMm9GkgiLE="
-    
-    def __init__(self, function_name):
-        """Creates a HTTP function using the name of the method that will be
-        called on ``current_app.client``"""
-        self.function_name = function_name
 
-    def authentication_header(self):
-        return 'MAC id="{0}",ts="{1}",nonce="{2}",mac="{3}"'.format(
-            self.macid, self.tstamp, self.nonce, self.mac)
+    return 'MAC id="{0}",ts="{1}",nonce="{2}",mac="{3}"'.format(
+        macid, tstamp, nonce, mac)
 
-    def __call__(self, endpoint, data=None, secure=False,
-        headers=None, content_type='text/html', **kwargs):
-        """Call current_app.client.<function> and return the response.
+def HTTP(type, endpoint, data=None, secure=False,
+    headers=None, content_type='text/html', **kwargs):
+    """A HTTP convenience function that takes a method type, an endpoint
+    name, and optionally data or JSON to send.
 
-        The endpoint argument is used to build an url using url_for, along
-        with **kwargs. If it starts with a /, it is used as-is. If the data
-        argument is a dict or list, it will be dumped to JSON"""
-        if not endpoint[0] == '/':
-            endpoint = url_for(endpoint, **kwargs)
-        
-        if isinstance(data, (dict, list)):
-            data = json.dumps(data, cls=JSONEncoder)
-            content_type = 'application/json'
+    The endpoint argument is used to build an url using url_for, along
+    with **kwargs. If it starts with a /, it is used as-is. If the data
+    argument is a dict or list, it will be dumped to JSONEncoder
 
-        if not hasattr(current_app, 'client'):
-            raise NotImplementedError(
-                "The application requires a test client")
+    Internally, it calls current_app.client.<method> to get the response.
+    """
+    if not endpoint[0] == '/':
+        endpoint = url_for(endpoint, **kwargs)
 
-        headers = headers or Headers()
-        
-        # Emulate a HMAC request if needed
-        if secure:
-            headers.set('Authorization', self.authentication_header())
+    if isinstance(data, (dict, list)):
+        data = json.dumps(data, cls=JSONEncoder)
+        content_type = 'application/json'
 
-        # Fetch and call the function from the client
-        http_function = getattr(current_app.client, self.function_name)
-        return http_function(
-            endpoint, data=data, headers=headers, content_type=content_type)
+    if not hasattr(current_app, 'client'):
+        raise NotImplementedError(
+            "The application requires a test client")
 
-# Generate the HTTP Methods
-for method_name in ('delete', 'get', 'head', 'post', 'put'):
-    locals()[method_name.upper()] = HTTP(method_name)
+    # Ensure ``headers`` is of type Headers
+    if not isinstance(headers, Headers):
+        headers = Headers(headers or {})
+
+    # Emulate a HMAC request if needed
+    if secure:
+        headers.set('Authorization', authorization_header())
+
+    # Fetch and call the function from the client
+    return getattr(current_app.client, type)(
+        endpoint, data=data, headers=headers, content_type=content_type)
+
+def _wrap_http(method_name):
+    return lambda *args, **kwargs: HTTP(method_name, *args, **kwargs)
+
+DELETE = _wrap_http('delete')
+GET = _wrap_http('get')
+HEAD = _wrap_http('head')
+POST = _wrap_http('post')
+PUT = _wrap_http('put')
 
 def profile_url_for(entity, _external=False):
     """Get an entity profile url without using url_for"""

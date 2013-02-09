@@ -3,12 +3,12 @@
 from flask import current_app
 
 from tentd.lib.flask import Response
-from tentd.tests import HTTP, GET, PUT, POST, HEAD
+from tentd.tests import HTTP, DELETE, GET, HEAD, POST, PUT
 
 def test_http_type():
     """Check that the HTTP methods have been built correctly"""
-    for http in GET, PUT, POST, HEAD:
-        assert isinstance(http, HTTP)
+    for http in HTTP, DELETE, GET, HEAD, POST, PUT:
+        assert callable(http)
 
 def test_http_get(app):
     """Test that the correct Response class is being used"""
