@@ -6,7 +6,7 @@ from flask import json, request, g, abort, make_response
 from flask.views import MethodView
 
 from tentd.lib.flask import EntityBlueprint, jsonify
-from tentd.control import follow
+from tentd.utils import follow
 from tentd.utils.exceptions import APIBadRequest
 from tentd.utils.auth import require_authorization
 from tentd.documents import Entity, Post, CoreProfile, Notification
