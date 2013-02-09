@@ -6,7 +6,7 @@ from flask import g
 from py.test import fixture
 
 from tentd import create_app
-from tentd.documents import collections, Entity
+from tentd.documents import collections, Entity, Follower
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('testing')
@@ -71,7 +71,7 @@ def app(request):
 
     return app
 
-@fixture(scope="function")
+@fixture
 def entity(request, app):
     g.entity = Entity.new(
         name=app.single_user_mode or 'testuser',
@@ -84,3 +84,10 @@ def entity(request, app):
             del g.entity
     
     return g.entity
+
+@fixture
+def follower(request, entity):
+    """A follower with an identity of http://follower.example.com"""
+    follower = Follower(entity=entity, identity='http://follower.example.com')
+    request.addfinalizer(lambda: follower.delete())
+    return follower.save()
