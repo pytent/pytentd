@@ -16,17 +16,15 @@ def test_keypair_defaults():
     assert kp.mac_key and isinstance(kp.mac_key, basestring)
     assert kp.mac_algorithm and isinstance(kp.mac_algorithm, basestring)
 
-@mark.usefixtures('app', 'entity', 'follower')
-class TestFollowerKeyPairs(object):
-    def test_follower_keypair_property(self, follower):
-        """Test that the property works and a KeyPair has been generated"""
-        assert isinstance(follower.keypair, KeyPair)
+def test_follower_keypair_property(follower):
+    """Test that the property works and a KeyPair has been generated"""
+    assert isinstance(follower.keypair, KeyPair)
 
-    def test_cascading_delete(self, follower):
-        """Test that the KeyPair is deleted with the follower"""
-        assert KeyPair.objects.get(owner=follower)
+def test_follower_cascading_delete(follower):
+    """Test that the KeyPair is deleted with the follower"""
+    assert KeyPair.objects.get(owner=follower)
 
-        follower.delete()
+    follower.delete()
 
-        with raises(KeyPair.DoesNotExist):
-            KeyPair.objects.get(owner=follower)
+    with raises(KeyPair.DoesNotExist):
+        KeyPair.objects.get(owner=follower)
