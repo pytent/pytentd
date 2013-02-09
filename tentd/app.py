@@ -9,6 +9,7 @@ from tentd.lib.flask import Request, Response, JSONEncoder, jsonify
 from tentd.blueprints import entity, followers, posts, groups
 from tentd.documents import db, Entity
 from tentd.utils import make_config
+from tentd.utils.exceptions import RequestDidNotValidate
 
 class TentdFlask(Flask):
     """An extension of the Flask class with some custom methods"""
@@ -36,7 +37,7 @@ class TentdFlask(Flask):
         self.url_defaults(self._url_defaults)
 
         # Error handlers
-        self.errorhandler(ValidationError)(self._validation_error)
+        self.errorhandler(ValidationError)(self.validation_error)
     
     @property
     def single_user_mode(self):
@@ -83,10 +84,16 @@ class TentdFlask(Flask):
             if 'entity' not in values and hasattr(g, 'entity'):
                 values['entity'] = g.entity
 
-    def _validation_error(self, error):
+    def validation_error(self, error):
         """Handle validation errors from the DB."""
-        return jsonify({'error': "Could not validate data ({}: {})".format(
-            error.__class__.__name__, error.message)}), 400
+        __tracebackhide__ = True
+        
+        exception = RequestDidNotValidate(validation_errors=error.errors)
+
+        if self.config['TRAP_HTTP_EXCEPTIONS']:
+            raise exception
+
+        return exception.get_response()
 
 def create_app(config=None):
     """Create an instance of the tentd flask application"""    
