@@ -82,6 +82,8 @@ class TentdFlask(Flask):
         if self.url_map.is_endpoint_expecting(endpoint, 'entity'):
             if 'entity' not in values and hasattr(g, 'entity'):
                 values['entity'] = g.entity
+        elif 'entity' in values and self.single_user_mode:
+            values.pop('entity')
 
     def validation_error(self, error):
         """Handle validation errors from the DB."""
