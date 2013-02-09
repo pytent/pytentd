@@ -50,6 +50,7 @@ def discover_entity(identity):
 
     return profile
 
+
 def start_following(entity, details):
     """Peform all necessary steps to allow an entity to start follow the
     current entity.
@@ -80,12 +81,14 @@ def start_following(entity, details):
 
     return follower.save()
 
+
 def notify_following(follower):
     """Perform the GET request to the new follower's notification path.
 
     It should return 200 OK if it's acceptable."""
     resp = requests.get(get_notification_link(follower))
     return resp.status_code
+
 
 def get_notification_link(follower):
     """Gets the absolute link of the notification path."""
@@ -100,10 +103,12 @@ def get_notification_link(follower):
 
     return api_root + '/' + follower.notification_path
 
+
 def stop_following(entity, id):
     """Stops following a user."""
     follower = Follower.objects.get(entity=entity, id=id)
     follower.delete()
+
 
 def update_follower(entity, follower_id, details):
     """Changes the way in which a user is followed."""
@@ -128,6 +133,7 @@ def update_follower(entity, follower_id, details):
 
     return follower.save()
 
+
 def get_follower(follower_id):
     """Gets details for a followed user."""
     follower = Follower.query.get(follower_id)
@@ -136,6 +142,7 @@ def get_follower(follower_id):
         raise APIException("Follower {} does not exist.".format(follower_id))
 
     return follower
+
 
 def get_followers():
     """Gets the ids of all users being followed."""

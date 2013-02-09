@@ -80,7 +80,7 @@ def check_request(request, key):
 def authenticate_response():
     """Sends a 401 response that enables basic auth"""
 
-    return Response('Invalid MAC Credentials\n', 
+    return Response('Invalid MAC Credentials\n',
                     401,
                     {'WWW-Authenticate': 'MAC'})
 

@@ -26,7 +26,7 @@ class ProfileView(MethodView):
         # TODO: Use a proper query here
         return jsonify({p.schema: p.to_json()
                        for p in g.entity.profiles
-                       if 'public' in p.permissions 
+                       if 'public' in p.permissions
                        and p.permissions['public']})
 
     @require_authorization
