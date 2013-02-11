@@ -161,37 +161,32 @@ def notification_mocks(request, follower):
 
     return head, get, post
 
-@mark.usefixtures('app', 'entity', 'follower', 'notification_mocks')
-class TestNotifications(object):
+def test_entity_header_notification(entity, notification_mocks):
+    """Test the entity header is returned from the notifications route."""
+    assert response_has_link_header(HEAD('entity.notification'))
 
-    def test_entity_header_notification(self):
-        """Test the entity header is returned from the notifications route."""
-        assert response_has_link_header(HEAD('entity.notification'))
+def test_notified_of_new_post(follower, notification_mocks):
+    """Test that a followers notification path has a post made to it."""
+    SPOST('posts.posts', {
+        'type': 'https://tent.io/types/post/status/v0.1.0',
+        'content': {
+            'text': 'test',
+            'location': None}})
 
-    def test_notified_of_new_post(self, follower):
-        """Test that a followers notification path has a post made to it."""        
-        SPOST('posts.posts', {
-            'type': 'https://tent.io/types/post/status/v0.1.0',
-            'content': {
-                'text': 'test',
-                'location': None}})
+    # TODO: Actually store the follower's servers
+    follower_notification_path = follower.identity + '/tentd/notification'
+    assert requests.post.was_called(follower_notification_path)
 
-        # TODO: Actually store the follower's servers
-        follower_notification_path = follower.identity + '/tentd/notification'
-        assert requests.post.was_called(follower_notification_path)
+def test_notification_created(entity):
+    """Test that a notification is raised correctly."""
+    
+    assert entity.notifications.count() == 0
 
-    def test_notification_created(self, entity):
-        """Test that a notification is raised correctly."""
-        # TODO: Test that the notification raised has the correct details.
-        
-        post = {
-            'id': '1',
-            'schema': 'https://tent.io/types/post/status/v0.1.0',
-            'content': {'text': 'test', 'location': None}}
+    POST('entity.notification', {
+        'id': '1',
+        'schema': 'https://tent.io/types/post/status/v0.1.0',
+        'content': {'text': 'test', 'location': None}
+    })
 
-        assert entity.notifications.count() == 0
-
-        POST('entity.notification', post)
-
-        assert entity.notifications.count() == 1
+    assert entity.notifications.count() == 1
         

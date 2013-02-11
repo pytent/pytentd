@@ -21,13 +21,13 @@ class Follower(EntityMixin, db.Document):
     }
 
     #: The identity of the follower
-    identity = URIField(unique_with='entity')
+    identity = URIField(required=True, unique_with='entity')
 
     #: The time the follower was created
-    created_at = DateTimeField(default=datetime.now)
+    created_at = DateTimeField(required=True, default=datetime.now)
 
     #: The time the follower was last updated
-    updated_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(required=True, default=datetime.now)
 
     notification_path = StringField(required=True)
     
@@ -43,14 +43,16 @@ class Follower(EntityMixin, db.Document):
         return "<Follower: {}>".format(self.identity)
 
     def to_json(self):
-        return json_attributes(self,
-           ('id', str),
-            'identity',
-           ('created_at', time_to_string),
-            'notification_path',
-            'permissions',
-            'types',
-            'licenses')
+        return {
+            'id': str(self.id),
+            'entity': self.identity,
+            'created_at': time_to_string(self.created_at),
+            'updated_at': time_to_string(self.updated_at),
+            'notification_path': self.notification_path,
+            'permissions': self.permissions,
+            'types': self.types,
+            'licenses': self.licenses
+        }
 
 post_save.connect(KeyPair.owner_post_save, sender=Follower)
 
