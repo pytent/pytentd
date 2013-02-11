@@ -68,7 +68,7 @@ class ProfileView(MethodView):
         profile.delete()
         return make_response(), 200
 
-@entity.route_class('/notification', endpoint='notify')
+@entity.route_class('/notification', endpoint='notification')
 class NotificationView(MethodView):
     """Routes relating to notifications."""
     

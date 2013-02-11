@@ -4,6 +4,7 @@ from flask import current_app, g
 from py.test import main
 
 from tentd.tests.http import *
+from tentd.tests.mock import *
 
 def profile_url_for(entity, _external=False):
     """Get an entity profile url without using url_for"""

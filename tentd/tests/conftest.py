@@ -108,6 +108,9 @@ def post(request, entity):
 @fixture
 def follower(request, entity):
     """A follower with an identity of http://follower.example.com"""
-    follower = Follower(entity=entity, identity='http://follower.example.com')
+    follower = Follower(
+        entity=entity,
+        identity='http://follower.example.com',
+        notification_path='notification')
     request.addfinalizer(follower.delete)
     return follower.save()

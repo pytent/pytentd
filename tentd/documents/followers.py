@@ -26,7 +26,10 @@ class Follower(EntityMixin, db.Document):
     #: The time the follower was created
     created_at = DateTimeField(default=datetime.now)
 
-    notification_path = StringField()
+    #: The time the follower was last updated
+    updated_at = DateTimeField(default=datetime.now)
+
+    notification_path = StringField(required=True)
     
     permissions = None
     licenses = None
