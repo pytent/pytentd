@@ -1,15 +1,10 @@
 """py.test conftest file"""
 
-import logging
-
 from flask import g
 from py.test import fixture
 
 from tentd import create_app
 from tentd.documents import collections, Entity, Post, Follower
-
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger('testing')
 
 #: Constant values for single and multi user modes
 MULTIPLE, SINGLE = 'multiple user mode', 'single user mode'
@@ -27,15 +22,10 @@ def pytest_generate_tests(metafunc):
             'single': (SINGLE,),
             'both': (MULTIPLE, SINGLE),
         }[metafunc.config.option.mode], indirect=True, scope="module")
-    
-def pytest_runtest_call(item):
-    """Log each test"""
-    log.info("Running {}".format(item.obj.__name__))
 
 def pytest_runtest_teardown(item, nextitem):
     """If the app fixture was used, clear the database after the test"""
     if 'app' in item.fixturenames:
-        log.debug("Dropping collections")
         for collection in collections:
             collection.drop_collection()
 
@@ -66,8 +56,6 @@ def app(request):
     ctx = app.test_request_context()
     ctx.push()
     request.addfinalizer(ctx.pop)
-
-    log.info("Created pytentd application[{}]".format(request.param))
 
     return app
 
@@ -109,12 +97,17 @@ def post(request, entity):
         mentions=[{
             'entity': 'http://softly.example.com'
         }])
-    request.addfinalizer(lambda: post.delete())
-    return post.save()
+    post.save()
+
+    # Fetch the post from the database,
+    # so that the version ordering is correct
+    post = Post.objects.get(entity=entity, schema=schema)
+    request.addfinalizer(post.delete)
+    return post
 
 @fixture
 def follower(request, entity):
     """A follower with an identity of http://follower.example.com"""
     follower = Follower(entity=entity, identity='http://follower.example.com')
-    request.addfinalizer(lambda: follower.delete())
+    request.addfinalizer(follower.delete)
     return follower.save()
