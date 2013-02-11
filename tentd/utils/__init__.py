@@ -62,8 +62,25 @@ def json_attributes(obj, *names, **kwargs):
     json.update(kwargs)
     return json
 
+def set_attributes(cls, obj, values, save=True):
+    """Assign a dictionary of values to a document, only using those
+    attributes that the document has a field for.
+
+    :Parameters:
+    - cls (type): The document class
+    - obj (Document): The object to set the attributes on
+    - values (dict): The values to assign
+    - save (bool): Save the document afterwards?
+    """
+    for attr in values.keys():
+        if attr in cls._fields:
+            setattr(obj, attr, values.pop(attr))
+    return obj.save(), values
 
 def time_to_string(time):
     """Converts a datetime instance to a string"""
-    time = datetime.now() if time == "now" else time
-    return time if time is None else mktime(time.timetuple())
+    if time is None:
+		return time
+    if time == "now":
+		time = datetime.now()
+    return mktime(time.timetuple())

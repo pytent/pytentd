@@ -1,222 +1,109 @@
 """Tests for the entity blueprint"""
 
 from flask import url_for, json, current_app
+from py.test import mark, raises
+from werkzeug.exceptions import NotFound
 
 from tentd.documents.entity import Post
 from tentd.lib.flask import jsonify
-from tentd.tests import TentdTestCase, EntityTentdTestCase
+from tentd.tests import response_has_link_header
+from tentd.tests.http import *
 from tentd.utils import time_to_string
+from tentd.utils.exceptions import APIBadRequest
 
-class HTTPTestCase(TentdTestCase):
-    """Utility methods for testing the HTTP API.
+def test_link_header(post):
+    """Test the entity header is returned from the posts route."""
+    assert response_has_link_header(SHEAD('posts.posts'))
 
-    Will be completed and merged into the test framework later on"""
+def test_create_post(entity):
+    """Test creating a post (belonging to the current entity)"""
+    data = {
+        'type': 'https://tent.io/types/post/status/v0.1.0',
+        'content': {
+            'text': "^SoftlySplinter: Hello World"
+        },
+        'mentions': [
+            {'entity': 'http://softly.example.com'}
+        ],
+    }
+    response = SPOST('posts.posts', data=data)
+    assert 'text' in response.json()['content']
+
+    # Fetch the post using the database
+    post_id = response.json()['id']
+    created_post = entity.posts.get(id=post_id)
+    assert created_post.schema == data['type']
+    assert created_post.latest.content == data['content']
+
+    # Fetch the post using the API
+    response = GET('posts.posts', secure=True)
+    assert 'text' in response.json()[0]['content']
+
+def test_create_invalid_post(entity):
+    """Test that attempting to create an invalid post fails."""
+    with raises(APIBadRequest):
+        SPOST('posts.posts', '<invalid>')
+
+def test_get_post(post):
+    """Test getting a single post works correctly."""
+    assert SGET('posts.post', post_id=post.id).data == jsonify(post).data
+
+def test_get_post_version(post):
+    posts_json = SGET('posts.versions', post_id=post.id).json()
+    posts_db = [v.to_json() for v in post.versions]
+    assert posts_json == posts_db
+
+def test_get_post_mentions(post):
+    """Test that the mentions of a post can be returned."""
+    response = SGET('posts.mentions', post_id=post.id)
+    assert response.json() == post.versions[0].mentions
+
+def test_get_posts(entity, post):
+    """Test that getting all posts returns correctly."""
+    response = GET('posts.posts', secure=True)
+    posts = jsonify([p.to_json() for p in entity.posts])
+    assert response.data == posts.data
+
+def test_get_empty_posts(entity):
+    """Test that /posts works when there are no posts to return"""
+    assert SGET('posts.posts').json() == list()
     
-    def url_for(self, endpoint, **kwargs):
-        """Calls url_for, using self.entity if needed"""
-        single_user_mode = current_app.config.get('SINGLE_USER_MODE', None)
-        if not single_user_mode and 'entity' not in kwargs:
-            kwargs['entity'] = self.entity.name
-        return url_for(endpoint, **kwargs)
+def test_update_post(post):
+    """Test a single post can be updated."""
+    response = SPUT('posts.post', post_id=post.id,
+        data={'content': {'text': 'updated', 'location': None}})
 
-    @staticmethod
-    def _check_response(response):
-        if 'error' in response.json():
-            raise Exception(response.json()['error'])
-        return response
+    post = Post.objects.get(id=post.id)
+    assert response.data == jsonify(post).data
 
-    def POST(self, endpoint, url=None, **kwargs):
-        """Make a HEAD request to an endpoint
+def test_update_post_with_invalid_data(post):
+    """Test that attempting to update an invalid post fails."""
+    with raises(APIBadRequest):
+        SPUT('posts.post', '<invalid>', post_id=post.id)
 
-        :Parameters:
-        - endpoint (str): The endpoint to use with url_for
-        - url (dict): Keyword arguments for use with url_for
-        - json: An object that will dumped to json as the request data
-        - kwargs: Passed on to `client.post`
-        """
-        url = self.url_for(endpoint, **url or {})
+def test_update_missing_post(entity):
+    """Test that attempting to update a non-existant post fails."""
+    with raises(NotFound):
+        SPUT('posts.post', {}, post_id='invalid')
 
-        if 'json' in kwargs and 'data' not in kwargs:
-            kwargs['data'] = json.dumps(kwargs.pop('json'))
+def test_delete_post(entity, post):
+    """Test that a post can be deleted."""
+    SDELETE('posts.post', post_id=post.id)
+    assert entity.posts.count() == 0
 
-        response = self.secure_client.post(url, **kwargs)
-
-        return HTTPTestCase._check_response(response)
-
-class MentionsTests(HTTPTestCase, EntityTentdTestCase):
-    def test_create_post(self):
-        response = self.POST('posts.posts', json={
-            'type': 'https://tent.io/types/post/status/v0.1.0',
-            'content': {
-                'text': "^SoftlySplinter: Hello World"
-            },
-            'mentions': [
-                {'entity': 'http://softly.example.com'}
-            ],
-        }, content_type='application/json')
-        
-        assert response.status_code == 200
-        assert 'text' in response.json()['content']
-
-        response = self.secure_client.get(
-            url_for('posts.posts', entity=self.entity))
-
-        assert response.status_code == 200
-        assert 'text' in response.json()[0]['content']
-
-class PostTests(EntityTentdTestCase):
-    """Tests relating to the post routes."""
+def test_delete_post_version(entity, post):
+    # Delete the first two versions
+    SDELETE('posts.post', post_id=post.id, version=0)
+    SDELETE('posts.post', post_id=post.id, version=0)
     
-    def before(self):
-        """Create a post in the DB."""
-        self.new_post = Post.new(
-            entity=self.entity,
-            schema='https://tent.io/types/post/status/v0.1.0',
-            content={'text': 'test', 'location': None}).save()
+    # Check the only one post is left
+    assert len(entity.posts.get(id=post.id).versions) == 1
 
-    def test_entity_header_posts(self):
-        """Test the entity header is returned from the posts route."""
-        self.assertEntityHeader('/{}/posts'.format(self.name))
+    # Check that trying to delete the last version raise an error
+    with raises(APIBadRequest):
+        SDELETE('posts.post', post_id=post.id, version=0)
 
-    def test_entity_get_posts(self):
-        """Test that getting all posts returns correctly."""
-        resp = self.secure_client.get('/{}/posts'.format(self.name))
-        self.assertStatus(resp, 200)
-
-        posts = [post.to_json() for post in self.entity.posts]
-        self.assertEquals(resp.data, jsonify(posts).data)
-
-    def test_entity_new_post(self):
-        """Test that a new post can be added correctly."""
-        details = {
-            'type': 'https://tent.io/types/post/status/v0.1.0',
-            'content': {'text': 'test', 'location': None}}
-            
-        resp = self.secure_client.post('/{}/posts'.format(self.name),
-            data=json.dumps(details), content_type='application/json')
-
-        self.assertStatus(resp, 200)
-
-        created_post = self.entity.posts.get(id=resp.json()['id'])
-        self.assertIsNotNone(created_post)
-        self.assertEquals(created_post.schema, details['type'])
-        self.assertEquals(created_post.latest.content, details['content'])
-
-    def test_entity_create_invalid_post(self):
-        """Test that attempting to create an invalid post fails."""
-        resp = self.secure_client.post(
-            '/{}/posts'.format(self.name), data='<invalid>',
-            content_type='application/json')
-        self.assertJSONError(resp)
-
-    def test_entity_get_single_post(self):
-        """Test getting a single post works correctly."""
-        resp = self.secure_client.get(
-            '/{}/posts/{}'.format(self.name, self.new_post.id))
-
-        self.assertStatus(resp, 200)
-        self.assertEquals(resp.data, jsonify(self.new_post).data)
-
-    def test_entity_update_single_post(self):
-        """Test a single post can be updated."""
-        resp = self.secure_client.put(
-            '/{}/posts/{}'.format(self.name, self.new_post.id),
-            data=json.dumps({
-                'content': {
-                    'text': 'updated',
-                    'location': None}}),
-            content_type='application/json')
-
-        new_post = Post.objects.get(entity=self.entity)
-        self.assertStatus(resp, 200)
-        self.assertEquals(resp.data, jsonify(new_post).data)
-
-    def test_entity_update_post_invalid(self):
-        """Test that attempting to update an invalid post fails."""
-        resp = self.secure_client.put(
-            '/{}/posts/{}'.format(self.name, self.new_post.id),
-            data='<invalid>')
-        self.assertJSONError(resp)
-
-    def test_entity_update_non_existant_post(self):
-        """Test that attempting to update a non-existant post fails."""
-        resp = self.secure_client.put('/{}/posts/invalid'.format(self.name))
-        self.assertStatus(resp, 404)
-
-    def test_entity_delete_post(self):
-        """Test that a post can be deleted."""
-        resp = self.secure_client.delete(
-            '/{}/posts/{}'.format(self.name, self.new_post.id))
-        self.assertStatus(resp, 200)
-        entity_post = self.entity.posts.filter(id=self.new_post.id)
-        self.assertEquals(entity_post.count(), 0)
-    
-    def test_entity_delete_invalid_post(self):
-        """Test that attempting to delete a non-existant post fails."""
-        resp = self.secure_client.delete('/{}/posts/<invalid>'.format(self.name))
-        self.assertStatus(resp, 404)
-
-class VersionsTest(EntityTentdTestCase):
-    def before(self):
-        self.post = Post(
-            entity=self.entity,
-            schema='https://tent.io/types/post/status/v0.1.0')
-
-        self.post.new_version(content={'text': "Hello world"})
-        self.post.new_version(content={'text': "Goodbye world"})
-
-        self.post.save()
-
-    def test_get_post_version(self):
-        """Test GET /posts/<id>/versions"""
-        response = self.secure_client.get(
-            '/testuser/posts/{}/versions'.format(self.post.id))
-
-        assert response.status_code == 200
-
-        versions = [v.to_json() for v in self.post.versions][::-1]
-        assert response.json() == versions
-
-    def test_delete_post_version(self):
-        """Test DELETE /posts/<id>?version=<num>"""
-
-        # Delete the post version
-        response = self.secure_client.delete(
-            '/testuser/posts/{}?version=0'.format(self.post.id))
-        assert response.status_code == 200
-
-        # Check the post version has been deleted
-        post = self.entity.posts.get(id=self.post.id)
-        assert len(post.versions) == 1
-
-        # Delete the last version of the post, expecting an error
-        self.assertJSONError(self.secure_client.delete(
-            '/testuser/posts/{}?version=0'.format(self.post.id)))
-
-    def test_get_post_mentions(self):
-        """Test that the mentions of a post can be returned."""
-        resp = self.secure_client.get('/{}/posts/{}/mentions'.format(self.name, 
-            self.post.id))
-        self.assertStatus(resp, 200)
-        assert resp.json() == self.post.versions[0].mentions
-
-class MorePostsTest(EntityTentdTestCase):
-    """Tests for posts without having existing posts."""
-    def test_create_invalid_post(self):
-        response = self.secure_client.post(
-            url_for('posts.posts', entity=self.entity),
-            data=json.dumps({
-                'content': "Hello world",
-                'received_at': time_to_string('now')}),
-            content_type='application/json')
-
-        self.assertStatus(response, 400)
-        self.assertJSONError(response)
-    
-    def test_get_empty_posts(self):
-        """Test that /posts works when there are no posts to return"""
-        response = self.secure_client.get(
-            url_for('posts.posts', entity=self.entity))
-        
-        self.assertStatus(response, 200)
-        self.assertEquals(response.json(), [])
+def test_delete_invalid_post(entity):
+    """Test that attempting to delete a non-existant post fails."""
+    with raises(NotFound):
+        SDELETE('posts.post', post_id='invalid')

@@ -2,12 +2,14 @@
 
 __all__ = ['Entity']
 
+from warnings import warn
+
 from mongoengine import *
 from mongoengine.queryset import DoesNotExist
+from mongoengine.signals import post_save
 
 from tentd.documents import *
-from tentd.utils import json_attributes
-
+from tentd.utils import json_attributes, set_attributes
 
 class QuerySetProperty(object):
     """A set of documents belonging to an entity from another collection
@@ -47,8 +49,18 @@ class Entity(db.Document):
         except DoesNotExist:
             raise Exception("Entity has no core profile.")
 
+    @classmethod
+    def new(cls, **kwargs):
+        """Constucts a Post and an initial version from the same args"""
+        entity = cls()
+        set_attributes(Entity, entity, kwargs)
+        set_attributes(CoreProfile, entity.core, kwargs)
+        return entity
+
     def create_core(self, **kwargs):
         """Creates a coreprofile instance attached to this entity"""
+        warn(DeprecationWarning(
+            "create_core() has been replaced by Entity.new()"))
         return CoreProfile(entity=self, **kwargs).save()
 
     def __repr__(self):
@@ -64,8 +76,18 @@ class Entity(db.Document):
 
     def to_json(self):
         return json_attributes(self,
-                               'name',
-                               'profiles',
-                               'followers',
-                               'followings',
-                               'notifications')
+            'name',
+            'profiles',
+            'followers',
+            'followings',
+            'notifications')
+
+    @staticmethod
+    def post_save(sender, document, **kwargs):
+        """Signal function to automatically create a core profile"""
+        try:
+            CoreProfile.objects.get(entity=document)
+        except CoreProfile.DoesNotExist:
+            CoreProfile(entity=document).save()
+
+post_save.connect(Entity.post_save, sender=Entity)

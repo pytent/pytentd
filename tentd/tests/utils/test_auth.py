@@ -4,47 +4,41 @@ import base64
 import hmac
 from hashlib import sha256
 
-from flask import request
+from flask import request, current_app
 
-from tentd.utils.auth import *
-from tentd.tests import TentdTestCase
+from tentd.utils.auth import parse_authstring, check_request
+from tentd.tests.http import GET
 
-class AuthTest(TentdTestCase):
-    macid  = "s:f5949a1d"
-    tstamp = 1355181298
-    nonce  = "b07235"
-    mac    = "swgy4RpdIBaFpA1hmAbZrph24VVg9FwmJgMm9GkgiLE="
+class TestAuth(object):
+    mac_id = "s:f5949a1d"
+    mac_ts = 1355181298
+    mac_nonce = "b07235"
+    mac = "swgy4RpdIBaFpA1hmAbZrph24VVg9FwmJgMm9GkgiLE="
 
-    def before(self):
-        """Set up mock request before each test """
-        self.generate_authstring()
+    def authstring(self):
+        return 'MAC id="{id}",ts="{ts}",nonce="{nonce}",mac="{mac}"'.format(
+            id=self.mac_id, ts=self.mac_ts,
+            nonce=self.mac_nonce, mac=self.mac)
+    
+    def test_parse_authstring(self):
+        """Test the parse_authstring() method """
+        auth = parse_authstring(self.authstring())
+        assert str(auth['id']) == self.mac_id
+        assert int(auth['ts']) == self.mac_ts
+        assert str(auth['nonce']) == self.mac_nonce
+        assert str(auth['mac']) == self.mac
 
-    def generate_authstring(self):
-        self.authstring = 'MAC id="{0}",ts="{1}",nonce="{2}",mac="{3}"'.format(
-            self.macid, self.tstamp, self.nonce, self.mac)
-
-    def test_parseauth(self):
-        """Test the parse authstring method """
-
-        auth = parse_authstring(self.authstring)
-        assert auth['id'] == self.macid
-        assert int(auth['ts']) == self.tstamp
-        assert auth['nonce'] == self.nonce
-        assert auth['mac'] == self.mac
-
-    def test_check_request(self):
+    def test_check_request(self, app):
         key = "secret"
 
         # Build a normalized request string
         norm = "\n".join([
-            str(self.tstamp), self.nonce, "GET", "/?apple=2",
-            self.app.config['SERVER_NAME'], str(80), ""])
+            str(self.mac_ts), self.mac_nonce, "GET", "/?apple=2",
+            app.config['SERVER_NAME'], str(80), ""])
         
         self.mac = base64.encodestring(hmac.new(key, norm, sha256).digest())
-        self.generate_authstring()
 
-        headers = [("Authorization", self.authstring)]
+        headers = [("Authorization", self.authstring())]
 
-        with self.client as c:
-            c.get(path="/?apple=2", headers=headers)
-            assert check_request(request, key) == True
+        with app.test_request_context("/?apple=2", headers=headers) as rc:
+            assert check_request(rc.request, key) == True

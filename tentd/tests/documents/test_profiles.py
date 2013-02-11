@@ -1,56 +1,48 @@
 """Test the profile types"""
 
 from mongoengine import NotUniqueError
+from py.test import fixture, mark, raises
 
 from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
-from tentd.tests import TentdTestCase, EntityTentdTestCase
 
-class ProfileTest(TentdTestCase):
-    def test_no_profile(self):
-        with self.assertRaises(NotImplementedError):
-            Profile()
+def test_profile_implementation():
+    """Assert that Profile cannot be instantiated directly"""
+    with raises(NotImplementedError):
+        Profile()
 
-class CoreProfileTest(EntityTentdTestCase):
-    def test_schema(self):
-        assert self.entity.core.schema == CoreProfile.__schema__
+def test_core_profile_schema(entity):
+    assert entity.core.schema == CoreProfile.__schema__
 
-    def test_json(self):
-        assert 'entity' in self.entity.core.to_json()
+def test_core_profile_json(entity):
+    assert entity.core.to_json()['entity'] == "http://example.com"
 
-    def test_arguments(self):
-        assert self.entity.core.identity == "http://example.com"
+def test_core_profile_data(entity):
+    assert entity.core.identity == "http://example.com"
 
-    def test_profile_constraint(self):
-        """Test that multiple profiles with the same schema cannot be added"""
-        with self.assertRaises(Exception):
-            CoreProfile(
-                entity=self.entity,
-                identity="http://bad.example.com"
-            ).save()
+def test_core_profile_constraint(entity):
+    """Test that multiple profiles with the same schema cannot be added"""
+    with raises(Exception):
+        CoreProfile(entity=entity, identity="http://bad.example.com").save()
 
-class GenericProfileTest(EntityTentdTestCase):    
-    def before(self):
-        super(GenericProfileTest, self).before()
-        
-        self.profile = GenericProfile(
-            entity=self.entity,
-            schema="https://tent.io/types/info/example/v0.0.0",
-            content={
-                'attr': 'value',
-                'dict': {'attr': 'value'},
-                'list': [1, 2, 3],
-            })
-        self.profile.save()
+@fixture
+def generic_profile(request, entity):
+    profile = GenericProfile(
+        entity=entity,
+        schema="https://tent.io/types/info/example/v0.0.0",
+        content={
+            'attr': 'value',
+            'dict': {'attr': 'value'},
+            'list': [1, 2, 3],
+        })
+    request.addfinalizer(profile.delete)
+    return profile.save()
 
-    def test_attributes(self):
-        assert self.profile.content['dict']['attr'] == 'value'
+def test_attributes(generic_profile):
+    assert generic_profile.content['dict']['attr'] == 'value'
 
-    def test_json_attributes(self):
-        profile = Profile.objects.get(id=self.profile.id)
-        assert profile.to_json()['content']['dict']['attr'] == 'value'
+def test_json_attributes(generic_profile):
+    assert generic_profile.to_json()['content']['dict']['attr'] == 'value'
 
-    def test_unique_schema(self):
-        with self.assertRaises(NotUniqueError):
-            GenericProfile(
-                entity=self.entity,
-                schema="https://tent.io/types/info/example/v0.0.0").save()
+def test_unique_schema(entity, generic_profile):
+    with raises(NotUniqueError):
+        GenericProfile(entity=entity, schema=generic_profile.schema).save()

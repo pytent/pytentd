@@ -1,6 +1,5 @@
 """Test our flask extensions"""
 
-from unittest import TestCase
 from random import random
 
 from bson import ObjectId
@@ -10,20 +9,19 @@ from tentd.lib.flask import cached_method, Request, Blueprint, JSONEncoder
 
 from tentd.utils.exceptions import APIBadRequest
 
-class TestFlaskAdditions(TestCase):
+class TestFlaskAdditions(object):
     @cached_method
-    def random(self):
+    def cached_random_method(self):
         return random()
     
     def test_cached_method(self):
-        return_value = self.random()
-        assert return_value == self.random()
+        assert self.cached_random_method() == self.cached_random_method()
 
     def test_Blueprint_get_endpoint_name(self):
         class TestView(object): pass
         assert Blueprint._get_endpoint_name(TestView) == 'test'
 
-class TestJSONEncoder(TestCase):
+class TestJSONEncoder(object):
     def json(self, obj):
         return json.dumps(obj, cls=JSONEncoder)
 
@@ -34,12 +32,14 @@ class TestJSONEncoder(TestCase):
     def test_methods(self):
         """Test that JSONEncoder handles to_json() and __json__() methods"""
         class JSONEncodable(object):
-            def to_json(self): return {'attribute': 'value'}
+            def to_json(self):
+                return {'attribute': 'value'}
 
         assert self.json(JSONEncodable()) == '{"attribute": "value"}'
 
         class JSONEncodable(object):
-            def __json__(self): return {'attribute': 'value'}
+            def __json__(self):
+                return {'attribute': 'value'}
 
         assert self.json(JSONEncodable()) == '{"attribute": "value"}'
 

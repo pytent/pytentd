@@ -1,148 +1,116 @@
 """Tests for the entity blueprint"""
 
-from json import dumps
-
 import requests
 
+from flask import json
+from py.test import raises, fixture
+
 from tentd.documents.entity import Follower
+from tentd.tests.http import POST, SPUT, SDELETE
+from tentd.tests.mock import MockFunction, MockResponse
+from tentd.utils.exceptions import APIBadRequest
 
-from tentd.tests import EntityTentdTestCase
-from tentd.tests.mocking import MockFunction, MockResponse, patch
+PROFILE_FORMAT = '<{}/profile>; rel="https://tent.io/rels/profile"'
 
-class FollowerTests(EntityTentdTestCase):
-    """Tests relating to followers."""
-    name = "localuser"
+@fixture
+def follower_mocks(request, monkeypatch):
+    follower_identity = 'http://follower.example.com'
+    follower_api_root = 'http://follower.example.com/tentd'
+
+    monkeypatch.setattr(requests, 'head', MockFunction())
+
+    requests.head[follower_identity] = MockResponse(
+        headers={'Link': PROFILE_FORMAT.format(follower_api_root)})
+
+    monkeypatch.setattr(requests, 'get', MockFunction())
+
+    requests.get[follower_api_root + '/notification'] = MockResponse()
+    requests.get[follower_api_root + '/profile'] = MockResponse(
+        json={
+            "https://tent.io/types/info/core/v0.1.0": {
+                "entity": follower_identity,
+                "servers": [follower_api_root],
+                "licences": [],
+                "tent_version": "0.2",
+            }})
+
+    assert isinstance(requests.head, MockFunction)
+    assert isinstance(requests.get, MockFunction)
+
+    @request.addfinalizer
+    def teardown_mocks():
+        monkeypatch.delattr(requests, 'head')
+        monkeypatch.delattr(requests, 'get')
+
+    return {
+        'identity': follower_identity,
+        'api_root': follower_api_root,
+        'notification_path': follower_api_root + '/notification'
+    }
+
+@fixture
+def new_follower_mocks(request, follower_mocks):
+    new_follower_identity = 'http://changed.follower.example.com'
+    new_follower_api_root = 'http://changed.follower.example.com/tentd'
+
+    requests.head[new_follower_identity] = MockResponse(
+        headers={'Link': PROFILE_FORMAT.format(new_follower_api_root)})
+
+    requests.get[new_follower_api_root + '/notification'] = MockResponse()
+    requests.get[new_follower_api_root + '/profile'] = MockResponse(
+        json={
+            "https://tent.io/types/info/core/v0.1.0": {
+                "entity": 'http://changed.follower.example.com',
+                "servers": ['http://changed.follower.example.com/tentd'],
+                "licences": [],
+                "tent_version": "0.2",
+            }})
     
-    @classmethod
-    def beforeClass(self):
-        """Set up details of followers."""
-        # Urls used for the follower
-        self.identity     = 'http://follower.example.com'
-        self.profile      = 'http://follower.example.com/tentd/profile'
-        self.notification = 'http://follower.example.com/tentd/notification'
-
-        # Urls used to update the follower
-        self.new_identity = 'http://changed.follower.example.com'
-        self.new_profile  = 'http://follower.example.com/new/profile'
+    follower_mocks.update({
+        'new_identity': new_follower_identity,
+        'new_api_root': new_follower_api_root,
+    })
     
-        # Mocks for the server responses
-        self.head = patch('requests.head', new_callable=MockFunction)
-        self.head.start()
+    return follower_mocks
 
-        profile_response = MockResponse(
-            headers={'Link':
-                '<{}>; rel="https://tent.io/rels/profile"'\
-                .format(self.profile)})
+def test_create_follower(entity, follower_mocks):
+    """Test that you can start following an entity."""
+    response = POST('followers.followers', {
+        'entity': follower_mocks['identity'],
+        'licences': [],
+        'types': 'all',
+        'notification_path': 'notification'
+    })
 
-        new_profile_response = MockResponse(
-            headers={'Link':
-                '<{}>; rel="https://tent.io/rels/profile"'\
-                .format(self.new_profile)})
-        
-        requests.head[self.identity] = profile_response
-        requests.head[self.new_identity] = new_profile_response
+    # Ensure the follower was created in the DB.
+    Follower.objects.get(id=response.json()['id'])
 
-        self.get = patch('requests.get', new_callable=MockFunction)
-        self.get.start()
-        
-        requests.get[self.notification] = MockResponse()
-        
-        requests.get[self.profile] = MockResponse(
-            json={
-                "https://tent.io/types/info/core/v0.1.0": {
-                    "entity": self.identity,
-                    "servers": ["http://follower.example.com/tentd"],
-                    "licences": [],
-                    "tent_version": "0.2",
-                }})
+    # Ensure the notification path was called
+    assert requests.get.was_called(follower_mocks['notification_path'])
 
-        requests.get[self.new_profile] = MockResponse(
-            json={
-                "https://tent.io/types/info/core/v0.1.0": {
-                    "entity": self.new_identity,
-                    "servers": ["http://follower.example.com/tentd"],
-                    "licences": [],
-                    "tent_version": "0.2",
-                }})
+def test_create_invalid_follower(entity, follower_mocks):
+    """Test that trying to follow an invalid entity will fail."""
+    with raises(APIBadRequest):
+        POST('followers.followers', '<invalid>')
+    assert requests.get.was_not_called(follower_mocks['notification_path'])
 
-    @classmethod
-    def afterClass(self):
-        """Clean up after testing."""
-        self.head.stop()
-        self.get.stop()
+def test_update_follower(entity, follower, new_follower_mocks):
+    """Test that the following relationship can be edited correctly."""
 
-    def before(self):
-        """Assert that the mocks are working correctly"""
-        self.assertIsInstance(requests.head, MockFunction)
-        self.assertIsInstance(requests.get, MockFunction)
+    response = SPUT('followers.follower', follower_id=follower.id, data={
+        'entity': new_follower_mocks['new_identity']})
 
-    def test_entity_follow(self):
-        """Test that you can start following an entity."""
-        response = self.client.post(
-            '/localuser/followers',
-            data=dumps({
-                'entity': self.identity,
-                'licences': [],
-                'types': 'all',
-                'notification_path': 'notification'
-            }), content_type='application/json')
+    # Ensure the update happened sucessfully
+    updated_follower = Follower.objects.get(id=follower.id)
+    assert str(follower.id) == response.json()['id']
+    assert new_follower_mocks['new_identity'] == response.json()['entity']
+    assert new_follower_mocks['new_identity'] == updated_follower.identity
 
-        # Ensure the request was made sucessfully.
-        self.assertStatus(response, 200)
+def test_delete_follower(follower):
+    SDELETE('followers.follower', follower_id=follower.id)
+    assert Follower.objects.count() == 0
 
-        # Ensure the follower was created in the DB.
-        Follower.objects.get(id=response.json()['id'])
-
-        requests.get(self.notification)
-        requests.get.assert_called(self.notification)
-       
-    def test_entity_follow_error(self):
-        """Test that trying to follow an invalid entity will fail."""
-        response = self.client.post(
-            '/{}/followers'.format(self.name), data='<invalid>')
-        self.assertJSONError(response)
-        requests.get.assert_not_called(self.notification)
-
-    def test_entity_follow_delete(self):
-        """Test that an entity can stop being followed."""
-        # Add a follower to delete
-        follower = Follower(
-            entity=self.entity,
-            identity="http://tent.example.com/test",
-            notification_path="notification").save()
-
-        # Delete it.
-        response = self.secure_client.delete(
-            '/{}/followers/{}'.format(self.name, follower.id))
-        self.assertEquals(200, response.status_code)
-
-    def test_entity_follow_delete_non_existant(self):
-        """Test that trying to stop following a non-existent user fails."""
-        response = self.secure_client.delete('/{}/followers/0'.format(self.name))
-        self.assertEquals(400, response.status_code)
-
-    def test_entity_follow_update(self):
-        """Test that the following relationship can be edited correctly."""
-
-        # Add a follower to update
-        follower = Follower(
-            entity=self.entity,
-            identity='http://follower.example.com',
-            notification_path='notification').save()
-
-        response = self.secure_client.put(
-            '/{}/followers/{}'.format(self.name, follower.id),
-            data=dumps({'entity': self.new_identity}),
-            content_type='application/json')
-        
-        # Ensure the request was made sucessfully.
-        self.assertIsNotNone(response)
-        self.assertStatus(response, 200)
-
-        # Ensure the update happened sucessfully in the JSON.
-        self.assertEquals(str(follower.id), response.json()['id'])
-        self.assertEquals(self.new_identity, response.json()['identity'])
-
-        # Ensure the DB was updated
-        updated_follower = Follower.objects.get(id=follower.id)
-        self.assertEquals(self.new_identity, updated_follower.identity)
+def test_delete_missing_follower(entity):
+    """Test that trying to stop following a non-existent user fails."""
+    with raises(APIBadRequest):
+        SDELETE('followers.follower', follower_id=0)

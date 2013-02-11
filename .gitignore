@@ -4,6 +4,7 @@ env/
 # Compiled python
 *.py[cod]
 *.so
+__pycache__
 
 # Packages
 *.egg
@@ -28,6 +29,7 @@ pip-log.txt
 .tox
 .noseids
 nosetests.xml
+.cache
 
 # Translations
 *.mo

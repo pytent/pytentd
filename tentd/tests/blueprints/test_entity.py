@@ -1,214 +1,185 @@
 """Tests for the entity blueprint"""
 
-from json import dumps
-
 import requests
+
+from flask import current_app, g
+from mongoengine import ValidationError
+from py.test import fixture, mark, raises
+from werkzeug.exceptions import NotFound
 
 from tentd.documents.entity import Entity, Follower
 from tentd.documents.profiles import CoreProfile, GenericProfile
+from tentd.tests import profile_url_for, response_has_link_header
+from tentd.tests.http import DELETE, GET, HEAD, PUT, POST, SPOST
+from tentd.tests.mock import MockFunction, MockResponse
+from tentd.utils.exceptions import APIBadRequest, RequestDidNotValidate
 
-from tentd.tests import TentdTestCase, EntityTentdTestCase, skip, AuthorizedClientWrapper
-from tentd.tests.mocking import MockFunction, MockResponse, patch
+def test_404_on_absent_entity(app):
+    """Test that profile pages for entities that don't exist 404"""
+    with raises(NotFound):
+        assert GET('/souffle-girl/profile')
 
-class EntityBlueprintTest(TentdTestCase):
-    """Base tests for the entity blueprint."""
-    def test_404(self):
-        """Tests that non-existent users 404."""
-        self.assertStatus(self.client.get("/non-existent-user"), 404)
-        self.assertStatus(self.client.get("/non-existent-user/profile"), 404)
+@mark.usefixtures('app', 'entity')
+class TestProfileBlueprint:
+    def test_entity_link_header(self, entity):
+        """Test that the entity header attached to the profile is correct"""
+        assert response_has_link_header(HEAD('entity.profiles'))
 
-    
-class ProfileBlueprintTest(EntityTentdTestCase):
-    """Tests relating to profiles."""
-    CORE = 'https://tent.io/types/info/core/v0.1.0'
-    BASIC = 'https://tent.io/types/info/basic/v0.1.0'
+    def test_profile_json(self):
+        """Test that /profile returns a json document"""
+        assert GET('entity.profiles').mimetype == 'application/json'
+        assert GET('entity.profiles').json()
 
-    def test_entity_profile_404(self):
-        """Test the the profile of a non-existent user returns 404."""
-        self.assertStatus(self.client.head('/non-existent-user/profile'), 404)
-   
-    def test_entity_profile_link(self):
-        """Test that the entity header on the entity profile is correct."""
-        self.assertEntityHeader('/{}/profile'.format(self.name))
- 
-    def test_entity_profile_json(self):
-        """Test that /profile returns json with a core profile"""
-        r = self.client.get('/{}/profile'.format(self.name))
-        
-        self.assertEquals(r.mimetype, 'application/json')
-        self.assertIn(CoreProfile.__schema__, r.json())
-        
-    def test_entity_core_profile(self):
-        """Test that the core profile is returned correctly"""
-        r = self.client.get('/{}/profile'.format(self.name))
-        identity = r.json()[CoreProfile.__schema__]['entity']
-        entity = Entity.objects.get(name=self.name)
-        self.assertEquals(identity, entity.core.identity)
+    def test_core_profile_json(self, entity):
+        """Test that /profile returns an accurate core profile"""
+        core_profile = GET('entity.profiles').json()[CoreProfile.__schema__]
+        assert core_profile['entity'] == entity.core.identity
+        assert core_profile['servers'] == entity.core.servers
+        assert core_profile['tent_version'] == '0.2'
 
-    def test_entity_get_single_profile(self):
-        """Test that getting a single profile is possible."""
-        resp = self.secure_client.get('/{}/profile/{}'.format(
-            self.name, CoreProfile.__schema__))
-        self.assertStatus(resp, 200)
+    def test_single_profile(self, entity):
+        """Test that getting a single profile works"""
+        core_profile = GET(
+            'entity.profile', secure=True, schema=CoreProfile.__schema__)
+        assert core_profile.json() == entity.core.to_json()
 
-        core_profile = self.entity.profiles.get(CoreProfile.__schema__)
-        self.assertEquals(resp.json(), core_profile.to_json())
-
-    def test_entity_get_non_existant_profile(self):
+    def test_missing_single_profile(self, entity):
         """Test that getting a non-existant profile fails."""
-        resp = self.secure_client.get('/{}/profile/<invalid>'.format(self.name))
-        self.assertStatus(resp, 404)
+        with raises(NotFound):
+            GET('entity.profile', secure=True, schema='invalid')
 
-    def test_entity_update_profile(self):
+    # Profile creation
+
+    def test_create_new_profile(self, entity):
+        schema = 'https://testprofile.example.com/'
+        data = {'data': 'test'}
+
+        response = PUT('entity.profile', data, secure=True, schema=schema)
+        profile = entity.profiles.get(schema=schema)
+
+        assert response.json() == profile.to_json() == data
+
+    def test_create_invalid_profile(self, entity):
+        with raises(APIBadRequest):
+            PUT('entity.profile', {}, schema='<invalid>')
+
+    @mark.xfail(reason="This can be fixed with schema checking")
+    def test_create_invalid_profile_with_list(self, entity):
+        with raises(APIBadRequest):
+            PUT('entity.profile', ['a', 'b'], schema='<invalid>')
+
+    # Profile updates
+
+    def test_update_profile(self, entity):
         """Tests that a profile can be updated."""
-        update_data = {
+        data = {
             'servers': [
                 'http://tent.example.com',
-                'http://example.com/tent',]}
+                'http://example.com/tent',
+            ]
+        }
 
-        resp = self.secure_client.put(
-            '{}/profile/{}'.format(self.name, CoreProfile.__schema__),
-            data=dumps(update_data), content_type='application/json')
+        response = PUT(
+            'entity.profile', data, secure=True,
+            schema=CoreProfile.__schema__)
 
-        servers = self.entity.profiles.get(CoreProfile.__schema__).servers
+        servers = entity.profiles.get(CoreProfile.__schema__).servers
 
-        self.assertStatus(resp, 200)
-        self.assertEquals(servers, update_data['servers'])
+        assert response.json()['servers'] == data['servers'] == servers
 
-    def test_entity_update_create_new_profile(self):
-        """Tests that a new profile is created."""
-        schema = 'https://testprofile.example.com/' 
-        update_data = {
-            'data': 'test'}
-        resp = self.client.put(
-            '{}/profile/{}'.format(self.name, schema),
-            data=dumps(update_data), content_type='application/json')
-        self.assertStatus(resp, 200)
-        profile = self.entity.profiles.get(schema=schema)
+    def test_update_profile_without_data(self, entity):
+        with raises(APIBadRequest):
+            PUT('entity.profile', schema=CoreProfile.__schema__)
 
-        self.assertEquals(profile.to_json()['data'], update_data['data'])
-        self.assertEquals(profile.schema, schema)
+    # Profile deletion
 
-    def test_entity_update_unknown_profile(self):
-        """Test that updating an unknown profile type fails."""
-        resp = self.client.put('{}/profile/<invalid>'.format(self.name), 
-            data=dumps({}), content_type='application/json')
-        self.assertStatus(resp, 400)
-        self.assertJSONError(resp)
-
-    def test_entity_invalid_update_profile(self):
-        """Tests that updating a profile with invalid data fails."""
-        resp = self.client.put('{}/profile/{}'.format(
-            self.name, CoreProfile.__schema__))
-        self.assertJSONError(resp)
-
-    def test_entity_delete_profile(self):
+    def test_delete_profile(self, entity):
         """Tests that a profile can be deleted."""
-        schema = "http://example.com/schema/"
-        new_profile = GenericProfile(entity=self.entity)
-        new_profile.avatar_url = 'http://example.com/avatar.jpg'
-        new_profile.name = 'test'
-        new_profile.location = 'test'
-        new_profile.gender = 'test'
-        new_profile.birthdate = '01/01/1980'
-        new_profile.bio = 'test'
-        new_profile.schema = schema
-        new_profile.save()
+        schema = 'http://example.com/schema/'
+        profile = GenericProfile(
+            entity=entity, schema=schema, name='McTest', gender='None',
+            location='Testville', avatar_url='http://example.com/avatar.jpg',
+            birthdate='01/01/1980', bio='I am a test.').save()
 
-        # Will raise DoesNotExist upon failing
-        self.entity.profiles.get(schema=schema)
+        assert profile in entity.profiles
 
-        resp = self.client.delete(
-            '{}/profile/{}'.format(self.name, schema))
-        self.assertStatus(resp, 200)
+        DELETE('entity.profile', secure=True, schema=schema)
 
-        profiles = self.entity.profiles.filter(schema=schema)
-        self.assertEquals(profiles.count(), 0)
+        assert profile not in entity.profiles
 
-    def test_entity_cannot_delete_core_profile(self):
-        """Tests that the core profile cannot be deleted."""
-        resp = self.client.delete(
-            '{}/profile/{}'.format(self.name, CoreProfile.__schema__))
-        self.assertStatus(resp, 400)
+    def test_delete_core_profile(self):
+        with raises(APIBadRequest):
+            DELETE(
+                'entity.profile', secure=True,
+                schema=CoreProfile.__schema__)
 
-    def test_entity_delete_non_existent_profile(self):
-        """Tests attempting to delete a non-existent profile fails."""
-        resp = self.client.delete('{}/profile/<invalid>'.format(self.name))
-        self.assertStatus(resp, 404)
+    def test_delete_missing_profile(self):
+        with raises(NotFound):
+            DELETE(
+                'entity.profile', secure=True,
+                schema='http://example.com/schemas/missing')
+
+@fixture
+def notification_mocks(request, follower, monkeypatch):
+    follower_api_root = follower.identity + '/tentd'
+    
+    monkeypatch.setattr(requests, 'head', MockFunction())
+
+    requests.head[follower.identity] = MockResponse(
+        headers={'Link':
+            '<{}/profile>; rel="https://tent.io/rels/profile"'\
+            .format(follower_api_root)})
+
+    monkeypatch.setattr(requests, 'get', MockFunction())
+
+    requests.get[follower_api_root + '/profile'] = MockResponse(
+        json={
+            "https://tent.io/types/info/core/v0.1.0": {
+                "entity": follower.identity,
+                "servers": [follower_api_root],
+                "licences": [],
+                "tent_version": "0.2"}})
+
+    monkeypatch.setattr(requests, 'post', MockFunction())
+    
+    requests.post[follower_api_root + '/notification'] = MockResponse()
+
+    assert isinstance(requests.head, MockFunction)
+    assert isinstance(requests.post, MockFunction)
+    assert isinstance(requests.get, MockFunction)
+
+    @request.addfinalizer
+    def teardown_notification_mocks():
+        monkeypatch.delattr(requests, 'head')
+        monkeypatch.delattr(requests, 'post')
+        monkeypatch.delattr(requests, 'get')
+
+def test_entity_header_notification(entity, notification_mocks):
+    """Test the entity header is returned from the notifications route."""
+    assert response_has_link_header(HEAD('entity.notification'))
+
+def test_notified_of_new_post(follower, notification_mocks):
+    """Test that a followers notification path has a post made to it."""
+    SPOST('posts.posts', {
+        'type': 'https://tent.io/types/post/status/v0.1.0',
+        'content': {
+            'text': 'test',
+            'location': None}})
+
+    # TODO: Actually store the follower's servers
+    follower_notification_path = follower.identity + '/tentd/notification'
+    assert requests.post.was_called(follower_notification_path)
+
+def test_notification_created(entity):
+    """Test that a notification is raised correctly."""
+    
+    assert entity.notifications.count() == 0
+
+    POST('entity.notification', {
+        'id': '1',
+        'schema': 'https://tent.io/types/post/status/v0.1.0',
+        'content': {'text': 'test', 'location': None}
+    })
+
+    assert entity.notifications.count() == 1
         
-class NotificationTest(EntityTentdTestCase):
-    """Test routes relating to notifications."""
-
-    @classmethod
-    def beforeClass(cls):
-        cls.identity = 'http://follower.example.com/tentd'
-        cls.profile = 'http://follower.example.com/tentd/profile'
-        cls.notification = 'http://follower.example.com/tentd/notification'
-
-        cls.head = patch('requests.head', new_callable=MockFunction)
-        cls.head.start()
-        requests.head[cls.identity] = MockResponse(
-            headers={'Link':
-                '<{}>; rel="https://tent.io/rels/profile"'\
-                .format(cls.profile)})
-
-        cls.get = patch('requests.get', new_callable=MockFunction)
-        cls.get.start()
-        requests.get[cls.profile] = MockResponse(
-            json={
-                "https://tent.io/types/info/core/v0.1.0": {
-                    "entity": cls.identity,
-                    "servers": ["http://follower.example.com/tentd"],
-                    "licences": [],
-                    "tent_version": "0.2",
-                }})
-
-        cls.post = patch('requests.post', new_callable=MockFunction)
-        cls.post.start()
-        requests.post[cls.notification] = MockResponse()
-        
-    @classmethod
-    def afterClass(cls):
-        cls.head.stop()
-        cls.get.stop()
-        cls.post.stop()
-
-    def before(self):
-        self.assertIsInstance(requests.post, MockFunction)
-        self.assertIsInstance(requests.get, MockFunction)
-
-        self.follower = Follower(
-            entity=self.entity,
-            identity='http://follower.example.com/tentd',
-            notification_path = 'notification'
-        ).save()
-
-    def test_entity_header_notification(self):
-        """Test the entity header is returned from the notifications route."""
-        self.assertEntityHeader('/{}/notification'.format(self.name))
-
-    def test_notified_of_new_post(self):
-        """Test that a followers notification path has a post made to it."""
-        resp = self.secure_client.post(
-            '/{}/posts'.format(self.name),
-            data=dumps({
-                'type': 'https://tent.io/types/post/status/v0.1.0',
-                'content': {'text': 'test', 'location': None}}),
-            content_type='application/json')
-        
-        self.assertStatus(resp, 200)
-        requests.post.assert_called(self.notification)
-
-    def test_notification_created(self):
-        """Test that a notification is raised correctly."""
-        post_details = {
-            'id': '1',
-            'schema': 'https://tent.io/types/post/status/v0.1.0', 
-            'content': {'text': 'test', 'location': None}}
-
-        self.assertEquals(self.entity.notifications.count(), 0)
-        resp = self.client.post('/{}/notification'.format(self.name), 
-            data=dumps(post_details), content_type='application/json')
-        self.assertStatus(resp, 200)
-        self.assertEquals(self.entity.notifications.count(), 1)
-        #TODO test that the notification raised has the correct details.

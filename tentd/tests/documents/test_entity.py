@@ -1,41 +1,28 @@
 """ Test cases for the user profile data """
 
+from py.test import raises, mark
+
 from tentd.documents import db, Entity, Post
-from tentd.tests import TentdTestCase, EntityTentdTestCase
 
-class EntityTest(EntityTentdTestCase):
-    def test_create_entity(self):
-        """Test creating and accessing an Entity"""
-        assert self.entity == Entity.objects.get(name="testuser")
+def test_create_identical_entity(entity):
+    """Test that we cannot create two entities with the same name"""
+    with raises(db.NotUniqueError):
+        Entity(name=entity.name).save()
 
-    def test_create_identical_entity(self):
-        """Check that properly inserting a document does not overwrite an
-        existing one"""
-        with self.assertRaises(db.NotUniqueError):
-            entity = Entity(name="testuser")
-            entity.save()
+def test_core_profile(app):
+    """Assert that a core profile is created"""
+    assert Entity(name="test").save().core is not None
 
-class CoreProfileTest(TentdTestCase):
-    def test_core_profile(self):
-        self.entity = Entity(name="testuser")
-        self.entity.save()
+def test_cascading_deletion(app):
+    entity = Entity(name="test_cascading_deletion").save()
+    post = Post.new(
+        entity=entity, content={'a': 'b'},
+        schema="http://example.com/thisisnotrelevant").save()
 
-        with self.assertRaises(Exception):
-            print self.entity.core
+    assert post in Post.objects
+    assert post in entity.posts
 
-class DeletionTest(TentdTestCase):
-    """Test cascading deletes"""
+    entity.delete()
 
-    def test_post_delete(self):
-        self.entity = Entity(name="testuser").save()
-        self.post = Post.new(
-            entity=self.entity,
-            schema="http://example.com/thisisnotrelevant",
-            content={'a': 'b'}).save()
-
-        assert self.post in Post.objects
-        assert self.post in self.entity.posts
-        
-        self.entity.delete(safe=True)
-
-        assert self.post not in Post.objects
+    assert post not in Post.objects
+    assert post not in entity.posts

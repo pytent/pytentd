@@ -1,38 +1,30 @@
 """ Test cases for the user profile data """
 
+from py.test import raises, mark
+
 from tentd.documents import db, Follower
 from tentd.documents.auth import generate_id, generate_key, KeyPair
-from tentd.tests import TestCase, EntityTentdTestCase
 
-class KeyPairTest(TestCase):
-    def test_generate(self):
-        assert generate_id()
-        assert generate_key()
+def test_generate():
+    assert generate_id()
+    assert generate_key()
 
-    def test_keypair_defaults(self):
-        keypair = KeyPair()
+def test_keypair_defaults():
+    """Test that KeyPair uses sensible defaults"""
+    kp = KeyPair()
+    assert kp.mac_id and isinstance(kp.mac_id, basestring)
+    assert kp.mac_key and isinstance(kp.mac_key, basestring)
+    assert kp.mac_algorithm and isinstance(kp.mac_algorithm, basestring)
 
-        assert isinstance(keypair.mac_id, basestring)
-        assert isinstance(keypair.mac_key, basestring)
-        assert isinstance(keypair.mac_algorithm, basestring)
+def test_follower_keypair_property(follower):
+    """Test that the property works and a KeyPair has been generated"""
+    assert isinstance(follower.keypair, KeyPair)
 
-class FollowerKeyPairTest(EntityTentdTestCase):
-    def before(self):
-        self.follower = Follower(
-            entity=self.entity,
-            identity='http://example.com')
+def test_follower_cascading_delete(follower):
+    """Test that the KeyPair is deleted with the follower"""
+    assert KeyPair.objects.get(owner=follower)
 
-        self.follower.save()
+    follower.delete()
 
-    def test_follower_keypair_property(self):
-        """Test that the property works and a KeyPair has been generated"""
-        assert self.follower.keypair
-
-    def test_cascading_delete(self):
-        """Test that the KeyPair is deleted with the follower"""
-        assert KeyPair.objects.get(owner=self.follower)
-
-        self.follower.delete()
-
-        with self.assertRaises(KeyPair.DoesNotExist):
-            KeyPair.objects.get(owner=self.follower)
+    with raises(KeyPair.DoesNotExist):
+        KeyPair.objects.get(owner=follower)

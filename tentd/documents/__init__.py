@@ -17,12 +17,16 @@ db = MongoEngine()
 from tentd.documents.auth import KeyPair
 from tentd.documents.followers import Follower, Following
 from tentd.documents.post import Post
-from tentd.documents.profiles import *
+from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
 from tentd.documents.notification import Notification
 from tentd.documents.groups import Group
 
 # Some document types import others, and should be loaded last
 from tentd.documents.entity import Entity
+
+#: A tuple of all documents that provide a mongodb collection
+collections = (
+    KeyPair, Follower, Following, Post, Profile, Notification, Group, Entity)
 
 # Create the deletion rules
 # CASCADE is used so that documents owned by an entity are deleted with it
