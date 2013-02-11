@@ -39,7 +39,7 @@ def test_create_post(entity):
     response = GET('posts.posts', secure=True)
     assert 'text' in response.json()[0]['content']
 
-def test_create_post_with_invalid_data(entity):
+def test_create_invalid_post(entity):
     """Test that attempting to create an invalid post fails."""
     with raises(APIBadRequest):
         SPOST('posts.posts', '<invalid>')
@@ -48,12 +48,26 @@ def test_get_post(post):
     """Test getting a single post works correctly."""
     assert SGET('posts.post', post_id=post.id).data == jsonify(post).data
 
+def test_get_post_version(post):
+    posts_json = SGET('posts.versions', post_id=post.id).json()
+    posts_db = [v.to_json() for v in post.versions]
+    assert posts_json == posts_db
+
+def test_get_post_mentions(post):
+    """Test that the mentions of a post can be returned."""
+    response = SGET('posts.mentions', post_id=post.id)
+    assert response.json() == post.versions[0].mentions
+
 def test_get_posts(entity, post):
     """Test that getting all posts returns correctly."""
     response = GET('posts.posts', secure=True)
     posts = jsonify([p.to_json() for p in entity.posts])
     assert response.data == posts.data
 
+def test_get_empty_posts(entity):
+    """Test that /posts works when there are no posts to return"""
+    assert SGET('posts.posts').json() == list()
+    
 def test_update_post(post):
     """Test a single post can be updated."""
     response = SPUT('posts.post', post_id=post.id,
@@ -76,6 +90,18 @@ def test_delete_post(entity, post):
     """Test that a post can be deleted."""
     SDELETE('posts.post', post_id=post.id)
     assert entity.posts.count() == 0
+
+def test_delete_post_version(entity, post):
+    # Delete the first two versions
+    SDELETE('posts.post', post_id=post.id, version=0)
+    SDELETE('posts.post', post_id=post.id, version=0)
+    
+    # Check the only one post is left
+    assert len(entity.posts.get(id=post.id).versions) == 1
+
+    # Check that trying to delete the last version raise an error
+    with raises(APIBadRequest):
+        SDELETE('posts.post', post_id=post.id, version=0)
 
 def test_delete_invalid_post(entity):
     """Test that attempting to delete a non-existant post fails."""
