@@ -106,7 +106,7 @@ class Post(EntityMixin, db.Document):
     def new_version(self, **kwargs):
         """Add a new version of the post"""
         version = Version(**kwargs)
-        self.versions.append(version)
+        self.versions.insert(0, version)
         return version
 
     @property

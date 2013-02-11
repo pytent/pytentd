@@ -12,7 +12,6 @@ def test_post_owner(entity, post):
 
 def test_post_content(entity, post):
     """Assert the post content is the latest version"""
-    post = Post.objects.get(entity=entity)
     assert post.latest.content['text'] == "Goodbye world"
     assert post.latest.content['coordinates'] == [2, 2]
 
