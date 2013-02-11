@@ -3,6 +3,7 @@
 from flask import json
 from flask.exceptions import JSONHTTPException, BadRequest
 
+
 class APIException(JSONHTTPException):
     """A base class for HTTP errors raised by the API, which should be
     returned with an error message in JSON format"""
@@ -16,6 +17,7 @@ class APIException(JSONHTTPException):
             'error': self.get_description(environ),
             'error_class': self.__class__.__name__
         }
+
 
 class APIBadRequest(APIException, BadRequest):
     """Represents an HTTP ``400 Bad Request`` error"""

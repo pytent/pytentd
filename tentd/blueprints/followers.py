@@ -6,13 +6,14 @@ from flask import json, request, g, make_response
 from flask.views import MethodView
 from mongoengine import ValidationError
 
-from tentd.control import follow
+from tentd.utils import follow
 from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.utils.auth import require_authorization
 from tentd.utils.exceptions import APIBadRequest
 from tentd.documents import Notification
 
 followers = EntityBlueprint('followers', __name__, url_prefix='/followers')
+
 
 @followers.route_class('')
 class FollowersView(MethodView):
@@ -21,6 +22,7 @@ class FollowersView(MethodView):
     def post(self):
         """Starts following a user, defined by the post data"""
         return jsonify(follow.start_following(g.entity, request.json()))
+
 
 @followers.route_class('/<string:follower_id>')
 class FollowerView(MethodView):
@@ -36,7 +38,7 @@ class FollowerView(MethodView):
         """Updates a following relationship."""
         return jsonify(follow.update_follower(
             g.entity, follower_id, request.json()))
-    
+
     def delete(self, follower_id):
         """Deletes a following relationship."""
         try:

@@ -7,6 +7,7 @@ from time import mktime
 
 from flask import Config
 
+
 def make_config(config):
     """Create a Config object from a filename or dictionary"""
     configuration = Config(getcwd())
@@ -17,6 +18,7 @@ def make_config(config):
     elif config is not None:
         raise TypeError("`config` argument must be a dict or string.")
     return configuration
+
 
 def json_attributes(obj, *names, **kwargs):
     """Takes an object and a list of attribute names, and returns a dict
@@ -35,10 +37,12 @@ def json_attributes(obj, *names, **kwargs):
             'b': 2,
             'c': 3,
         }
-    
+
     :Parameters:
     - obj: The object to fetch the attribute's from
-    - names: Each 'name' should attribute name (as a string) that will be used to fetch a value from the object. Optionally, the name can be replaced with a tuple containing a name and a function to apply to the value.
+    - names: Each 'name' should attribute name (as a string) that will be used
+      to fetch a value from the object. Optionally, the name can be replaced
+      with a tuple containing a name and a function to apply to the value.
     - kwargs: Each keyword: argument pair will be added to the resulting dict
     """
     json = {}
@@ -75,6 +79,8 @@ def set_attributes(cls, obj, values, save=True):
 
 def time_to_string(time):
     """Converts a datetime instance to a string"""
-    if time is None: return time
-    if time == "now": time = datetime.now()
+    if time is None:
+		return time
+    if time == "now":
+		time = datetime.now()
     return mktime(time.timetuple())

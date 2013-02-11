@@ -13,6 +13,7 @@ from tentd.utils.exceptions import APIBadRequest
 
 __all__ = ['Request', 'Response', 'Blueprint', 'JSONEncoder', 'jsonify']
 
+
 def cached_method(func):
     """Caches the return value of a function"""
     @wraps(func)
@@ -24,6 +25,7 @@ def cached_method(func):
         return getattr(self, name)
     return cache_return_value
 
+
 class JSONMixin(object):
     """Adds a cached JSON method for use with Request and Response
 
@@ -33,7 +35,7 @@ class JSONMixin(object):
     accepted_json_mimetypes = (
         'application/json',
         'application/vnd.tent.v0+json')
-    
+
     @cached_method
     def json(self):
         try:
@@ -53,13 +55,16 @@ class JSONMixin(object):
         Used for compatibility with Request"""
         raise error
 
+
 class Request(JSONMixin, Request):
     def on_json_loading_failed(self, e):
         raise APIBadRequest(
             "The request data could not be parsed as JSON ({})".format(e))
 
+
 class Response(JSONMixin, Response):
     pass
+
 
 class Blueprint(Blueprint):
     """Extends the base Flask Blueprint"""
@@ -88,6 +93,7 @@ class Blueprint(Blueprint):
             return cls
         return decorator
 
+
 class EntityBlueprint(Blueprint):
     """A blueprint that provides g.entity, either using SINGLE_USER_MODE or
     an url prefix of ``/<entity>``
@@ -104,17 +110,14 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if hasattr(obj, 'to_json'):
             return obj.to_json()
-        
         if hasattr(obj, '__json__'):
             return obj.__json__()
-        
         if isinstance(obj, (list, QuerySet)):
             return [self.default(o) for o in obj]
-
         if isinstance(obj, ObjectId):
             return str(obj)
-        
         return super(JSONEncoder, self).default(obj)
+
 
 def jsonify(obj):
     """Similar to Flask's jsonify() function, but uses a single argument

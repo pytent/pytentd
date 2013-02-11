@@ -14,19 +14,25 @@ from tentd.utils import make_config
 parser = ArgumentParser(description=__doc__)
 
 # Basic arguments
-parser.add_argument('-c', "--conf", metavar="[filename]",
-    help="a configuration file to use")
-parser.add_argument('-d', "--debug", action="store_true",
-    help="run flask in debug mode")
+parser.add_argument('-c',
+                    "--conf",
+                    metavar="[filename]",
+                    help="a configuration file to use")
+
+parser.add_argument('-d',
+                    "--debug",
+                    action="store_true",
+                    help="run flask in debug mode")
+
 
 def run():
     """Parse command line arguments and run the application"""
-    
+
     args = parser.parse_args()
-    
+
     config = make_config(args.conf)
     config['DEBUG'] = args.debug
-    
+
     # Create the application and create the database
     app = create_app(config)
 

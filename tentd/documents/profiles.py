@@ -10,6 +10,7 @@ from tentd.documents import db, EntityMixin
 from tentd.utils import json_attributes
 from tentd.lib.mongoengine import URIField
 
+
 class Profile(EntityMixin, db.Document):
     """A profile information type belonging to an entity
 
@@ -53,6 +54,7 @@ class Profile(EntityMixin, db.Document):
 
     def update_values(self, values):
         raise NotImplementedError("This class is abstract.")
+
 
 class CoreProfile(Profile):
     """This model provides the Core profile info type.
@@ -98,6 +100,7 @@ class CoreProfile(Profile):
             self.identity = values['identity']
         if 'servers' in values:
             self.servers = values['servers']
+
 
 class GenericProfile(db.DynamicDocument, Profile):
     def to_json(self):

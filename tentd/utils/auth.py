@@ -19,13 +19,14 @@ from werkzeug.exceptions import Unauthorized
 
 from tentd.documents.auth import KeyPair
 
+
 def parse_authstring(authstring):
-    """Parse an auth string into a dict 
-    
+    """Parse an auth string into a dict
+
     Given an authentication header string [RFC2617], parse the fields and
     return a dict object of each key/pair
     """
-    
+
     # Ensure the string starts with 'MAC '
     if not authstring or not authstring.startswith('MAC '):
         raise Exception("Could not parse authstring")
@@ -36,21 +37,21 @@ def parse_authstring(authstring):
     for pair in pairs:
         key, value = pair.strip().split("=", 1)
         avars[key] = value.strip('"')
-    
+
     return avars
 
 def normalize_request(request_object):
     """Build a normalized request string from a request
-    
-    Take the flask request object and build a normalized request string 
-    as defined in the IETF MAC proposal document 
+
+    Take the flask request object and build a normalized request string
+    as defined in the IETF MAC proposal document
 
     http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01
     """
 
     auth = parse_authstring(request_object.headers.get('Authorization'))
     full_path = request_object.path + "?" + request_object.query_string
-    ext = auth['ext'] if auth.has_key('ext') else ""
+    ext = auth['ext'] if 'ext' in auth else ""
 
     return "\n".join([
         str(auth['ts']), auth['nonce'], request_object.method,
@@ -80,19 +81,20 @@ class InvalidAuthentication(Unauthorized):
     def get_headers(self, environ):
         return [('Content-Type', 'text/html'), ('WWW-Authenticate', 'MAC')]
 
+
 def require_authorization(route):
     """Annotation that forces the view to do HMAC auth
 
-    
+
     Apply this decorator to your view to ensure that the browser is
     authenticated. If they are not, they'll get a HTTP 401 and a
     WWW-Authenticate header.
-    
+
     """
     @wraps(route)
     def require_authorization_for_route(*args, **kwargs):
             """Wrapped decorator function
-            
+
             TODO: actual implementation of this decorator.
             """
 
