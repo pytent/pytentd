@@ -28,8 +28,7 @@ def parse_authstring(authstring):
     
     # Ensure the string starts with 'MAC '
     if not authstring or not authstring.startswith('MAC '):
-        # TODO: Should this raise an error?
-        return False
+        raise Exception("Could not parse authstring")
 
     pairs = authstring[4:].strip().split(',')
 
@@ -40,7 +39,7 @@ def parse_authstring(authstring):
     
     return avars
 
-def normalize_request(request):
+def normalize_request(request_object):
     """Build a normalized request string from a request
     
     Take the flask request object and build a normalized request string 
@@ -49,33 +48,28 @@ def normalize_request(request):
     http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01
     """
 
-    auth = parse_authstring(request.headers.get('Authorization'))
-    full_path = request.path + "?" + request.query_string
+    auth = parse_authstring(request_object.headers.get('Authorization'))
+    full_path = request_object.path + "?" + request_object.query_string
     ext = auth['ext'] if auth.has_key('ext') else ""
 
     return "\n".join([
-        str(auth['ts']), auth['nonce'], request.method,
-        full_path, request.host, str(80), ext])
+        str(auth['ts']), auth['nonce'], request_object.method,
+        full_path, request_object.host, str(80), ext])
 
-def check_request(request, key):
+def check_request(request_object, key):
     """Return true if the given request object matches its signature
     
     This is the main test method that verifies that request
     """
-    
-    auth = parse_authstring(request.headers.get('Authorization'))
-    
-    reqmac = auth['mac']
-    norm = normalize_request(request)   
-
-    mac = hmac.new(key, norm, sha256)
-
+    mac = hmac.new(key, normalize_request(request_object), sha256)
     macstr = base64.encodestring(mac.digest())
-    return reqmac == macstr
+    
+    auth = parse_authstring(request_object.headers.get('Authorization'))
+    return auth['mac'] == macstr
 
 def authenticate_response():
     """Sends a 401 response that enables basic auth"""
-
+    # TODO: Replace with ``raise InvalidAuthentication``
     return Response('Invalid MAC Credentials\n', 401,
         {'WWW-Authenticate': 'MAC'})
 
