@@ -6,7 +6,7 @@ from flask import g
 from py.test import fixture
 
 from tentd import create_app
-from tentd.documents import collections, Entity, Follower
+from tentd.documents import collections, Entity, Post, Follower
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('testing')
@@ -84,6 +84,33 @@ def entity(request, app):
             del g.entity
     
     return g.entity
+
+@fixture
+def post(request, entity):
+    """A post with multiple versions"""
+    schema = 'https://tent.io/types/post/status/v0.1.0'
+    post = Post(entity=entity, schema=schema)
+    post.new_version(
+        content={
+            'text': "Hello world",
+            'coordinates': [0, 0],
+        },
+        mention=[])
+    post.new_version(
+        content={
+            'text': "How are you, world?",
+            'coordinates': [1, 1],
+        },
+        mention=[])
+    post.new_version(
+        content={
+            'text': "Goodbye world",
+            'coordinates': [2, 2]},
+        mentions=[{
+            'entity': 'http://softly.example.com'
+        }])
+    request.addfinalizer(lambda: post.delete())
+    return post.save()
 
 @fixture
 def follower(request, entity):

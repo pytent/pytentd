@@ -1,6 +1,6 @@
 """ Test cases for the user profile data """
 
-from py.test import fixture, raises, mark
+from py.test import raises, mark
 
 from tentd.documents import db, Follower
 from tentd.documents.auth import generate_id, generate_key, KeyPair
