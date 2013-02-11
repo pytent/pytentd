@@ -119,22 +119,18 @@ class TestProfileBlueprint:
                 'entity.profile', secure=True,
                 schema='http://example.com/schemas/missing')
 
-from mock import patch
-
 @fixture
-def notification_mocks(request, follower):
+def notification_mocks(request, follower, monkeypatch):
     follower_api_root = follower.identity + '/tentd'
     
-    head = patch('requests.head', new_callable=MockFunction)
-    head.start()
+    monkeypatch.setattr(requests, 'head', MockFunction())
 
     requests.head[follower.identity] = MockResponse(
         headers={'Link':
             '<{}/profile>; rel="https://tent.io/rels/profile"'\
             .format(follower_api_root)})
 
-    get = patch('requests.get', new_callable=MockFunction)
-    get.start()
+    monkeypatch.setattr(requests, 'get', MockFunction())
 
     requests.get[follower_api_root + '/profile'] = MockResponse(
         json={
@@ -144,8 +140,7 @@ def notification_mocks(request, follower):
                 "licences": [],
                 "tent_version": "0.2"}})
 
-    post = patch('requests.post', new_callable=MockFunction)
-    post.start()
+    monkeypatch.setattr(requests, 'post', MockFunction())
     
     requests.post[follower_api_root + '/notification'] = MockResponse()
 
@@ -155,11 +150,9 @@ def notification_mocks(request, follower):
 
     @request.addfinalizer
     def teardown_notification_mocks():
-        head.stop()
-        get.stop()
-        post.stop()
-
-    return head, get, post
+        monkeypatch.delattr(requests, 'head')
+        monkeypatch.delattr(requests, 'post')
+        monkeypatch.delattr(requests, 'get')
 
 def test_entity_header_notification(entity, notification_mocks):
     """Test the entity header is returned from the notifications route."""

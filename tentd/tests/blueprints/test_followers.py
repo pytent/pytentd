@@ -4,7 +4,6 @@ import requests
 
 from flask import json
 from py.test import raises, fixture
-from mock import patch
 
 from tentd.documents.entity import Follower
 from tentd.tests.http import POST, SPUT, SDELETE
@@ -14,18 +13,16 @@ from tentd.utils.exceptions import APIBadRequest
 PROFILE_FORMAT = '<{}/profile>; rel="https://tent.io/rels/profile"'
 
 @fixture
-def follower_mocks(request):
+def follower_mocks(request, monkeypatch):
     follower_identity = 'http://follower.example.com'
     follower_api_root = 'http://follower.example.com/tentd'
-    
-    head = patch('requests.head', new_callable=MockFunction)
-    head.start()
+
+    monkeypatch.setattr(requests, 'head', MockFunction())
 
     requests.head[follower_identity] = MockResponse(
         headers={'Link': PROFILE_FORMAT.format(follower_api_root)})
 
-    get = patch('requests.get', new_callable=MockFunction)
-    get.start()
+    monkeypatch.setattr(requests, 'get', MockFunction())
 
     requests.get[follower_api_root + '/notification'] = MockResponse()
     requests.get[follower_api_root + '/profile'] = MockResponse(
@@ -41,9 +38,9 @@ def follower_mocks(request):
     assert isinstance(requests.get, MockFunction)
 
     @request.addfinalizer
-    def teardown_follower_mocks():
-        head.stop()
-        get.stop()
+    def teardown_mocks():
+        monkeypatch.delattr(requests, 'head')
+        monkeypatch.delattr(requests, 'get')
 
     return {
         'identity': follower_identity,

@@ -5,8 +5,6 @@ from __future__ import absolute_import
 from collections import defaultdict
 from weakref import proxy
 
-from mock import Mock
-
 class CallableAttribute(object):
     def __call__(self):
         return self.value
@@ -14,8 +12,12 @@ class CallableAttribute(object):
     def __set__(self, instance, value):
         self.value = value
 
-class MockResponse(Mock):
+class MockResponse(object):
     """A mock response, for use with MockFunction"""
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     #: Use a default status code
     status_code = 200
@@ -24,27 +26,10 @@ class MockResponse(Mock):
     json = CallableAttribute()
 
 class MockFunction(dict):
-    """A callable argument->value dictionary for patching over a function
-
-    New argument->value pairs can be assigned in the same way as a dict,
-    and values can be returned by calling it as a function.
-
-        with mock.patch('requests.head', new_callable=MockFunction) as head:
-            head['http://example.com'] = MockResponse(data="Hello world.")
-            ...
-    """
-
-    __objects = []
-
-    @classmethod
-    def reset(cls):
-        """Clear the history of all MockFunction objects"""
-        for obj in cls.__objects:
-            obj.history.clear()
+    """A callable argument->value dictionary for patching over a function"""
 
     def __init__(self, **kwargs):
         super(MockFunction, self).__init__(**kwargs)
-        self.__objects.append(proxy(self))
         self.history = defaultdict(lambda: 0)
 
     def __call__(self, value, *args, **kwargs):
@@ -63,5 +48,4 @@ class MockFunction(dict):
         return self.history[value] == 0
     
     def __repr__(self):
-        return "MockFunction({})".format(
-            super(MockFunction, self).__repr__())
+        return "MockFunction{}".format(super(MockFunction, self).__repr__())
