@@ -111,6 +111,7 @@ def follower(request, entity):
     follower = Follower(
         entity=entity,
         identity='http://follower.example.com',
+        servers=['http://follower.example.com/tentd'],
         notification_path='notification')
     request.addfinalizer(follower.delete)
     return follower.save()

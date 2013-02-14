@@ -23,6 +23,9 @@ class Follower(EntityMixin, db.Document):
     #: The identity of the follower
     identity = URIField(required=True, unique_with='entity')
 
+    #: The Server/API root of the follower
+    servers = ListField(URIField(), required=True)
+
     #: The time the follower was created
     created_at = DateTimeField(required=True, default=datetime.now)
 
@@ -46,6 +49,7 @@ class Follower(EntityMixin, db.Document):
         return {
             'id': str(self.id),
             'entity': self.identity,
+            'servers': self.servers,
             'created_at': time_to_string(self.created_at),
             'updated_at': time_to_string(self.updated_at),
             'notification_path': self.notification_path,

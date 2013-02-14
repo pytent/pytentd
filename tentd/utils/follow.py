@@ -27,7 +27,6 @@ def discover_entity(identity):
     except requests.ConnectionError as ex:
         raise APIBadRequest("Could not discover entity ({})".format(ex))
 
-    # TODO: 404 is probably the wrong error code
     if not 'Link' in response.headers:
         raise APIBadRequest("Entity has no 'Link' header")
 
@@ -67,6 +66,7 @@ def start_following(entity, details):
     follower = Follower(
         entity=entity,
         identity=profile[CoreProfile.__schema__]['entity'],
+        servers=profile[CoreProfile.__schema__]['servers'],
         licenses=details['licences'],
         types=details['types'],
         notification_path=details['notification_path'])
@@ -94,9 +94,9 @@ def get_notification_link(follower):
     """Gets the absolute link of the notification path."""
     # TODO: Adding a / is a potential bug.
     #       We may have to strip all identities of trailing /'s
-
-    profile = discover_entity(follower.identity)
-    api_root = profile[CoreProfile.__schema__]['servers'][0]
+    if len(follower.servers) < 1:
+        raise APIException("Could not get notification link of follower {}: No servers".format(follower))
+    api_root = follower.servers[0]
 
     if api_root[-1] == '/':
         api_root = api_root[:-1]
