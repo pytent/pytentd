@@ -107,6 +107,7 @@ class EntityBlueprint(Blueprint):
 
         self.url_value_preprocessor(self._assign_global_entity)
         self.url_defaults(self._use_global_entity)
+        self.url_defaults(self._pop_global_entity)
         self.after_request(self._link_header)
 
     def _assign_global_entity(self, endpoint, values):
@@ -121,9 +122,12 @@ class EntityBlueprint(Blueprint):
     def _use_global_entity(self, endpoint, values):
         """Use g.entity as a default value in url_for calls"""
         if current_app.url_map.is_endpoint_expecting(endpoint, 'entity'):
-            if 'entity' not in values and hasattr(g, 'entity'):
-                values['entity'] = g.entity
-        elif current_app.single_user_mode:
+            if hasattr(g, 'entity'):
+                values.setdefault('entity', g.entity)
+
+    def _pop_global_entity(self, endpoint, values):
+        """Remove entity values in single user mode"""
+        if current_app.single_user_mode:
             values.pop('entity', None)
 
     def _link_header(self, response):
