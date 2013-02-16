@@ -8,15 +8,20 @@ from tentd.tests.mock import *
 
 def profile_url_for(entity, _external=False):
     """Get an entity profile url without using url_for"""
-    url = ['/profile']
+    
+    if current_app.use_subdomains:
+        base_url = 'http://{user}.{server}'
+    else:
+        if _external:
+            base_url = 'http://{server}'
+        else:
+            base_url = ''
 
-    if not current_app.single_user_mode:
-        url.append('/' + entity.name)
+        if not current_app.single_user_mode:
+            base_url += '/{user}'
 
-    if _external:
-        url.append('http://' + current_app.config['SERVER_NAME'])
-
-    return ''.join(url[::-1])
+    server = current_app.config.get('SERVER_NAME')
+    return (base_url + '/profile').format(server=server, user=entity.name)
 
 def response_has_link_header(response):
     """Test that a response includes an entity link header"""
