@@ -45,6 +45,10 @@ def create_app(config=None):
     # Load the user configuration values
     app.config.update(make_config(config))
 
+    if app.single_user_mode and app.use_subdomains:
+        raise Exception(
+            "Single user and subdomain modes are mutually exclusive.")
+
     @app.route('/')
     def home():
         """Returns information about the server"""
