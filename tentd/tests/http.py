@@ -4,6 +4,8 @@ __all__ = [
     'HTTP', 'DELETE', 'GET', 'HEAD', 'PUT', 'POST',
     'SDELETE', 'SGET', 'SHEAD', 'SPUT', 'SPOST']
 
+from re import match
+
 from flask import current_app, json, url_for, g
 from werkzeug.datastructures import Headers
 
@@ -19,6 +21,21 @@ def authorization_header():
     return 'MAC id="{0}",ts="{1}",nonce="{2}",mac="{3}"'.format(
         macid, tstamp, nonce, mac)
 
+def build_url(endpoint, base_url=None, **kwargs):
+    if endpoint[0] == '/':
+        return endpoint, base_url
+
+    try:
+        url = url_for(endpoint, **kwargs)
+    except KeyError:
+        raise Exception("Endpoint does not exist")
+
+    result = match("(http://[^/]+)(/.*)", url)
+    if result:
+        base_url, url = result.groups()
+
+    return url, base_url
+
 def HTTP(type, endpoint, data=None, secure=False,
     headers=None, content_type='text/html', **kwargs):
     """A HTTP convenience function that takes a method type, an endpoint
@@ -30,12 +47,10 @@ def HTTP(type, endpoint, data=None, secure=False,
 
     Internally, it calls current_app.client.<method> to get the response.
     """
-    if not endpoint[0] == '/':
-        try:
-            endpoint = url_for(endpoint, **kwargs)
-        except KeyError:
-            raise Exception("Endpoint does not exist")
-
+    
+    url, base_url = build_url(endpoint, **kwargs)
+    print url, base_url
+    
     if isinstance(data, (dict, list)):
         data = json.dumps(data, cls=JSONEncoder)
         content_type = 'application/json'
@@ -54,7 +69,8 @@ def HTTP(type, endpoint, data=None, secure=False,
 
     # Fetch and call the function from the client
     return getattr(current_app.client, type)(
-        endpoint, data=data, headers=headers, content_type=content_type)
+        url, base_url=base_url,
+        data=data, headers=headers, content_type=content_type)
 
 def _wrap_http(method_name):
     return lambda *a, **k: HTTP(method_name, *a, **k)

@@ -93,14 +93,61 @@ class Blueprint(Blueprint):
             return cls
         return decorator
 
+from flask import current_app, g, url_for
+from tentd.documents import Entity
+from werkzeug.exceptions import NotFound
 
 class EntityBlueprint(Blueprint):
     """A blueprint that provides g.entity, either using SINGLE_USER_MODE or
     an url prefix of ``/<entity>``
-
-    This class is deprecated
     """
-    pass
+
+    def __init__(self, *args, **kwargs):
+        super(EntityBlueprint, self).__init__(*args, **kwargs)
+
+        self.url_value_preprocessor(self._assign_global_entity)
+        self.url_defaults(self._use_global_entity)
+        self.url_defaults(self._pop_global_entity)
+        self.after_request(self._link_header)
+
+    def _assign_global_entity(self, endpoint, values):
+        """Assign the current entity to g.entity"""
+        if endpoint:
+            try:
+                name = current_app.single_user_mode or values.pop('entity')
+                g.entity = Entity.objects.get(name=name)
+            except Entity.DoesNotExist:
+                raise NotFound("The reqested entity was not found")
+
+    def _use_global_entity(self, endpoint, values):
+        """Use g.entity as a default value in url_for calls"""
+        if current_app.url_map.is_endpoint_expecting(endpoint, 'entity'):
+            if hasattr(g, 'entity'):
+                values.setdefault('entity', g.entity)
+
+    def _pop_global_entity(self, endpoint, values):
+        """Remove entity values in single user mode"""
+        if current_app.single_user_mode:
+            values.pop('entity', None)
+
+    def _link_header(self, response):
+        """Add the entity link header to responses"""
+        if hasattr(g, 'entity'):
+            link = '<{}>; rel="https://tent.io/rels/profile"'.format(
+                url_for('entity.profiles', _external=True))
+            response.headers['Link'] = link
+        return response
+
+    def register(self, app, options, *args):
+        """Register the blueprint with the correct url prefixes"""
+        if not app.single_user_mode:
+            if app.use_subdomains:
+                options['subdomain'] = '<string:entity>'
+            else:
+                original_prefix = self.url_prefix or ''
+                options['url_prefix'] = '/<string:entity>' + original_prefix
+
+        super(EntityBlueprint, self).register(app, options, *args)
 
 
 class JSONEncoder(json.JSONEncoder):

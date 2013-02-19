@@ -6,8 +6,10 @@ from py.test import fixture
 from tentd import create_app
 from tentd.documents import collections, Entity, Post, Follower
 
-#: Constant values for single and multi user modes
-MULTIPLE, SINGLE = 'multiple user mode', 'single user mode'
+#: Constant values for various modes
+SINGLE = 'single user mode'
+MULTIPLE = 'multiple user mode'
+SUBDOMAINS = 'subdomain multiple user mode'
 
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
@@ -20,7 +22,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('app', {
             'multi': (MULTIPLE,),
             'single': (SINGLE,),
-            'both': (MULTIPLE, SINGLE),
+            'domains': (SUBDOMAINS),
+            'both': (SINGLE, MULTIPLE, SUBDOMAINS),
         }[metafunc.config.option.mode], indirect=True, scope="module")
 
 def pytest_runtest_teardown(item, nextitem):
@@ -35,22 +38,31 @@ def app(request):
 
     The scope for this fixture is defined in pytest_generate_tests"""
 
-    mode = "single_user_name" if request.param is SINGLE else False
+    single_user_mode, use_subdomains = False, False
+    
+    if request.param is SINGLE:
+        single_user_mode = 'the_single_user'
+    elif request.param is SUBDOMAINS:
+        use_subdomains = True
 
     app = create_app({
         'DEBUG': True,
         'TESTING': True,
         'TRAP_HTTP_EXCEPTIONS': True,
         'PRESERVE_CONTEXT_ON_EXCEPTION': False,
-        'SERVER_NAME': 'tentd.example.com',
+        'SERVER_NAME': 'example.com',
         'MONGODB_SETTINGS': {
             'db': 'tentd-testing',
         },
-        'SINGLE_USER_MODE': mode,
+        'SINGLE_USER_MODE': single_user_mode,
+        'USE_SUBDOMAINS': use_subdomains,
     })
 
     # Create a test client, used with the tentd.tests.HTTP functions
     app.client = app.test_client()
+
+    # Make the test mode availible, not useful for much more than debugging
+    app.test_mode = request.param
 
     # Setup a request and application context
     ctx = app.test_request_context()

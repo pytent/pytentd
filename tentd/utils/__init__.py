@@ -5,7 +5,17 @@ from datetime import datetime
 from functools import wraps
 from time import mktime
 
-from flask import Config
+from flask import Config, current_app
+
+
+def manage_exception(func):
+    """Decorates an error handler to raise errors in debug mode"""
+    @wraps(func)
+    def manage_exception(error):
+        if current_app.config['TRAP_HTTP_EXCEPTIONS']:
+            raise func(error)
+        return func(error).get_response()
+    return manage_exception
 
 
 def make_config(config):
