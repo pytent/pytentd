@@ -118,6 +118,19 @@ def post(request, entity):
     return post
 
 @fixture
+def posts(request, entity):
+    """Sets up multiple posts"""
+    schema = 'https://tent.io/types/post/status/v0.1.0'
+    posts = []
+    for i in xrange(15):
+        post = Post.new(entity=entity, schema=schema, content={
+            'text': 'Post {}'.format(i)})
+        post.save()
+        request.addfinalizer(post.delete)
+        posts.append(post)
+    return posts
+
+@fixture
 def follower(request, entity):
     """A follower with an identity of http://follower.example.com"""
     follower = Follower(

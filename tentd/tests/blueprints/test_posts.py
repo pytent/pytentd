@@ -60,13 +60,22 @@ def test_get_post_mentions(post):
 
 def test_get_posts(entity, post):
     """Test that getting all posts returns correctly."""
-    response = GET('posts.posts', secure=True)
+    response = SGET('posts.posts')
     posts = jsonify([p.to_json() for p in entity.posts])
     assert response.data == posts.data
 
 def test_get_empty_posts(entity):
     """Test that /posts works when there are no posts to return"""
     assert SGET('posts.posts').json() == list()
+
+def test_get_filtered_posts(entity, posts):
+    """Test that /posts?limit=1 works"""
+    # Check limits from 0 to N+1 (check boundary conditions)
+    for i in xrange(len(posts) + 1):
+        # Make sure the length of posts returned is either i or the number of
+        # posts which exist.
+        assert len(SGET('posts.posts', limit=i).json()) == min(i, len(posts))
+
     
 def test_update_post(post):
     """Test a single post can be updated."""

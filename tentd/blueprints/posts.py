@@ -5,6 +5,8 @@ import requests
 from flask import json, request, g, abort, make_response
 from flask.views import MethodView
 
+from mongoengine import Q
+
 from tentd.lib.flask import EntityBlueprint, jsonify
 from tentd.utils import follow
 from tentd.utils.exceptions import APIBadRequest
@@ -13,6 +15,7 @@ from tentd.documents import Entity, Post, CoreProfile, Notification
 
 posts = EntityBlueprint('posts', __name__, url_prefix='/posts')
 
+DEFAULT_POST_LIMIT = 200
 
 @posts.route_class('', endpoint='posts')
 class PostsView(MethodView):
@@ -22,7 +25,12 @@ class PostsView(MethodView):
 
     def get(self):
         """Gets all posts"""
-        return jsonify(g.entity.posts)
+        query = []
+        limit = DEFAULT_POST_LIMIT
+        if 'limit' in request.args:
+            limit = min(int(request.args['limit']), limit)
+
+        return jsonify(g.entity.posts(*query).limit(limit))
 
     def post(self):
         """ Used by apps to create a new post.
