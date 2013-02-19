@@ -35,7 +35,6 @@ def test_create_group(entity):
     with raises(APIBadRequest):
         POST('groups.groups', '<invalid>')
 
-@mark.xfail(reason="Group updates are currently broken")
 def test_update_group(entity, group):
     PUT('groups.group', {'name': "A renamed Test Group"}, name=group.name)
     with raises(Group.DoesNotExist):

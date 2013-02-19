@@ -33,9 +33,10 @@ class Group(EntityMixin, db.Document):
     def __str__(self):
         return self.name
 
-    def update_values(self, values):
+    def update_values(self, **values):
         if 'name' in values:
             self.name = values['name']
+        self.save()
 
     def to_json(self):
         return json_attributes(self, 'name', ('created_at', time_to_string))
