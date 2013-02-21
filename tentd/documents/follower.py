@@ -1,11 +1,11 @@
 """Followers and followings"""
 
-__all__ = ['Follower', 'Following']
+__all__ = ['Follower']
 
 from datetime import datetime
 
 from mongoengine import *
-from mongoengine.signals import post_save
+from mongoengine.signals import pre_save, post_save
 
 from tentd.documents import db, EntityMixin, KeyPair
 from tentd.utils import json_attributes, time_to_string
@@ -58,18 +58,10 @@ class Follower(EntityMixin, db.Document):
             'licenses': self.licenses
         }
 
+    @staticmethod
+    def pre_save(sender, document, **kwargs):
+        """Update the updated_at attribute"""
+        document.updated_at = datetime.now()
+
 post_save.connect(KeyPair.owner_post_save, sender=Follower)
-
-class Following(EntityMixin, db.Document):
-    """An entity that a local entity is following"""
-
-    meta = {
-        'allow_inheritance': False,
-        'indexes': ['identity'],
-    }
-
-    #: The identity of the following
-    identity = URIField(unique_with='entity')
-
-    #: The time the following was created
-    created_at = DateTimeField(default=datetime.now)
+pre_save.connect(Follower.pre_save, sender=Follower)

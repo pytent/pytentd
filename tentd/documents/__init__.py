@@ -15,7 +15,8 @@ db = MongoEngine()
 # Ensure all models are loaded and imported into the current namespace
 
 from tentd.documents.auth import KeyPair
-from tentd.documents.followers import Follower, Following
+from tentd.documents.follower import Follower
+from tentd.documents.following import Following
 from tentd.documents.post import Post
 from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
 from tentd.documents.notification import Notification
