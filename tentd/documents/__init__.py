@@ -1,7 +1,7 @@
 """The database models"""
 
 from flask.ext.mongoengine import MongoEngine
-from mongoengine import CASCADE, ReferenceField, DENY
+from mongoengine import CASCADE, ReferenceField
 
 
 class EntityMixin(object):
@@ -13,7 +13,6 @@ class EntityMixin(object):
 db = MongoEngine()
 
 # Ensure all models are loaded and imported into the current namespace
-
 from tentd.documents.auth import KeyPair
 from tentd.documents.follower import Follower
 from tentd.documents.following import Following
@@ -31,9 +30,12 @@ collections = (
 
 # Create the deletion rules
 # CASCADE is used so that documents owned by an entity are deleted with it
+
+# Most documents are deleted with their entity
 for collection in (Follower, Following, Post, Profile):
     Entity.register_delete_rule(collection, 'entity', CASCADE)
 
+# KeyPairs are deleted with their owner
 Follower.register_delete_rule(KeyPair, 'owner', CASCADE)
 
 # Clean the namespace, as defining __all__ leads to problems
