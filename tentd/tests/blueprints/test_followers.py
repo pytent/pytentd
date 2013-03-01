@@ -1,4 +1,4 @@
-"""Tests for the entity blueprint"""
+"""Tests for the followers blueprint"""
 
 import requests
 

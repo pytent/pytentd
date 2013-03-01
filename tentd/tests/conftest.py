@@ -4,7 +4,7 @@ from flask import g
 from py.test import fixture
 
 from tentd import create_app
-from tentd.documents import collections, Entity, Post, Follower
+from tentd.documents import collections, Entity, Post, Follower, Following
 
 #: Constant values for various modes
 SINGLE = 'single user mode'
@@ -127,3 +127,12 @@ def follower(request, entity):
         notification_path='notification')
     request.addfinalizer(follower.delete)
     return follower.save()
+
+@fixture
+def following(request, entity):
+    """A following with an identity of http://following.example.com"""
+    following = Following(
+        entity=entity,
+        identity='http://following.example.com')
+    request.addfinalizer(following.delete)
+    return following.save()
