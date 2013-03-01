@@ -7,7 +7,7 @@ from werkzeug.exceptions import ImATeapot, NotFound
 
 from tentd import __doc__ as description, __version__ as version
 from tentd.lib.flask import Request, Response, JSONEncoder, jsonify
-from tentd.blueprints import entity, followers, posts, groups
+from tentd.blueprints import entity, followers, followings, posts, groups
 from tentd.documents import db, Entity
 from tentd.utils import make_config, manage_exception
 from tentd.utils.exceptions import RequestDidNotValidate
@@ -70,6 +70,7 @@ def create_app(config=None):
     # Register the blueprints
     app.register_blueprint(entity)
     app.register_blueprint(followers)
+    app.register_blueprint(followings)
     app.register_blueprint(posts)
     app.register_blueprint(groups)
     

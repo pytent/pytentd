@@ -163,6 +163,8 @@ class JSONEncoder(json.JSONEncoder):
             return [self.default(o) for o in obj]
         if isinstance(obj, ObjectId):
             return str(obj)
+        if obj is NotImplemented:
+            return "Warning: Attribute not implemented"
         return super(JSONEncoder, self).default(obj)
 
 

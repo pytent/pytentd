@@ -4,7 +4,7 @@ from flask import g
 from py.test import fixture
 
 from tentd import create_app
-from tentd.documents import collections, Entity, Post, Follower
+from tentd.documents import collections, Entity, Post, Follower, Following
 
 #: Constant values for various modes
 SINGLE = 'single user mode'
@@ -13,8 +13,8 @@ SUBDOMAINS = 'subdomain multiple user mode'
 
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
-    parser.addoption("--mode", action="store", default="both",
-        help="the mode to run pytentd in - multi, single, or both")
+    parser.addoption('--mode', action='store', default='domains',
+        help="the mode to run pytentd in - single, multi, domains, or all")
 
 def pytest_generate_tests(metafunc):
     """Apply the --mode option to the app fixture"""
@@ -22,8 +22,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('app', {
             'multi': (MULTIPLE,),
             'single': (SINGLE,),
-            'domains': (SUBDOMAINS),
-            'both': (SINGLE, MULTIPLE, SUBDOMAINS),
+            'domains': (SUBDOMAINS,),
+            'all': (SINGLE, MULTIPLE, SUBDOMAINS),
         }[metafunc.config.option.mode], indirect=True, scope="module")
 
 def pytest_runtest_teardown(item, nextitem):
@@ -127,3 +127,12 @@ def follower(request, entity):
         notification_path='notification')
     request.addfinalizer(follower.delete)
     return follower.save()
+
+@fixture
+def following(request, entity):
+    """A following with an identity of http://following.example.com"""
+    following = Following(
+        entity=entity,
+        identity='http://following.example.com')
+    request.addfinalizer(following.delete)
+    return following.save()

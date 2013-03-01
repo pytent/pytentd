@@ -49,7 +49,6 @@ def HTTP(type, endpoint, data=None, secure=False,
     """
     
     url, base_url = build_url(endpoint, **kwargs)
-    print url, base_url
     
     if isinstance(data, (dict, list)):
         data = json.dumps(data, cls=JSONEncoder)
