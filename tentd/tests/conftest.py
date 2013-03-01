@@ -19,7 +19,6 @@ def pytest_addoption(parser):
 def pytest_generate_tests(metafunc):
     """Apply the --mode option to the app fixture"""
     if 'app' in metafunc.fixturenames:
-        print "Using", metafunc.config.option.mode
         metafunc.parametrize('app', {
             'multi': (MULTIPLE,),
             'single': (SINGLE,),
