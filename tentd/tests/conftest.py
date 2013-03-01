@@ -13,17 +13,18 @@ SUBDOMAINS = 'subdomain multiple user mode'
 
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
-    parser.addoption("--mode", action="store", default="both",
-        help="the mode to run pytentd in - multi, single, or both")
+    parser.addoption('--mode', action='store', default='domains',
+        help="the mode to run pytentd in - single, multi, domains, or all")
 
 def pytest_generate_tests(metafunc):
     """Apply the --mode option to the app fixture"""
     if 'app' in metafunc.fixturenames:
+        print "Using", metafunc.config.option.mode
         metafunc.parametrize('app', {
             'multi': (MULTIPLE,),
             'single': (SINGLE,),
-            'domains': (SUBDOMAINS),
-            'both': (SINGLE, MULTIPLE, SUBDOMAINS),
+            'domains': (SUBDOMAINS,),
+            'all': (SINGLE, MULTIPLE, SUBDOMAINS),
         }[metafunc.config.option.mode], indirect=True, scope="module")
 
 def pytest_runtest_teardown(item, nextitem):
