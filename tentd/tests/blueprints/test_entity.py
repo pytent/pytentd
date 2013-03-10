@@ -27,7 +27,8 @@ class TestProfileBlueprint:
 
     def test_profile_json(self):
         """Test that /profile returns a json document"""
-        assert GET('entity.profiles').mimetype == 'application/json'
+        tent_mimetype = 'application/vnd.tent.v0+json'
+        assert GET('entity.profiles').mimetype == tent_mimetype
         assert GET('entity.profiles').json()
 
     def test_core_profile_json(self, entity):

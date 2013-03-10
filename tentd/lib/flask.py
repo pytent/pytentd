@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from functools import wraps
 
 from bson import ObjectId
-from flask import json, current_app, Request, Response, Blueprint
+from flask import json, current_app, Request, Response, Blueprint, request
 from mongoengine.queryset import QuerySet
 from werkzeug.utils import cached_property
 
@@ -170,8 +170,17 @@ class JSONEncoder(json.JSONEncoder):
 
 def jsonify(obj):
     """Similar to Flask's jsonify() function, but uses a single argument
-    and doesn't coerce the arguments into a dictionary"""
-    # TODO: Use current_app.json_encoder once Flask 0.10 is availible
+    and doesn't coerce the arguments into a dictionary.
+
+    Uses the mimetype of the request if possible, otherwise uses ``application/vnd.tent.v0+json``.
+
+    .. todo: Use current_app.json_encoder once Flask 0.10 is availible
+    """
     data = json.dumps(obj, cls=JSONEncoder, indent=2)
-    # TODO: Use mimetype based on the request Accept header
-    return current_app.response_class(data, mimetype='application/json')
+
+    if request.mimetype in ['application/json', 'text/json']:
+        mimetype = request.mimetype
+    else:
+        mimetype = 'application/vnd.tent.v0+json'
+    
+    return current_app.response_class(data, mimetype=mimetype)
