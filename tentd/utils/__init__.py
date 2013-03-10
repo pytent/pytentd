@@ -4,8 +4,20 @@ from os import getcwd
 from datetime import datetime
 from functools import wraps
 from time import mktime
+from warnings import warn
 
 from flask import Config, current_app
+
+
+def deprecated(func):
+    """Marks a function as deprecated"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        warn(
+            "Call to deprecated function {}.".format(func.__name__),
+            category=DeprecationWarning)
+        return func(*args, **kwargs)
+    return wrapper
 
 
 def manage_exception(func):

@@ -6,15 +6,14 @@ from werkzeug.exceptions import ImATeapot, NotFound
 
 from tentd.documents import CoreProfile
 from tentd.tests import GET, profile_url_for, response_has_link_header
-from tentd.tests.conftest import SINGLE, MULTIPLE, SUBDOMAINS
 
 def test_expected_profile_url(request, app, entity):
     url = profile_url_for(entity)
-    if app.test_mode is SINGLE:
+    if app.user_mode == 'single':
         assert url == '/profile'
-    elif app.test_mode is MULTIPLE:
+    elif app.user_mode is 'multiple':
         assert url == '/' + entity.name + '/profile'
-    elif app.test_mode is SUBDOMAINS:
+    elif app.user_mode is 'subdomain':
         assert url == 'http://{}.example.com/profile'.format(entity.name)
 
 def test_url_value_preprocessor(app, entity):

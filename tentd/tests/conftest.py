@@ -7,24 +7,19 @@ from py.test import fixture, exit
 from tentd import create_app
 from tentd.documents import collections, Entity, Post, Follower, Following
 
-#: Constant values for various modes
-SINGLE = 'single user mode'
-MULTIPLE = 'multiple user mode'
-SUBDOMAINS = 'subdomain multiple user mode'
-
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
-    parser.addoption('--mode', action='store', default='domains',
-        help="the mode to run pytentd in - single, multi, domains, or all")
+    parser.addoption('--mode', action='store', default='subdomain',
+        help="the mode to run in (multiple, single, subdomain, all)")
 
 def pytest_generate_tests(metafunc):
     """Apply the --mode option to the app fixture"""
     if 'app' in metafunc.fixturenames:
         metafunc.parametrize('app', {
-            'multi': (MULTIPLE,),
-            'single': (SINGLE,),
-            'domains': (SUBDOMAINS,),
-            'all': (SINGLE, MULTIPLE, SUBDOMAINS),
+            'multiple': ('MULTIPLE',),
+            'single': ('SINGLE',),
+            'subdomain': ('SUBDOMAIN',),
+            'all': ('MULTIPLE', 'SINGLE', 'SUBDOMAIN'),
         }[metafunc.config.option.mode], indirect=True, scope="module")
 
 def pytest_runtest_teardown(item, nextitem):
@@ -45,14 +40,7 @@ def app(request):
 
     The scope for this fixture is defined in pytest_generate_tests"""
 
-    single_user_mode, use_subdomains = False, False
-    
-    if request.param is SINGLE:
-        single_user_mode = 'the_single_user'
-    elif request.param is SUBDOMAINS:
-        use_subdomains = True
-
-    app = create_app({
+    config = {
         'DEBUG': True,
         'TESTING': True,
         'TRAP_HTTP_EXCEPTIONS': True,
@@ -61,9 +49,13 @@ def app(request):
         'MONGODB_SETTINGS': {
             'db': 'tentd-testing',
         },
-        'SINGLE_USER_MODE': single_user_mode,
-        'USE_SUBDOMAINS': use_subdomains,
-    })
+        'USER_MODE': request.param,
+    }
+
+    if request.param == 'SINGLE':
+        config['USER_NAME'] = 'the_single_user'
+        
+    app = create_app(config)
 
     # Create a test client, used with the tentd.tests.HTTP functions
     app.client = app.test_client()

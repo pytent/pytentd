@@ -9,9 +9,9 @@ from tentd import __doc__ as description, __version__ as version
 from tentd.lib.flask import Request, Response, JSONEncoder, jsonify
 from tentd.blueprints import entity, followers, followings, posts, groups
 from tentd.documents import db, Entity
-from tentd.utils import make_config, manage_exception
+from tentd.utils import make_config, manage_exception, deprecated
 from tentd.utils.exceptions import RequestDidNotValidate
-       
+
 
 class TentdFlask(Flask):
     """An extension of the Flask class with some custom methods"""
@@ -25,11 +25,24 @@ class TentdFlask(Flask):
     #: Not useful until Flask 0.10
     json_encoder = JSONEncoder
 
-    #: Alias for app.config['SINGLE_USER_MODE']
-    single_user_mode = ConfigAttribute('SINGLE_USER_MODE')
+    #: Alias for app.config['SINGLE_USER_MODE'], converts to lowercase
+    user_mode = ConfigAttribute('USER_MODE', lambda x: str.lower(x))
 
-    #: Alias for app.config['USE_SUBDOMAINS']
-    use_subdomains = ConfigAttribute('USE_SUBDOMAINS')
+    #: Alias for app.config['USER_NAME']
+    user_name = ConfigAttribute('USER_NAME')
+
+    @property
+    @deprecated
+    def single_user_mode(self):
+        if self.user_mode == 'single':
+            return self.user_name
+        return False
+
+    @property
+    @deprecated
+    def use_subdomains(self):
+        return self.user_mode == 'USE_SUBDOMAINS'
+
 
 def create_app(config=None):
     """Create an instance of the tentd flask application"""    
@@ -38,16 +51,20 @@ def create_app(config=None):
     # Load the default configuration values
     app.config.update({
         'MONGODB_DB': 'tentd',
-        'SINGLE_USER_MODE': False,
-        'USE_SUBDOMAINS': False,
+        'USER_MODE': 'multiple',
+        'USER_NAME': None,
     })
     
     # Load the user configuration values
     app.config.update(make_config(config))
 
-    if app.single_user_mode and app.use_subdomains:
+    # Validate the configuration
+    if not app.user_mode in ('multiple', 'single', 'subdomain'):
         raise Exception(
-            "Single user and subdomain modes are mutually exclusive.")
+            "USER_MODE must be one of multiple, single, subdomain")
+
+    if app.user_mode == 'single' and app.user_name is None:
+        raise Exception("USER_NAME must be set in single user mode")
 
     @app.route('/')
     def home():
