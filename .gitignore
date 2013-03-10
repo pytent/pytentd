@@ -37,3 +37,6 @@ nosetests.xml
 # Editor files
 *~
 *.swp
+
+# Built documentation
+docs/_build
