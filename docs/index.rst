@@ -1,19 +1,23 @@
 Welcome to pytentd's documentation!
 ===================================
 
-Contents:
+pytentd is licenced under the `Apache License Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0>`_.
+
+Contents
+--------
 
 .. toctree::
-   :maxdepth: 2
 
    installation
    configuration
    development
 
-Indices and tables
-------------------
+Contributors
+--------------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+The following people have contributed to pytentd:
 
+- James Ravenscroft (`ravenscroftj <https://github.com/ravenscroftj>`_)
+- Sam Clements (`borntyping <https://github.com/borntyping>`_)
+- Alexander Brown (`SoftlySplinter <https://github.com/SoftlySplinter>`_)
+- Louis Taylor (`kragniz <https://github.com/kragniz>`_) [the pytent logo]
