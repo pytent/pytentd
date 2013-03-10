@@ -1,7 +1,8 @@
 """py.test conftest file"""
 
 from flask import g
-from py.test import fixture
+from mongoengine.connection import ConnectionError
+from py.test import fixture, exit
 
 from tentd import create_app
 from tentd.documents import collections, Entity, Post, Follower, Following
@@ -31,6 +32,12 @@ def pytest_runtest_teardown(item, nextitem):
     if 'app' in item.fixturenames:
         for collection in collections:
             collection.drop_collection()
+
+def pytest_runtest_makereport (item, call):
+    """Stop the tests early when we can't connect to the database"""
+    if hasattr(call.excinfo, 'type'):
+        if call.excinfo.type == ConnectionError:
+            exit("Could not connect to the database")
 
 @fixture
 def app(request):
