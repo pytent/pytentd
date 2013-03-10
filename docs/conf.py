@@ -97,6 +97,11 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 html_theme = 'flask'
 
+# A dictionary of values to pass into the template engine’s context for all pages.
+html_context = {
+    'css_files': ["_static/theme.css"],
+}
+
 # Lets the flask theme import it's own module
 sys.path.append(os.path.abspath('_themes'))
 
