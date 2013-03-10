@@ -11,3 +11,28 @@ Documentation is also available on the configuration variables for `Flask`_ and 
 
 .. _Flask: http://flask.pocoo.org/docs/config/#builtin-configuration-values
 .. _Flask-MongoEngine: https://flask-mongoengine.readthedocs.org/en/latest/
+
+Example configuration file
+--------------------------
+
+::
+    
+    ## Use a collection named tentd on the mongodb server
+    MONGODB_DB = 'tentd'
+
+    ## The mongodb server location
+    MONGODB_HOST = 'localhost'
+    MONGODB_PORT = 27017
+
+    ## Usernamed and password for the mongodb server
+    MONGODB_USERNAME = 'example_username'
+    MONGODB_PASSWORD = 'example_password'
+
+    ## Threaded mode is needed so that flask can fetch urls that it provides.
+    ## It is not needed for single user mode and is only used when running
+    ## tentd from the command line.
+    THREADED = False
+
+    ## The name of the entity being used in single user mode
+    ## This should be set to None or False to explicitly disable single user mode
+    SINGLE_USER_MODE = 'name'
