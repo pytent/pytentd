@@ -12,6 +12,7 @@ Running pytentd
 
 Running pytentd is easy::
 
+    $ pip install tentd
     $ tentd
 
 More information on installing, running and configuring pytentd can be found in the `pytentd documentation`_.
