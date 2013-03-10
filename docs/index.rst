@@ -6,7 +6,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   running
+   installation
+   configuration
+   development
 
 Indices and tables
 ------------------
