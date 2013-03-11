@@ -62,10 +62,8 @@ def app(request):
             'db': 'tentd-testing',
         },
         'USER_MODE': request.param,
+        'USER_NAME': 'neo',
     }
-
-    if request.param == 'SINGLE':
-        config['USER_NAME'] = 'the_single_user'
         
     app = create_app(config)
 

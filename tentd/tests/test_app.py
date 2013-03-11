@@ -8,6 +8,7 @@ from tentd.documents import CoreProfile
 from tentd.tests import GET, profile_url_for, response_has_link_header
 
 def test_expected_profile_url(request, app, entity):
+    """Test that urls are built correctly, based on the user_mode"""
     url = profile_url_for(entity)
     if app.user_mode == 'single':
         assert url == '/profile'
@@ -15,6 +16,10 @@ def test_expected_profile_url(request, app, entity):
         assert url == '/' + entity.name + '/profile'
     elif app.user_mode == 'subdomain':
         assert url == 'http://{}.example.com/profile'.format(entity.name)
+
+def test_user_name(request, app, entity):
+    """Test that app.user_name returns the correct result"""
+    assert app.user_name == ('neo' if app.user_mode == 'single' else None)
 
 def test_url_value_preprocessor(app, entity):
     """Assert urls are created correctly in single user mode"""
