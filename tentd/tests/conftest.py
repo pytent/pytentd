@@ -11,6 +11,14 @@ def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
     parser.addoption('--mode', action='store', default='subdomain',
         help="the mode to run in (multiple, single, subdomain, all)")
+    parser.addoption('--warnings', action='store_true',
+        help="turn warnings into errors")
+
+def pytest_configure(config):
+    """Apply the --warnings option"""
+    if config.getoption('warnings'):
+        from warnings import resetwarnings, filterwarnings
+        filterwarnings(action='error', module='tentd')
 
 def pytest_generate_tests(metafunc):
     """Apply the --mode option to the app fixture"""
@@ -20,7 +28,7 @@ def pytest_generate_tests(metafunc):
             'single': ('SINGLE',),
             'subdomain': ('SUBDOMAIN',),
             'all': ('MULTIPLE', 'SINGLE', 'SUBDOMAIN'),
-        }[metafunc.config.option.mode], indirect=True, scope="module")
+        }[metafunc.config.getoption('mode')], indirect=True, scope="module")
 
 def pytest_runtest_teardown(item, nextitem):
     """If the app fixture was used, clear the database after the test"""
