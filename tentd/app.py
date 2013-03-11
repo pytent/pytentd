@@ -25,24 +25,17 @@ class TentdFlask(Flask):
     #: Not useful until Flask 0.10
     json_encoder = JSONEncoder
 
-    #: Alias for app.config['SINGLE_USER_MODE'], converts to lowercase
-    user_mode = ConfigAttribute('USER_MODE', lambda x: str.lower(x))
-
-    #: Alias for app.config['USER_NAME']
-    user_name = ConfigAttribute('USER_NAME')
+    @property
+    def user_mode(self):
+        """Return USER_MODE as lowercase"""
+        return self.config['USER_MODE'].lower()
 
     @property
-    @deprecated
-    def single_user_mode(self):
-        if self.user_mode == 'single':
-            return self.user_name
-        return False
-
-    @property
-    @deprecated
-    def use_subdomains(self):
-        return self.user_mode == 'USE_SUBDOMAINS'
-
+    def user_name(self):
+        """Return USER_NAME in single user mode, else None"""
+        if self.config['USER_MODE'] == 'single':
+            return self.config['USER_NAME']
+        return None
 
 def create_app(config=None):
     """Create an instance of the tentd flask application"""    

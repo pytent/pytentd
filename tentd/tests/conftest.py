@@ -7,16 +7,20 @@ from py.test import fixture, exit
 from tentd import create_app
 from tentd.documents import collections, Entity, Post, Follower, Following
 
+def pytest_report_header(config):
+    from tentd import __version__
+    return "pytentd version: {}".format(__version__)
+
 def pytest_addoption(parser):
     """Add an option to chose the modes tests will be run under"""
     parser.addoption('--mode', action='store', default='subdomain',
         help="the mode to run in (multiple, single, subdomain, all)")
-    parser.addoption('--warnings', action='store_true',
-        help="turn warnings into errors")
+    parser.addoption('--nowarnings', action='store_true',
+        help="don't turn warnings into errors")
 
 def pytest_configure(config):
     """Apply the --warnings option"""
-    if config.getoption('warnings'):
+    if not config.getoption('nowarnings'):
         from warnings import resetwarnings, filterwarnings
         filterwarnings(action='error', module='tentd')
 
@@ -80,8 +84,10 @@ def app(request):
 
 @fixture
 def entity(request, app):
+    name = app.user_name if app.user_mode == 'single' else 'testuser'
+    
     g.entity = Entity.new(
-        name=app.single_user_mode or 'testuser',
+        name=name,
         identity= "http://example.com",
         servers=["http://tent.example.com"]).save()
 

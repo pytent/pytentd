@@ -114,7 +114,7 @@ class EntityBlueprint(Blueprint):
         """Assign the current entity to g.entity"""
         if endpoint:
             try:
-                name = current_app.single_user_mode or values.pop('entity')
+                name = current_app.user_name or values.pop('entity')
                 g.entity = Entity.objects.get(name=name)
             except Entity.DoesNotExist:
                 raise NotFound("The reqested entity was not found")
@@ -127,7 +127,7 @@ class EntityBlueprint(Blueprint):
 
     def _pop_global_entity(self, endpoint, values):
         """Remove entity values in single user mode"""
-        if current_app.single_user_mode:
+        if current_app.user_mode == 'single':
             values.pop('entity', None)
 
     def _link_header(self, response):
@@ -139,14 +139,12 @@ class EntityBlueprint(Blueprint):
         return response
 
     def register(self, app, options, *args):
-        """Register the blueprint with the correct url prefixes"""
-        if not app.single_user_mode:
-            if app.use_subdomains:
-                options['subdomain'] = '<string:entity>'
-            else:
-                original_prefix = self.url_prefix or ''
-                options['url_prefix'] = '/<string:entity>' + original_prefix
-
+        """Register the blueprint with the correct url patterns"""
+        if app.user_mode == 'multiple':
+            original_url_prefix = self.url_prefix or ''
+            options['url_prefix'] = '/<string:entity>' + original_url_prefix
+        elif app.user_mode == 'subdomain':
+            options['subdomain'] = '<string:entity>'
         super(EntityBlueprint, self).register(app, options, *args)
 
 

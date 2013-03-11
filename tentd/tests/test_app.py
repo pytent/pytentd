@@ -11,9 +11,9 @@ def test_expected_profile_url(request, app, entity):
     url = profile_url_for(entity)
     if app.user_mode == 'single':
         assert url == '/profile'
-    elif app.user_mode is 'multiple':
+    elif app.user_mode == 'multiple':
         assert url == '/' + entity.name + '/profile'
-    elif app.user_mode is 'subdomain':
+    elif app.user_mode == 'subdomain':
         assert url == 'http://{}.example.com/profile'.format(entity.name)
 
 def test_url_value_preprocessor(app, entity):

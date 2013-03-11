@@ -36,7 +36,7 @@ class Profile(EntityMixin, db.Document):
             cls = GenericProfile
             if CoreProfile.__schema__ == kwargs['schema']:
                 cls = CoreProfile
-        return super(Profile, cls).__new__(cls, *args, **kwargs)
+        return super(Profile, cls).__new__(cls)
 
     def __init__(self, **kwargs):
         if self.__class__ is Profile:
