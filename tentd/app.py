@@ -33,7 +33,7 @@ class TentdFlask(Flask):
     @property
     def user_name(self):
         """Return USER_NAME in single user mode, else None"""
-        if self.config['USER_MODE'] == 'single':
+        if self.user_mode == 'single':
             return self.config['USER_NAME']
         return None
 

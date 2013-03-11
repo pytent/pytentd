@@ -40,10 +40,10 @@ def pytest_runtest_teardown(item, nextitem):
         for collection in collections:
             collection.drop_collection()
 
-def pytest_runtest_makereport (item, call):
+def pytest_runtest_makereport(item, call):
     """Stop the tests early when we can't connect to the database"""
     if hasattr(call.excinfo, 'type'):
-        if call.excinfo.type == ConnectionError:
+        if call.excinfo.type is ConnectionError:
             exit("Could not connect to the database")
 
 @fixture

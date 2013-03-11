@@ -9,7 +9,7 @@ class PyTest(TestCommand):
     """Test runner for py.test"""
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['tentd/tests']
+        self.test_args = ['tentd/tests', '--mode=all']
         self.test_suite = True
     
     def run_tests(self):
