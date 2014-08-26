@@ -6,7 +6,7 @@ from tentd.documents import db, Entity, Post
 
 def test_create_identical_entity(entity):
     """Test that we cannot create two entities with the same name"""
-    with raises(db.NotUniqueError):
+    with raises((db.NotUniqueError, db.OperationError)):
         Entity(name=entity.name).save()
 
 def test_core_profile(app):

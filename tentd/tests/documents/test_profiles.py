@@ -1,6 +1,6 @@
 """Test the profile types"""
 
-from mongoengine import NotUniqueError
+from mongoengine import NotUniqueError, OperationError
 from py.test import fixture, mark, raises
 
 from tentd.documents.profiles import Profile, CoreProfile, GenericProfile
@@ -44,5 +44,5 @@ def test_json_attributes(generic_profile):
     assert generic_profile.to_json()['content']['dict']['attr'] == 'value'
 
 def test_unique_schema(entity, generic_profile):
-    with raises(NotUniqueError):
+    with raises((NotUniqueError, OperationError)):
         GenericProfile(entity=entity, schema=generic_profile.schema).save()
